@@ -12,7 +12,6 @@
 XSocket::XSocket(HWND hWnd, int iBlockLimit)
 {
  register int i;
- char cData[100];
 	
 	m_cType       = NULL;
 	m_pRcvBuffer  = NULL;
@@ -416,7 +415,7 @@ int XSocket::iSendMsg(char * cData, DWORD dwSize, char cKey)
 {
  WORD * wp;
  int    i, iRet;
- char cTxt[200];
+
 	//m_pSndBuffer = cData;
 	// 메시지 크기가 버퍼보다 크면 보낼 수 없다.
 	if (dwSize > m_dwBufferSize) return DEF_XSOCKEVENT_MSGSIZETOOLARGE;

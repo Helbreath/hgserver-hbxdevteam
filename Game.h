@@ -148,7 +148,8 @@
 //============================
 
 //============================
-#define DEF_GMGMANACONSUMEUNIT	1			// Grand Magic Generator 마나 흡수 단위.
+// New Changed 12/05/2004
+#define DEF_GMGMANACONSUMEUNIT	15			// Grand Magic Generator 마나 흡수 단위.
 //============================
 
 #define DEF_MAXCONSTRUCTIONPOINT 30000		// 최대 소환 포인트 
@@ -264,7 +265,8 @@ public:
 	void GSM_SetGuildTeleportLoc(int iGuildGUID, int dX, int dY, char * pMapName);
 	void SyncMiddlelandMapInfo();
 	void _GrandMagicLaunchMsgSend(int iType, char cAttackerSide);
-	void GrandMagicResultHandler(char * cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure);
+	void GrandMagicResultHandler(char *cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure, int iTotalStrikePoints, char * cData);
+	//void GrandMagicResultHandler(char * cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure);
 	void CalcMeteorStrikeEffectHandler(int iMapIndex);
 	void DoMeteorStrikeDamageHandler(int iMapIndex);
 	void GSM_RequestFindCharacter(WORD wReqServerID, WORD wReqClientH, char * pName);
@@ -299,7 +301,8 @@ public:
 	BOOL __bSetConstructionKit(int iMapIndex, int dX, int dY, int iType, int iTimeCost, int iClientH);
 	void AgingMapSectorInfo();
 	void UpdateMapSectorInfo();
-	BOOL bGetItemNameWhenDeleteNpc(char * pItemName, short sNpcType);
+	//BOOL bGetItemNameWhenDeleteNpc(char * pItemName, short sNpcType);
+	BOOL bGetItemNameWhenDeleteNpc(int & iItemID, short sNpcType);
 	int iGetItemWeight(class CItem * pItem, int iCount);
 	void CancelQuestHandler(int iClientH);
 	void ActivateSpecialAbilityHandler(int iClientH);
@@ -624,6 +627,10 @@ public:
 	BOOL bCheckAndConvertPlusWeaponItem(int iClientH, int iItemIndex);
 	void ArmorLifeDecrement(int iAttackerH, int iTargetH, char cOwnerType, int iValue);
 
+	// MultiDrops
+	BOOL bGetMultipleItemNamesWhenDeleteNpc(short sNpcType, int iProbability, int iMin, int iMax, short sBaseX, short sBaseY,
+											   int iItemSpreadType, int iSpreadRange,
+											   int *iItemIDs, POINT *BasePos, int *iNumItem);
 	CGame(HWND hWnd);
 	virtual ~CGame();
 
@@ -759,6 +766,8 @@ public:
 	char  m_cGateServerStockMsg[DEF_MAXGATESERVERSTOCKMSGSIZE];
 	int   m_iIndexGSS;
 
+	int m_iLastCrusadeWinner; 	// New 13/05/2004
+
 	struct {
 		int iCrashedStructureNum;
 		int iStructureDamageAmount;
@@ -778,6 +787,7 @@ public:
 
 	int m_iNpcConstructionPoint[DEF_MAXNPCTYPES];
 	DWORD m_dwCrusadeGUID;
+	short m_sLastCrusadeDate;
 	int   m_iCrusadeWinnerSide;
 
 	int   m_iPlayerMaxLevel;
@@ -793,6 +803,16 @@ private:
 	void _ClearExchangeStatus(int iClientH);
 	int _iGetItemSpaceLeft(int iClientH);
 
+public:
+	void AdminOrder_GoTo(int iClientH, char* pData, DWORD dwMsgSize);
+	void AdminOrder_MonsterCount(int iClientH, char* pData, DWORD dwMsgSize);
+	void AdminOrder_SetForceRecallTime(int iClientH, char* pData, DWORD dwMsgSize);
+	void AdminOrder_UnsummonBoss(int iClientH);
+	void RemoveCrusadeNpcs(void);
+	void RemoveCrusadeRecallTime(void);
+	BOOL _bCrusadeLog(int iAction,int iClientH,int iData, char * cName);
+	int iGetPlayerABSStatus(int iClientH);
+	BOOL _bInitItemAttr(class CItem * pItem, int iItemID);
 };
 
 #endif // !defined(AFX_GAME_H__C3D29FC5_755B_11D2_A8E6_00001C7030A6__INCLUDED_)

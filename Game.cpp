@@ -1,4 +1,4 @@
-﻿// Game.cpp: implementation of the CGame class.
+// Game.cpp: implementation of the CGame class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -687,7 +687,9 @@ BOOL CGame::bInit()
 	m_iIndexGSS = 6;
 	m_dwCrusadeGUID = NULL;
 	m_iCrusadeWinnerSide = NULL;
-	
+	m_iLastCrusadeWinner = 0;
+	m_sLastCrusadeDate = -1;
+
 	return TRUE;
 }
 
@@ -1786,7 +1788,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	int iTL_;
 
 	// 횉횄쨌쨔?횑쩐챤째징 쨈횢쨍짜 쨍횎쩔징 쨉챕쩐챤째짭쨈횢. 쨍쨍쩐횪 ?청짹쨔?횑쨋처쨍챕 쩍횄째짙?쨩 쩌쨀횁짚횉횗쨈횢.
-	if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) && 
+	if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) && 
 		(memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "elvine", 6) == 0) ) {
 
 			m_pClientList[iClientH]->m_dwWarBeginTime = timeGetTime();
@@ -1824,7 +1826,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 			}
 		}
 	else
-		if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "elvine", 6) == 0) && 
+		if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "elv", 3) == 0) && 
 			(memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "aresden", 7) == 0) ) {
 
 				m_pClientList[iClientH]->m_dwWarBeginTime = timeGetTime();
@@ -2858,11 +2860,6 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
 	} // while(1)
 
 	*pTotal = iTileExists;
-
-	// testcode
-	//wsprintf(G_cTxt, "ComposeInitMapData: %d", iTileExists);
-	//PutLogList(G_cTxt);
-
 	return iSize;
 }
 
@@ -2953,7 +2950,7 @@ void CGame::DeleteClient(int iClientH, BOOL bSave, BOOL bNotify, BOOL bCountLogo
 			}
 			else {
 				// ¼Ò¼ÓÀÌ ÀÖ´Ù¸é ¼Ò¼Ó ¸¶À»ÀÇ ºÎÈ°Á¸À¸·Î °£´Ù.
-				if (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) {
+				if (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) {
 					if (m_bIsCrusadeMode == TRUE) {
 						// Å©·ç¼¼ÀÌµå ¸ðµå¿¡¼­ »ç¸ÁÇÑ °æ¿ì: ¸¶À» ¸Ê¿¡¼­ ÀÏÁ¤½Ã°£ ³ª°¥ ¼ö ¾ø´Ù.
 						if (m_pClientList[iClientH]->m_iDeadPenaltyTime > 0) {
@@ -4426,36 +4423,37 @@ char  * cp;
 							break;
 						}//End Switch
 					}// if ((ucHeader & 0x02) != 0)
+
+					if (pTile->m_pItem[0] != NULL) {
+						sp  = (short *)cp;
+						*sp	= pTile->m_pItem[0]->m_sSprite;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= pTile->m_pItem[0]->m_sSpriteFrame;
+						cp += 2;
+						iSize += 2;
+
+						*cp = pTile->m_pItem[0]->m_cItemColor;
+						cp++;
+						iSize++;
+					}
+
+					if (pTile->m_sDynamicObjectType != NULL) {
+
+						wp  = (WORD *)cp;
+						*wp = pTile->m_wDynamicObjectID;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= pTile->m_sDynamicObjectType;
+						cp += 2;
+						iSize += 2;
+					} //(pTile->m_sDynamicObjectType != NULL)
+
 				} //(pTile->m_sOwner != NULL)
-
-				if (pTile->m_pItem[0] != NULL) {
-					sp  = (short *)cp;
-					*sp	= pTile->m_pItem[0]->m_sSprite;
-					cp += 2;
-					iSize += 2;
-
-					sp  = (short *)cp;
-					*sp	= pTile->m_pItem[0]->m_sSpriteFrame;
-					cp += 2;
-					iSize += 2;
-
-					*cp = pTile->m_pItem[0]->m_cItemColor;
-					cp++;
-					iSize++;
-				}
-
-				if (pTile->m_sDynamicObjectType != NULL) {
-
-					wp  = (WORD *)cp;
-					*wp = pTile->m_wDynamicObjectID;
-					cp += 2;
-					iSize += 2;
-
-					sp  = (short *)cp;
-					*sp	= pTile->m_sDynamicObjectType;
-					cp += 2;
-					iSize += 2;
-				} //(pTile->m_sDynamicObjectType != NULL)
 		} // end While(1)
 				*pTotal = iTileExists;
 				return iSize;
@@ -4720,7 +4718,8 @@ void CGame::CheckClientResponseTime()
 					if (m_pClientList[i]->m_iAutoExpAmount < iValue) {
 						// ÀÚµ¿ ½Ã°£ °è»ê °æÇèÄ¡·Î´Â ·¹º§ÀÌ ¿À¸£Áö ¾ÊÀ¸¹Ç·Î Ã³¸®ÇÑ´Ù.
 						if ((m_pClientList[i]->m_iExp + iValue) < m_iLevelExpTable[m_pClientList[i]->m_iLevel+1]) {
-							m_pClientList[i]->m_iExpStock += iValue;
+							//m_pClientList[i]->m_iExpStock += iValue;
+							GetExp(i, iValue, FALSE);
 							CalcExpStock(i);
 						}
 					}
@@ -4845,7 +4844,7 @@ void CGame::CheckClientResponseTime()
 
 				if (m_pClientList[i] == NULL) break;
 				// ³ó°æÁö¸Ê¿¡ ÀûÀÌ µé¾î°¡¸é ¸®ÄÝ
-				if ((strcmp(m_pClientList[i]->m_cLocation, "aresden") == 0) &&
+				if ((memcmp(m_pClientList[i]->m_cLocation, "are",3) == 0) &&
 					(strcmp(m_pMapList[m_pClientList[i]->m_cMapIndex]->m_cName, "elvfarm") == 0)) {
 					// ¼ÒÈ¯µÈ´Ù´Â ¸Þ½ÃÁö¸¦ º¸³»°í °­Á¦ ¸®ÄÝ.
 					SendNotifyMsg(NULL, i, DEF_NOTIFY_TOBERECALLED, NULL, NULL, NULL, NULL);
@@ -4854,7 +4853,7 @@ void CGame::CheckClientResponseTime()
 
 				if (m_pClientList[i] == NULL) break;
 				// ³ó°æÁö¸Ê¿¡ ÀûÀÌ µé¾î°¡¸é ¸®ÄÝ
-				if ((strcmp(m_pClientList[i]->m_cLocation, "elvine") == 0) &&
+				if ((memcmp(m_pClientList[i]->m_cLocation, "elv", 3) == 0) &&
 					(strcmp(m_pMapList[m_pClientList[i]->m_cMapIndex]->m_cName, "arefarm") == 0)) {
 					// ¼ÒÈ¯µÈ´Ù´Â ¸Þ½ÃÁö¸¦ º¸³»°í °­Á¦ ¸®ÄÝ.
 					SendNotifyMsg(NULL, i, DEF_NOTIFY_TOBERECALLED, NULL, NULL, NULL, NULL);
@@ -9929,19 +9928,38 @@ void CGame::ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize)
 		memcpy(cBuffer, cp, dwMsgSize - 21);
 		cp = (char *)(cBuffer);
 		
+		// New 10/05/2004
+		if (memcmp(cp, "/begincrusadetotalwar", 21) == 0) {
+			if (m_pClientList[iClientH]->m_iAdminUserLevel > 3) {
+				GlobalStartCrusadeMode();
+				wsprintf(cTemp, "GM Order(%s): begincrusadetotalwar", m_pClientList[iClientH]->m_cCharName);
+				bSendMsgToLS(MSGID_GAMEMASTERLOG, iClientH, FALSE, cTemp);
+			}
+			return;
+		}
+
+		if (memcmp(cp, "/endcrusadetotalwar", 19) == 0) {
+			if (m_pClientList[iClientH]->m_iAdminUserLevel > 3) {
+				ManualEndCrusadeMode(0);
+				wsprintf(cTemp, "GM Order(%s): endcrusadetotalwar", m_pClientList[iClientH]->m_cCharName);
+				bSendMsgToLS(MSGID_GAMEMASTERLOG, iClientH, FALSE, cTemp);
+			}
+			return;
+		}
+
 		// New 08/05/2004
 		if (memcmp(cp, "/goto ", 6) == 0) {
-			//AdminOrder_GoTo
+			AdminOrder_GoTo(iClientH, cp, dwMsgSize - 21);
 			return;
 		}
 
 		if (memcmp(cp, "/unsummonboss ", 14) == 0) {
-			//AdminOrder_UnsummonBoss
+			AdminOrder_UnsummonBoss(iClientH);
 			return;
 		}
 
 		if (memcmp(cp, "/setforcerecalltime ", 20) == 0) {
-			//AdminOrder_SetForceRecallTime
+			AdminOrder_SetForceRecallTime(iClientH, cp, dwMsgSize - 21);
 			return;
 		}
 
@@ -9951,7 +9969,7 @@ void CGame::ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize)
 		}
 
 		if (memcmp(cp, "/MonsterCount ", 14) == 0) {
-			//AdminOrder_MonsterCount
+			AdminOrder_MonsterCount(iClientH,cp,dwMsgSize - 21);
 			return;
 		}
 
@@ -12808,7 +12826,9 @@ CAE_SKIPCOUNTERATTACK:;
 							// Crusade
 							if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
-							m_pClientList[sAttackerH]->m_iExpStock += iExp;
+							// New 09/05/2004
+							//m_pClientList[sAttackerH]->m_iExpStock += iExp;
+							GetExp(sAttackerH, iExp, TRUE);
 
 							// NPC ¿ÀºêÁ§Æ® »èÁ¦
 							DeleteNpc(sTargetH);
@@ -13181,7 +13201,9 @@ void CGame::NpcKilledHandler(short sAttackerH, char cAttackerType, int iNpcH, sh
 			if (iExp > 10) iExp = iExp/3;
 		}
 
-		m_pClientList[sAttackerH]->m_iExpStock += iExp;
+		// New 09/05/2004
+		//m_pClientList[sAttackerH]->m_iExpStock += iExp;
+		GetExp(sAttackerH, iExp, TRUE);
 
 		// Quest ¿©ºÎ¸¦ ÆÇ´ÜÇÑ´Ù.
 		iQuestIndex = m_pClientList[sAttackerH]->m_iQuest;
@@ -14673,7 +14695,7 @@ BOOL CGame::_bAddClientItemList(int iClientH, class CItem * pItem, int * pDelReq
 BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 {
  char  cEquipPos;
- short sSpeed;
+ int   sSpeed;
  int   iTemp, sTemp;
 	
 	if (m_pClientList[iClientH] == NULL) return FALSE;
@@ -14716,7 +14738,8 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 	cEquipPos = m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cEquipPos;
 
 	// ¿Ê¾ÆÀÌÅÛÀÇ °æ¿ì´Â Æ¯¼ºÄ¡ÀÇ Á¦ÇÑ¿¡ °É¸®¸é ÀåÂø ºÒ°¡´É. 
-	if ((cEquipPos == DEF_EQUIPPOS_BODY) || (cEquipPos == DEF_EQUIPPOS_LEGGINGS) || (cEquipPos == DEF_EQUIPPOS_ARMS)) {
+	if ((cEquipPos == DEF_EQUIPPOS_BODY) || (cEquipPos == DEF_EQUIPPOS_LEGGINGS) ||
+		(cEquipPos == DEF_EQUIPPOS_ARMS) || (cEquipPos == DEF_EQUIPPOS_HEAD)) {
 		switch (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sItemEffectValue4) {
 		case 10: // Str Á¦ÇÑ 
 			if (m_pClientList[iClientH]->m_iStr < m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sItemEffectValue5) {
@@ -14832,7 +14855,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 		m_pClientList[iClientH]->m_sAppr2 = sTemp;
 
 		iTemp = m_pClientList[iClientH]->m_iApprColor; // v1.4 ÄÃ·¯°ª ¼¼ÆÃ 
-		iTemp = iTemp & 0x0FFFFFFF; // ¹«±â »ö ºñÆ®¸¦ Å¬¸®¾î.
+		iTemp = iTemp & 0xFFFFFFF; // ¹«±â »ö ºñÆ®¸¦ Å¬¸®¾î.
 		iTemp = iTemp | ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cItemColor) << 28);
 		m_pClientList[iClientH]->m_iApprColor = iTemp;
 		
@@ -14868,7 +14891,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 		m_pClientList[iClientH]->m_sAppr2 = sTemp;
 		
 		iTemp = m_pClientList[iClientH]->m_iApprColor; // v1.4 ÄÃ·¯°ª ¼¼ÆÃ 
-		iTemp = iTemp & 0x0FFFFFFF; // ¹«±â »ö ºñÆ®¸¦ Å¬¸®¾î.
+		iTemp = iTemp & 0xFFFFFFF; // ¹«±â »ö ºñÆ®¸¦ Å¬¸®¾î.
 		iTemp = iTemp | ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cItemColor) << 28);
 		m_pClientList[iClientH]->m_iApprColor = iTemp;
 
@@ -14927,7 +14950,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 		m_pClientList[iClientH]->m_sAppr3 = sTemp;
 
 		iTemp = m_pClientList[iClientH]->m_iApprColor; // v1.4 ÄÃ·¯°ª ¼¼ÆÃ 
-		iTemp = iTemp & 0xFFFF0FFF; // ¼Ó¿Ê »ö ºñÆ®¸¦ Å¬¸®¾î.
+		iTemp = iTemp & 0xF; // ¼Ó¿Ê »ö ºñÆ®¸¦ Å¬¸®¾î. // New 09/05/2004
 		iTemp = iTemp | ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cItemColor) << 12);
 		m_pClientList[iClientH]->m_iApprColor = iTemp;
 		break;
@@ -14939,11 +14962,12 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 		m_pClientList[iClientH]->m_sAppr3 = sTemp;
 
 		iTemp = m_pClientList[iClientH]->m_iApprColor; // v1.4 ÄÃ·¯°ª ¼¼ÆÃ 
-		iTemp = iTemp & 0xFFFFF0FF; // ¹ÙÁö »ö ºñÆ®¸¦ Å¬¸®¾î.
+		iTemp = iTemp & 0xF0; // ¹ÙÁö »ö ºñÆ®¸¦ Å¬¸®¾î.
 		iTemp = iTemp | ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cItemColor) << 8);
 		m_pClientList[iClientH]->m_iApprColor = iTemp;
 		break;
 
+	// New 09/05/2004 Changed
 	case DEF_EQUIPPOS_LEGGINGS:
 		sTemp = m_pClientList[iClientH]->m_sAppr4;
 		sTemp = sTemp & 0x0FFF;	// ºÎÃ÷ Æ¯¼ºÄ¡ ºñÆ®¸¦ Å¬¸®¾î.
@@ -14951,7 +14975,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 		m_pClientList[iClientH]->m_sAppr4 = sTemp;
 
 		iTemp = m_pClientList[iClientH]->m_iApprColor; // v1.4 ÄÃ·¯°ª ¼¼ÆÃ 
-		iTemp = iTemp & 0xFFFFFF0F; // ºÎÃ÷ »ö ºñÆ®¸¦ Å¬¸®¾î.
+		iTemp = iTemp & 0x0F; // ºÎÃ÷ »ö ºñÆ®¸¦ Å¬¸®¾î.
 		iTemp = iTemp | ((m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cItemColor) << 4);
 		m_pClientList[iClientH]->m_iApprColor = iTemp;
 		break;
@@ -14989,15 +15013,36 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 		}
 	}
 
+	//New changed 09/05/2004
 	if (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sItemEffectType == DEF_ITEMEFFECTTYPE_DEFENSE_SPECABLTY) {
 		// ¹æ¾î±¸ Æ¯¼ö ´É·Â ºñÆ® Å¬¸®¾î
 		m_pClientList[iClientH]->m_sAppr4 = m_pClientList[iClientH]->m_sAppr4 & 0xFFFC;
+		if(m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sSpecialEffect == 0){
+		}
+		else if (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sSpecialEffect <= 31) {
+			if(m_pClientList[iClientH]->m_iAdminUserLevel > 0)
+				m_pClientList[iClientH]->m_sAppr4 = m_pClientList[iClientH]->m_sAppr4 | 0x0001;
+		}
+		else if (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sSpecialEffect <= 34){
+			m_pClientList[iClientH]->m_sAppr4 = m_pClientList[iClientH]->m_sAppr4 | 0x0002;	
+		}
+		else{
+			if(m_pClientList[iClientH]->m_iAdminUserLevel > 0)
+				m_pClientList[iClientH]->m_sAppr4 = m_pClientList[iClientH]->m_sAppr4 | 0x0001;
+		}
+		/*
 		switch (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sSpecialEffect) {
 		case 0: break;
+		case 32: // New
+		case 33:
+		case 34:
+			if(m_pClientList[iClientH]->m_iAdminUserLevel > 0)
+				m_pClientList[iClientH]->m_sAppr4 = m_pClientList[iClientH]->m_sAppr4 | 0x0001;
+			break;
 		default: // ³ì»ö 
 			m_pClientList[iClientH]->m_sAppr4 = m_pClientList[iClientH]->m_sAppr4 | 0x0002;	
 			break;
-		}
+		}*/
 	}
 
 	// ¿ÜÇüÀÌ ¹Ù²ï°ÍÀ» ¾Ë¸°´Ù.
@@ -15398,7 +15443,7 @@ void CGame::RequestPurchaseItemHandler(int iClientH, char * pItemName, int iNum)
 	//	 (memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, m_pClientList[iClientH]->m_cLocation, 10) != 0) ) return;
 
 	if (memcmp(m_pClientList[iClientH]->m_cLocation, "NONE", 4) != 0) {
-		if (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) {
+		if (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) {
 			if ((memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "aresden", 7) == 0) ||
 				(memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "arefarm", 7) == 0)) {
 
@@ -15406,7 +15451,7 @@ void CGame::RequestPurchaseItemHandler(int iClientH, char * pItemName, int iNum)
 			else return;
 		}
 
-		if (memcmp(m_pClientList[iClientH]->m_cLocation, "elvine", 6) == 0) {
+		if (memcmp(m_pClientList[iClientH]->m_cLocation, "elv", 3) == 0) {
 			if ((memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "elvine", 6) == 0) ||
 				(memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "elvfarm", 7) == 0)) {
 
@@ -16420,6 +16465,7 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 34);
 		break;
 	
+	//New 11/05/2004
 	case DEF_NOTIFY_GRANDMAGICRESULT:
 		wp  = (WORD *)cp;
 		*wp = (WORD)sV1;
@@ -16440,7 +16486,16 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 		*wp = (WORD)sV4;
 		cp += 2;
 
-		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 24);
+		if (sV9 > 0) {
+			memcpy(cp,pString2,(sV9*2)+2);
+			cp += (sV9*2)+2;
+		}
+		else{
+			sp = (short *)cp;
+			*sp = 0;
+			cp += 2;
+		}
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, (sV9*2)+26);
 		break;
 	
 	case DEF_NOTIFY_MAPSTATUSNEXT:
@@ -17019,15 +17074,27 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 7 + strlen(pString));
 		break;
 
+	// New 10/05/2004 Changed
 	case DEF_NOTIFY_WHISPERMODEON:
 	case DEF_NOTIFY_WHISPERMODEOFF:
-	
-	case DEF_NOTIFY_PLAYERONGAME:
 	case DEF_NOTIFY_PLAYERNOTONGAME:
 		memcpy(cp, pString, 10);
 		cp += 10;
 
-		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 17);
+		memcpy(cp, "          ", 10);
+		cp += 10;
+
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 27);
+		break;
+
+	case DEF_NOTIFY_PLAYERONGAME:
+		memcpy(cp, pString, 10);
+		cp += 10;
+
+		memcpy(cp, pString, 14);
+		cp += 14;
+
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 31);
 		break;
 	
 	// New 06/05/2004
@@ -18018,7 +18085,7 @@ void CGame::ClientKilledHandler(int iClientH, int iAttackerH, char cAttackerType
 void CGame::ReleaseItemHandler(int iClientH, short sItemIndex, BOOL bNotice)
 {
  char cEquipPos;
- short sTemp;
+ short  sTemp;
  int   iTemp;
 
 	if (m_pClientList[iClientH] == NULL) return;
@@ -18043,9 +18110,9 @@ void CGame::ReleaseItemHandler(int iClientH, short sItemIndex, BOOL bNotice)
 		m_pClientList[iClientH]->m_iApprColor = iTemp;
 
 		// V1.3 ¹«±â¼Óµµ Àç°è»ê <- ¸Ç¼ÕÀÌ´Ï±ñ 0
-		sTemp = m_pClientList[iClientH]->m_iStatus;
-		sTemp = sTemp & 0xFFFFFFF0;
-		m_pClientList[iClientH]->m_iStatus = sTemp;
+		iTemp = m_pClientList[iClientH]->m_iStatus;
+		iTemp = iTemp & 0xFFFFFFF0;
+		m_pClientList[iClientH]->m_iStatus = iTemp;
 		break;
 
 	case DEF_EQUIPPOS_LHAND:
@@ -19340,21 +19407,13 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 	switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cCategory) {
 	case 1: // °Ë, µµ³¢
 		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
-	case 20 : // ¿¢½ºÄ®¸®¹ö 
-	case 610: // Á¦¸®¸¶-ºí·¹ÀÌµå
-	case 611: // Á¦¸®¸¶-¾×½º
-	case 612: // Á¦¸®¸¶-·¹ÀÌÇÇ¾î
-	case 613: // ¼Òµå-¿Àºê-¸ÞµÎ»ç
-	case 614: // ¼Òµå-¿Àºê-¾ÆÀÌ½º 
-	case 616: // µ¥¸ó-½½·¹ÀÌ¾î                         
-		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
-		return; 
-
 	case 703: // »ó¾îÀÇ ÇÃ·¥¹ö±× 
 	case 709: // Èæ±â»çÀÇ ÇÃ·¥¹ö±× 
+	case 718:
 	case 727: // ÈÅ¿©±â»çÀÇ ÇÃ·¥¹ö±× 
 	case 736: // »õ·Î¿î »ó¾îÀÇ ÀÚÀÌ¾ðÆ®¼Òµå
 	case 737: // »õ·Î¿î Èæ±â»çÀÇ ÀÚÀÌ¾ðÆ®¼Òµå
+	case 745:
 		if (m_pClientList[iClientH]->m_iGizonItemUpgradeLeft <= 0) 
 		{ 
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // ÇÊ¿äÇÑ ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ¼öÄ¡°¡ ¾ø½À´Ï´Ù.
@@ -22687,7 +22746,7 @@ RTH_NEXTSTEP:;
 	int iTL_;
 
 	// 플레이어가 다른 맵에 들어갔다. 만약 적국이라면 시간을 설정한다.
-	if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) && 
+	if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) && 
 		 (memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "elvine", 6) == 0) ) {
 		
 		m_pClientList[iClientH]->m_dwWarBeginTime = timeGetTime();
@@ -22726,7 +22785,7 @@ RTH_NEXTSTEP:;
 		}
 	}
 	else
-	if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "elvine", 6) == 0) && 
+	if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "elv", 3) == 0) && 
 		 (memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "aresden", 7) == 0) ) {
 		
 		m_pClientList[iClientH]->m_dwWarBeginTime = timeGetTime();
@@ -27086,37 +27145,37 @@ void CGame::CalculateSSN_SkillIndex(int iClientH, short sSkillIndex, int iValue)
 
 void CGame::MobGenerator()
 {
- register int i, j, iNamingValue, iResult, iTotalMob;
- char cNpcName[21], cName_Master[11], cName_Slave[11], cWaypoint[11];
- char cSA;
- int  pX, pY, iMapLevel, iProbSA, iKindSA, iResultNum;
- BOOL bMaster, bFirmBerserk, bIsSpecialEvent;
- 
+	register int i, j, iNamingValue, iResult, iTotalMob;
+	char cNpcName[21], cName_Master[11], cName_Slave[11], cWaypoint[11];
+	char cSA;
+	int  pX, pY, iMapLevel, iProbSA, iKindSA, iResultNum;
+	BOOL bMaster, bFirmBerserk, bIsSpecialEvent;
+
 	if (m_bOnExitProcess == TRUE) return;
-	
+
 	for (i = 0; i < DEF_MAXMAPS; i++) {
 		// Random Mob Generator
-		
+
 		/*
 		iResultNum = 0;
 		// v1.432 ?붾뱶 ?쒕쾭??珥??ъ슜???섏뿉 鍮꾨??섏뿬 理쒕? ?ㅻ툕?앺듃 ?섎? 寃곗젙?쒕떎. 1000紐??댁긽?대㈃ 100%  理쒖냼 50%
 		if ((m_pMapList[i] != NULL) && (m_pMapList[i]->m_bRandomMobGenerator == TRUE)) {
-			// ?ъ슜???섏뿉 鍮꾨??섏뿬 ?쒕뜡 紐?媛?닔 蹂댁젙.
-			if (m_iTotalGameServerClients >= 1000) {
-				iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
-			}
-			else {
-				dV2 = (double)m_iTotalGameServerClients;
-				dV3 = (m_pMapList[i]->m_iMaximumObject - 30);
+		// ?ъ슜???섏뿉 鍮꾨??섏뿬 ?쒕뜡 紐?媛?닔 蹂댁젙.
+		if (m_iTotalGameServerClients >= 1000) {
+		iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
+		}
+		else {
+		dV2 = (double)m_iTotalGameServerClients;
+		dV3 = (m_pMapList[i]->m_iMaximumObject - 30);
 
-				dV1 = (dV2 / 1000.0f)*dV3;
-				iResultNum = (int)dV1;
-			}
+		dV1 = (dV2 / 1000.0f)*dV3;
+		iResultNum = (int)dV1;
+		}
 
-			// v1.432 ?レ옄 蹂댁젙
-			iMin = (m_pMapList[i]->m_iMaximumObject - 30) - ((m_pMapList[i]->m_iMaximumObject - 30)/3);
-			if (iResultNum > (m_pMapList[i]->m_iMaximumObject - 30)) iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
-			if (iResultNum < iMin) iResultNum = iMin;
+		// v1.432 ?レ옄 蹂댁젙
+		iMin = (m_pMapList[i]->m_iMaximumObject - 30) - ((m_pMapList[i]->m_iMaximumObject - 30)/3);
+		if (iResultNum > (m_pMapList[i]->m_iMaximumObject - 30)) iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
+		if (iResultNum < iMin) iResultNum = iMin;
 		}
 		*/
 
@@ -27130,13 +27189,13 @@ void CGame::MobGenerator()
 			//else iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
 			iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
 		}
-				
+
 		if ( (m_pMapList[i] != NULL) && (m_pMapList[i]->m_bRandomMobGenerator == TRUE) && (iResultNum > m_pMapList[i]->m_iTotalActiveObject) ) {
 			// i踰덉㎏ 留듭뿉 紐뱀쓣 ?앹꽦??議곌굔??留뚯”?섏뿀??
-			
+
 			// Crusade : ?꾨㈃??紐⑤뱶?쇰븣 誘몃뱾?쒕뱶 紐??앹궛 以묐떒.
 			if ((m_iMiddlelandMapIndex != -1) && (m_iMiddlelandMapIndex == i) && (m_bIsCrusadeMode == TRUE)) break;
-			
+
 			iNamingValue = m_pMapList[i]->iGetEmptyNamingValue();
 			if (iNamingValue != -1) {
 				// Master Mob???앹꽦?쒕떎.
@@ -27144,9 +27203,9 @@ void CGame::MobGenerator()
 				wsprintf(cName_Master, "XX%d", iNamingValue);
 				cName_Master[0] = '_';
 				cName_Master[1] = i + 65;
-			
+
 				ZeroMemory(cNpcName, sizeof(cNpcName));
-			
+
 				bFirmBerserk = FALSE;
 				iResult = iDice(1,100);
 				// 紐??쒕꽕?덉씠?곗쓽 ?덈꺼 
@@ -27176,33 +27235,33 @@ void CGame::MobGenerator()
 				case 3:     // v1.4334 紐뱀젣?덈젅?댄꽣 蹂寃?
 					if ((iResult >= 1) && (iResult < 25)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 3; break;
-						case 2: iResult = 4; break;
+				case 1: iResult = 3; break;
+				case 2: iResult = 4; break;
 						}
 					}
 					else if ((iResult >= 25) && (iResult < 50)) {
 						switch ( iDice(1,3) ) {
-						case 1: iResult = 5; break;
-						case 2:	iResult = 6; break;
-						case 3: iResult = 7; break;
+				case 1: iResult = 5; break;
+				case 2:	iResult = 6; break;
+				case 3: iResult = 7; break;
 						}
 					}
 					else if ((iResult >= 50) && (iResult < 75)) {
 						switch ( iDice(1,5) ) {	
-						case 1:
-						case 2: iResult = 8;  break;
-						case 3:	iResult = 11; break;
-						case 4:	iResult = 12; break;
-						case 5: iResult = 18; break;
+				case 1:
+				case 2: iResult = 8;  break;
+				case 3:	iResult = 11; break;
+				case 4:	iResult = 12; break;
+				case 5: iResult = 18; break;
 						}
-						
+
 					}
 					else if ((iResult >= 75) && (iResult <= 100)) {
 						switch ( iDice(1,4) ) {
-						case 1:
-						case 2:	iResult = 9;  break;
-						case 3:	iResult = 13; break;
-						case 4: iResult = 14; break;
+				case 1:
+				case 2:	iResult = 9;  break;
+				case 3:	iResult = 13; break;
+				case 4: iResult = 14; break;
 						}
 					}
 					iMapLevel = 4;
@@ -27211,20 +27270,20 @@ void CGame::MobGenerator()
 				case 4:
 					if ((iResult >= 1) && (iResult < 50)) {
 						switch ( iDice(1,2) ) {
-						case 1:	iResult = 2; break;
-						case 2: iResult = 10; break;
+				case 1:	iResult = 2; break;
+				case 2: iResult = 10; break;
 						}
 					}
 					else if ((iResult >= 50) && (iResult < 80)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 8; break;
-						case 2: iResult = 11; break;
+				case 1: iResult = 8; break;
+				case 2: iResult = 11; break;
 						}
 					}
 					else if ((iResult >= 80) && (iResult < 100)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 14; break;
-						case 2:	iResult = 9; break;
+				case 1: iResult = 14; break;
+				case 2:	iResult = 9; break;
 						}
 					}
 					iMapLevel = 2;
@@ -27233,37 +27292,37 @@ void CGame::MobGenerator()
 				case 5:
 					if ((iResult >= 1) && (iResult < 30)) {
 						switch ( iDice(1,5) ) {
-						case 1:
-						case 2: 
-						case 3:
-						case 4: 
-						case 5: iResult = 2; break;
+				case 1:
+				case 2: 
+				case 3:
+				case 4: 
+				case 5: iResult = 2; break;
 						}
 					}
 					else if ((iResult >= 30) && (iResult < 60)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 3; break;
-						case 2: iResult = 4; break;
+				case 1: iResult = 3; break;
+				case 2: iResult = 4; break;
 						}
 					}
 					else if ((iResult >= 60) && (iResult < 80)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 5; break;
-						case 2: iResult = 7; break;
+				case 1: iResult = 5; break;
+				case 2: iResult = 7; break;
 						}
 					}
 					else if ((iResult >= 80) && (iResult < 95)) {
 						switch ( iDice(1,3) ) {
-						case 1:
-						case 2: iResult = 8;  break;
-						case 3:	iResult = 11; break;
+				case 1:
+				case 2: iResult = 8;  break;
+				case 3:	iResult = 11; break;
 						}
 					}
 					else if ((iResult >= 95) && (iResult <= 100)) {
 						switch ( iDice(1,3) ) {
-						case 1: iResult = 11; break;
-						case 2: iResult = 14; break;
-						case 3: iResult = 9; break;
+				case 1: iResult = 11; break;
+				case 2: iResult = 14; break;
+				case 3: iResult = 9; break;
 						}
 					}
 					iMapLevel = 3;
@@ -27272,28 +27331,28 @@ void CGame::MobGenerator()
 				case 6:
 					if ((iResult >= 1) && (iResult < 60)) {
 						switch ( iDice(1,4) ) {
-						case 1: iResult = 5; break;
-						case 2:	iResult = 6; break;
-						case 3: iResult = 7; break;
-						case 4: iResult = 4; break;
+				case 1: iResult = 5; break;
+				case 2:	iResult = 6; break;
+				case 3: iResult = 7; break;
+				case 4: iResult = 4; break;
 						}
 					}
 					else if ((iResult >= 60) && (iResult < 95)) {
 						switch ( iDice(1,4) ) {
-						case 1:
-						case 2: iResult = 8;  break;
-						case 3:	iResult = 11; break;
-						case 4:	iResult = 12; break;
+				case 1:
+				case 2: iResult = 8;  break;
+				case 3:	iResult = 11; break;
+				case 4:	iResult = 12; break;
 						}
-						
+
 					}
 					else if ((iResult >= 95) && (iResult <= 100)) {
 						switch ( iDice(1,5) ) {
-						case 1:
-						case 2:	iResult = 9;  break;
-						case 3:	iResult = 13; break;
-						case 4: iResult = 14; break;
-						case 5: iResult = 18; break;
+				case 1:
+				case 2:	iResult = 9;  break;
+				case 3:	iResult = 13; break;
+				case 4: iResult = 14; break;
+				case 5: iResult = 18; break;
 						}
 					}
 					iMapLevel = 4;
@@ -27302,29 +27361,29 @@ void CGame::MobGenerator()
 				case 7:
 					if ((iResult >= 1) && (iResult < 70)) {
 						switch ( iDice(1,4) ) {
-						case 1:	iResult = 1;  break;
-						case 2: iResult = 2;  break;
-						case 3: iResult = 10; break;
-						case 4: iResult = 3;  break;
+				case 1:	iResult = 1;  break;
+				case 2: iResult = 2;  break;
+				case 3: iResult = 10; break;
+				case 4: iResult = 3;  break;
 						}
 					}
 					else if ((iResult >= 70) && (iResult < 95)) {
 						switch ( iDice(1,4) ) {
-						case 1:
-						case 2:
-						case 3: iResult = 6;  break;
-						case 4: iResult = 12; break;
+				case 1:
+				case 2:
+				case 3: iResult = 6;  break;
+				case 4: iResult = 12; break;
 						}
 					}
 					else if ((iResult >= 95) && (iResult < 100)) {
 						switch ( iDice(1,3) ) {
-						case 1: iResult = 12; break;
-						case 2: iResult = 2;  break;
-						case 3: 
-							if (iDice(1,100) == 13) 
-								 iResult = 17;
-							else iResult = 12;
-							break;
+				case 1: iResult = 12; break;
+				case 2: iResult = 2;  break;
+				case 3: 
+					if (iDice(1,100) == 13) 
+						iResult = 17;
+					else iResult = 12;
+					break;
 						}
 					}
 					iMapLevel = 4;
@@ -27333,21 +27392,21 @@ void CGame::MobGenerator()
 				case 8:
 					if ((iResult >= 1) && (iResult < 70)) {
 						switch ( iDice(1,2) ) {
-						case 1:	iResult = 4;  break;
-						case 2: iResult = 5;  break;
+				case 1:	iResult = 4;  break;
+				case 2: iResult = 5;  break;
 						}
 					}
 					else if ((iResult >= 70) && (iResult < 90)) {
 						switch ( iDice(1,3) ) {
-						case 1: iResult = 8;  break;
-						case 2: iResult = 11; break;
-						case 3: iResult = 14; break;
+				case 1: iResult = 8;  break;
+				case 2: iResult = 11; break;
+				case 3: iResult = 14; break;
 						}
 					}
 					else if ((iResult >= 90) && (iResult < 100)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 9;  break;
-						case 2: iResult = 14; break;
+				case 1: iResult = 9;  break;
+				case 2: iResult = 14; break;
 						}
 					}
 					iMapLevel = 4;
@@ -27356,54 +27415,54 @@ void CGame::MobGenerator()
 				case 9:
 					if ((iResult >= 1) && (iResult < 70)) {
 						switch ( iDice(1,2) ) {
-						case 1:	iResult = 4;  break;
-						case 2: iResult = 5;  break;
+				case 1:	iResult = 4;  break;
+				case 2: iResult = 5;  break;
 						}
 					}
 					else if ((iResult >= 70) && (iResult < 95)) {
 						switch ( iDice(1,3) ) {
-						case 1: iResult = 8;  break;
-						case 2: iResult = 9;  break;
-						case 3: iResult = 13; break;
+				case 1: iResult = 8;  break;
+				case 2: iResult = 9;  break;
+				case 3: iResult = 13; break;
 						}
 					}
 					else if ((iResult >= 95) && (iResult < 100)) {
 						switch ( iDice(1,6) ) {
-						case 1:
-						case 2:
-						case 3: iResult = 9;  break;
-						case 4:
-						case 5: iResult = 14; break;
-						case 6: iResult = 15; break;
+				case 1:
+				case 2:
+				case 3: iResult = 9;  break;
+				case 4:
+				case 5: iResult = 14; break;
+				case 6: iResult = 15; break;
 						}
 					}
 
 					// Demon? Berserk ?곹깭媛 ?섏? ?딅뒗??
 					if ((iDice(1,3) == 1) && (iResult != 16)) bFirmBerserk = TRUE;
-					
+
 					iMapLevel = 4;
 					break;
 
 				case 10:
 					if ((iResult >= 1) && (iResult < 70)) {
 						switch ( iDice(1,2) ) {
-						case 1:	iResult = 4; break;
-						case 2: iResult = 5; break;
+				case 1:	iResult = 4; break;
+				case 2: iResult = 5; break;
 						}
 					}
 					else if ((iResult >= 70) && (iResult < 95)) {
 						// 
 						switch ( iDice(1,3) ) {
-						case 1:
-						case 2:	iResult = 13; break;
-						case 3: iResult = 14; break;
+				case 1:
+				case 2:	iResult = 13; break;
+				case 3: iResult = 14; break;
 						}
 					}
 					else if ((iResult >= 95) && (iResult < 100)) {
 						switch (iDice(1,3)) {
-						case 1:
-						case 2: iResult = 14; break;
-						case 3: iResult = 15; break;
+				case 1:
+				case 2: iResult = 14; break;
+				case 3: iResult = 15; break;
 						}
 					}
 
@@ -27416,37 +27475,37 @@ void CGame::MobGenerator()
 				case 11:
 					if ((iResult >= 1) && (iResult < 30)) {
 						switch ( iDice(1,5) ) {
-						case 1:
-						case 2: 
-						case 3:
-						case 4: 
-						case 5: iResult = 2; break;
+				case 1:
+				case 2: 
+				case 3:
+				case 4: 
+				case 5: iResult = 2; break;
 						}
 					}
 					else if ((iResult >= 30) && (iResult < 60)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 3; break;
-						case 2: iResult = 4; break;
+				case 1: iResult = 3; break;
+				case 2: iResult = 4; break;
 						}
 					}
 					else if ((iResult >= 60) && (iResult < 80)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 5; break;
-						case 2: iResult = 7; break;
+				case 1: iResult = 5; break;
+				case 2: iResult = 7; break;
 						}
 					}
 					else if ((iResult >= 80) && (iResult < 95)) {
 						switch ( iDice(1,3) ) {
-						case 1:
-						case 2: iResult = 10;  break;
-						case 3:	iResult = 11; break;
+				case 1:
+				case 2: iResult = 10;  break;
+				case 3:	iResult = 11; break;
 						}
 					}
 					else if ((iResult >= 95) && (iResult <= 100)) {
 						switch ( iDice(1,3) ) {
-						case 1: iResult = 11; break;
-						case 2: iResult = 7; break;
-						case 3: iResult = 8; break;
+				case 1: iResult = 11; break;
+				case 2: iResult = 7; break;
+				case 3: iResult = 8; break;
 						}
 					}
 					iMapLevel = 3;
@@ -27455,98 +27514,98 @@ void CGame::MobGenerator()
 				case 12:
 					if ((iResult >= 1) && (iResult < 50)) {
 						switch ( iDice(1,3) ) {
-						case 1:	iResult = 1 ; break;
-						case 2: iResult = 2 ; break;
-						case 3: iResult = 10; break;
+				case 1:	iResult = 1 ; break;
+				case 2: iResult = 2 ; break;
+				case 3: iResult = 10; break;
 						}
 					}
 					else if ((iResult >= 50) && (iResult < 85)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 5; break;
-						case 2: iResult = 4; break;
+				case 1: iResult = 5; break;
+				case 2: iResult = 4; break;
 						}
 					}
 					else if ((iResult >= 85) && (iResult < 100)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 8; break;
-						case 2: iResult = 11; break;
+				case 1: iResult = 8; break;
+				case 2: iResult = 11; break;
 						}
 					}
 					iMapLevel = 2;
 					break;
-	
+
 				case 13: // toh1
 					if ((iResult >= 1) && (iResult < 25)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 14; break;//Hellbound
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 14; break;//Hellbound
 						}
 					}
 					if ((iResult >= 25) && (iResult < 50)) {
-					switch ( iDice(1,1) ) {
-						case 1:	iResult = 9; break; // Cyclops
+						switch ( iDice(1,1) ) {
+				case 1:	iResult = 9; break; // Cyclops
 						}
 					}
 					else if ((iResult >= 50) && (iResult < 75)) {
-					switch ( iDice(1,1) ) {
-						case 1:	iResult = 27; break; // Dark-Elf
+						switch ( iDice(1,1) ) {
+				case 1:	iResult = 27; break; // Dark-Elf
 						}
 					}
 					else if ((iResult >= 75) && (iResult < 100)) {
-					switch ( iDice(1,2) ) {
-						case 1:iResult = 26; break; // Beholder
-						case 2:iResult = 13; break; // Ogre
+						switch ( iDice(1,2) ) {
+				case 1:iResult = 26; break; // Beholder
+				case 2:iResult = 13; break; // Ogre
 						}						
 					}
 					break;
-					
+
 
 				case 14: // toh2
 					if ((iResult >= 1) && (iResult < 40)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 27; break; // Dark-Elf
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 27; break; // Dark-Elf
 						}
 					}
 					else if ((iResult >= 40) && (iResult < 60)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 15; break; // Liche
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 15; break; // Liche
 						}
 					}
 					else if ((iResult >= 60) && (iResult < 80)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 13; break; // Orge
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 13; break; // Orge
 						}
 					}
 					else if ((iResult >= 80) && (iResult < 90)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 31; break; // Gagoyle
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 31; break; // Gagoyle
 						}
 					}
 					else if ((iResult >= 90) && (iResult < 100)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 16; break; // Demon
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 16; break; // Demon
 						}
 					}
 					break;
 
 				case 15: // toh3
 					if ((iResult >= 1) && (iResult < 40)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 27; break; // Dark-Elf
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 27; break; // Dark-Elf
 						}
 					}
 					else if ((iResult >= 40) && (iResult < 80)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 26; break; // Beholder
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 26; break; // Beholder
 						}
 					}
 					else if ((iResult >= 80) && (iResult < 90)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 31; break; // Gagoyle
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 31; break; // Gagoyle
 						}
 					}
 					else if ((iResult >= 90) && (iResult < 100)) {
-					switch ( iDice(1,1) ) {
-						case 1: iResult = 16; break; // Hellclaw
+						switch ( iDice(1,1) ) {
+				case 1: iResult = 16; break; // Hellclaw
 						}
 					}
 					break;
@@ -27554,23 +27613,23 @@ void CGame::MobGenerator()
 				case 16: // huntzone1
 					if ((iResult >= 1) && (iResult < 70)) {
 						switch ( iDice(1,5) ) {
-						case 1:	iResult = 1;  break; // Slime
-						case 2: iResult = 2;  break; // Giant-Ant
-						case 3: iResult = 10; break; // Amphis
-						case 4: iResult = 3;  break; // Orc
-						case 5: iResult = 5;  break; // Skeleton
+				case 1:	iResult = 1;  break; // Slime
+				case 2: iResult = 2;  break; // Giant-Ant
+				case 3: iResult = 10; break; // Amphis
+				case 4: iResult = 3;  break; // Orc
+				case 5: iResult = 5;  break; // Skeleton
 						}
 					}
 					else if ((iResult >= 70) && (iResult < 90)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 8;  break; // Stone-Golem
-						case 2: iResult = 11; break; // Clay-Golem
+				case 1: iResult = 8;  break; // Stone-Golem
+				case 2: iResult = 11; break; // Clay-Golem
 						}
 					}
 					else if ((iResult >= 90) && (iResult < 100)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 24; break; // Giant-Frog
-						case 2: iResult = 32;  break; // Rudolph
+				case 1: iResult = 24; break; // Giant-Frog
+				case 2: iResult = 32;  break; // Rudolph
 						}
 					}
 					break;
@@ -27578,23 +27637,23 @@ void CGame::MobGenerator()
 				case 17: // icebound
 					if ((iResult >= 1) && (iResult < 10)) {
 						switch ( iDice(1,3) ) {
-						case 1:	iResult = 29;  break; // Cat
-						case 2: iResult = 5;   break; // Skeleton
-						case 3: iResult = 8;  break; // Stone-Golem
+				case 1:	iResult = 29;  break; // Cat
+				case 2: iResult = 5;   break; // Skeleton
+				case 3: iResult = 8;  break; // Stone-Golem
 						}
 					}
 					else if ((iResult >= 10) && (iResult < 80)) {
 						switch ( iDice(1,4) ) {
-						case 1: iResult = 35;  break; // ice-golem
-						case 2: iResult = 34;  break; // direboar
-						case 3: iResult = 32;  break; // Rudolph
-						case 4: iResult = 27;  break; // Dark-elf
+				case 1: iResult = 35;  break; // ice-golem
+				case 2: iResult = 34;  break; // direboar
+				case 3: iResult = 32;  break; // Rudolph
+				case 4: iResult = 27;  break; // Dark-elf
 						}
 					}
 					else if ((iResult >= 80) && (iResult < 100)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 33;  break; // Frost
-						case 2: iResult = 26;  break; // Beholder
+				case 1: iResult = 33;  break; // Frost
+				case 2: iResult = 26;  break; // Beholder
 						}
 					}
 					break;
@@ -27605,14 +27664,14 @@ void CGame::MobGenerator()
 					}
 					else if ((iResult >= 50) && (iResult < 90)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 41;  break; // giant-cray-fish
-						case 2: iResult = 22;  break; // Stalker
+				case 1: iResult = 41;  break; // giant-cray-fish
+				case 2: iResult = 22;  break; // Stalker
 						}
 					}
 					else if ((iResult >= 90) && (iResult < 100)) {
 						switch ( iDice(1,2) ) {
-						case 1: iResult = 46;  break; // Nizie
-						case 2: iResult = 39;  break; // Claw-Turtle
+				case 1: iResult = 46;  break; // Nizie
+				case 2: iResult = 39;  break; // Claw-Turtle
 						}
 					}
 					break;
@@ -27623,14 +27682,14 @@ void CGame::MobGenerator()
 					}
 					else if ((iResult >= 60) && (iResult < 95)) {
 						switch ( iDice(1,2) ) {
-							case 1: iResult = 41;  break; // beholders
-							case 2: iResult = 45;  break; // Minotaurus
+				case 1: iResult = 41;  break; // beholders
+				case 2: iResult = 45;  break; // Minotaurus
 						}
 					}
 					else if ((iResult >= 95) && (iResult < 100)) {
 						switch ( iDice(1,2) ) {
-							case 1: iResult = 16;  break; // demons
-							case 2: iResult = 31;  break; // ggs
+				case 1: iResult = 16;  break; // demons
+				case 2: iResult = 31;  break; // ggs
 						}
 					}
 					break;
@@ -27638,7 +27697,7 @@ void CGame::MobGenerator()
 
 				pX = NULL;
 				pY = NULL;
-				
+
 				// Special Event. ?щ윭 留듭쨷 ?쒕뜡??留듭씠 嫄몃━?꾨줉 二쇱궗?꾨? 援대젮?쇰쭔 ?쒕떎.
 				bIsSpecialEvent = FALSE;
 				if ((m_bIsSpecialEventTime == TRUE) && (iDice(1,10) == 3)) bIsSpecialEvent = TRUE;
@@ -27661,12 +27720,12 @@ void CGame::MobGenerator()
 								else if (strcmp(m_pMapList[i]->m_cName, "elvine") == 0)
 									iResult = 19;
 							}
-							
+
 							wsprintf(G_cTxt, "(!) Mob-Event Map(%s) Loc(%d,%d)", m_pMapList[i]->m_cName, pX, pY);
 							PutLogList(G_cTxt);
 						}
 						break;
-					
+
 					case 2:
 						// ?곕が ?뱀? ?좊땲肄섏쓣 ?앹꽦 
 						if (iDice(1,3) == 2) {
@@ -27675,20 +27734,20 @@ void CGame::MobGenerator()
 								(memcmp(m_pMapList[i]->m_cLocationName, "middled1n", 9) == 0) ||
 								(memcmp(m_pMapList[i]->m_cLocationName, "elvine", 6)    == 0)) {
 									// 留덉쓣 ?댁뿉?쒕뒗 ?곕が??異쒗쁽 媛?μ꽦??????텣?? 
-								if (iDice(1,20) == 5) 
-									 iResult = 16;
-								else iResult = 5;
-							}
+									if (iDice(1,20) == 5) 
+										iResult = 16;
+									else iResult = 5;
+								}
 							else iResult = 16;
 						}
 						else iResult = 17;
-						
+
 						// ?밸퀎 ?대깽???쒖꽦???꾨옒洹?鍮꾪솢?깊솕 
 						m_bIsSpecialEventTime = FALSE;
 						break;
 					}
 				}
-				
+
 				ZeroMemory(cNpcName, sizeof(cNpcName));
 				//Random Monster Spawns
 				switch (iResult) {
@@ -27759,16 +27818,16 @@ void CGame::MobGenerator()
 				if (iDice(1,100) <= iProbSA) {
 					cSA = _cGetSpecialAbility(iKindSA);
 				}
-								
+
 				if ((bMaster = bCreateNewNpc(cNpcName, cName_Master, m_pMapList[i]->m_cName, (rand() % 3), cSA, DEF_MOVETYPE_RANDOM, &pX, &pY, cWaypoint, NULL, NULL, -1, FALSE, FALSE, bFirmBerserk, TRUE)) == FALSE) {
 					// ?ㅽ뙣?덉쑝誘濡??덉빟??NameValue瑜??댁젣?쒗궓??
 					m_pMapList[i]->SetNamingValueEmpty(iNamingValue);
 				}
 				else {
-					
+
 				}
 			}	
-			
+
 			// 泥섏쓬 ?앹꽦??紐뱀쓽 醫낅쪟???곕Ⅸ ?앹꽦 媛?닔瑜?怨꾩궛?쒕떎.
 			switch (iResult) {
 			case 1:	 iTotalMob = iDice(1,5)-1; break;
@@ -27837,7 +27896,7 @@ void CGame::MobGenerator()
 
 			// 1.4 紐뱀씠 萸됱퀜 ?섏삤??寃껋쓣 留됯린 ?꾪빐??30% ?뺣쪧濡?留덉뒪?곕쭔 ?앹꽦?쒕떎.
 			//if ((iTotalMob >= 2) && (iDice(1,2) == 1)) iTotalMob = 0;
-			
+
 			// v1.432 紐ъ뒪?곗쓽 醫낅쪟???곕씪 臾대━瑜?吏???뺣쪧???ㅻⅤ??
 			if (iTotalMob >= 2) {
 				switch (iResult) {
@@ -27897,22 +27956,22 @@ void CGame::MobGenerator()
 					break;
 				}
 			}
-			
+
 			// 留뚯빟 ?뺢린?뺤쑝濡?紐뱀쓣 ???異붽??댁빞 ???쒖젏?대씪硫??щ젅?대툕 媛?닔瑜??섎┛?? Special Event 1踰?
 			if (bIsSpecialEvent == TRUE) {
 				switch (m_cSpecialEventType) {
 				case 1:
 					// 紐??대깽??					if ((iResult != 15) && (iResult != 16)) iTotalMob = 30;
 					break;
-				
+
 				case 2:
 					// ?곕が 異쒕ぐ 
 					if ( (memcmp(m_pMapList[i]->m_cLocationName, "aresden", 7) == 0) ||
-						 (memcmp(m_pMapList[i]->m_cLocationName, "elvine",  6) == 0) ) {
-						// 留뚯빟 留덉쓣?대씪硫??щ옒?대툕 ?곕が? ?녿떎.
-						iTotalMob = 0;
-					}
-					break;
+						(memcmp(m_pMapList[i]->m_cLocationName, "elvine",  6) == 0) ) {
+							// 留뚯빟 留덉쓣?대씪硫??щ옒?대툕 ?곕が? ?녿떎.
+							iTotalMob = 0;
+						}
+						break;
 				}
 				m_bIsSpecialEventTime = FALSE;
 			}
@@ -27925,7 +27984,7 @@ void CGame::MobGenerator()
 					wsprintf(cName_Slave, "XX%d", iNamingValue);
 					cName_Slave[0] = '_';
 					cName_Slave[1] = i + 65;
-			
+
 					// v1.411 紐ъ뒪?곗쓽 ?뱀닔 ?뱀꽦移섎? ?낅젰?쒕떎. 
 					cSA = 0;
 					if (iDice(1,100) <= iProbSA) {
@@ -27944,33 +28003,33 @@ void CGame::MobGenerator()
 			}
 		}
 		// random mob generator	^
- 
+
 		// spot mob generator 
 		if ( (m_pMapList[i] != NULL) && ((m_pMapList[i]->m_iMaximumObject) > m_pMapList[i]->m_iTotalActiveObject) ) {
 			for (j = 1; j < DEF_MAXSPOTMOBGENERATOR; j++)
-			if ( (iDice(1,3) == 2) && (m_pMapList[i]->m_stSpotMobGenerator[j].bDefined == TRUE) &&
-				 (m_pMapList[i]->m_stSpotMobGenerator[j].iMaxMobs > m_pMapList[i]->m_stSpotMobGenerator[j].iCurMobs) ) {
-				// ?곗씠?곌? ?뺤쓽?섏뼱 ?덇퀬 紐뱀쓣 留뚮뱾 湲고쉶媛 ?먮떎.
-				iNamingValue = m_pMapList[i]->iGetEmptyNamingValue();
-				if (iNamingValue != -1) {
-					// 紐뱀쓣 ?앹꽦?쒕떎.
-					
-					ZeroMemory(cNpcName, sizeof(cNpcName));
-					switch (m_pMapList[i]->m_stSpotMobGenerator[j].iMobType) {
-					// 3.51 et al Monster Spawns
+				if ( (iDice(1,3) == 2) && (m_pMapList[i]->m_stSpotMobGenerator[j].bDefined == TRUE) &&
+					(m_pMapList[i]->m_stSpotMobGenerator[j].iMaxMobs > m_pMapList[i]->m_stSpotMobGenerator[j].iCurMobs) ) {
+						// ?곗씠?곌? ?뺤쓽?섏뼱 ?덇퀬 紐뱀쓣 留뚮뱾 湲고쉶媛 ?먮떎.
+						iNamingValue = m_pMapList[i]->iGetEmptyNamingValue();
+						if (iNamingValue != -1) {
+							// 紐뱀쓣 ?앹꽦?쒕떎.
+
+							ZeroMemory(cNpcName, sizeof(cNpcName));
+							switch (m_pMapList[i]->m_stSpotMobGenerator[j].iMobType) {
+								// 3.51 et al Monster Spawns
 					case 6:   strcpy(cNpcName,"Orc-Mage");			iProbSA = 30; iKindSA = 7;  break;
 					case 10:  strcpy(cNpcName,"Slime");				iProbSA = 5;  iKindSA = 1;  break;
 					case 11:  strcpy(cNpcName,"Skeleton");			iProbSA = 35; iKindSA = 8;  break;
 					case 12:  strcpy(cNpcName,"Stone-Golem");		iProbSA = 25; iKindSA = 5;  break;
 					case 13:  strcpy(cNpcName,"Cyclops");			iProbSA = 35; iKindSA = 8;  break;
 					case 14:  strcpy(cNpcName,"Orc");				iProbSA = 15; iKindSA = 1;  break;
-					// 15 ShopKeeper-W
+						// 15 ShopKeeper-W
 					case 16:  strcpy(cNpcName,"Giant-Ant");			iProbSA = 10; iKindSA = 2;  break;
 					case 17:  strcpy(cNpcName,"Scorpion");			iProbSA = 15; iKindSA = 3;  break;
 					case 18:  strcpy(cNpcName,"Zombie");			iProbSA = 15; iKindSA = 3;  break;
-					// 19 Gandlf          
-					// 20 Howard
-					// 21 Guard - Aresden, Elvine, and Neutral
+						// 19 Gandlf          
+						// 20 Howard
+						// 21 Guard - Aresden, Elvine, and Neutral
 					case 22:  strcpy(cNpcName,"Amphis");			iProbSA = 20; iKindSA = 3;  break;
 					case 23:  strcpy(cNpcName,"Clay-Golem");		iProbSA = 20; iKindSA = 5;  break;
 					case 24:  strcpy(cNpcName,"Guard-Aresden");		iProbSA = 20; iKindSA = 1;  break;
@@ -27985,18 +28044,18 @@ void CGame::MobGenerator()
 					case 33:  strcpy(cNpcName,"WereWolf");			iProbSA = 25; iKindSA = 1;  break;
 					case 34:  strcpy(cNpcName,"Dummy");				iProbSA = 5;  iKindSA = 1;  break;
 					case 35:  strcpy(cNpcName,"Attack-Dummy");		iProbSA = 5;  iKindSA = 1;  break;
-					// 36 Arrow Gaurd Tower Kit - Aresden, Elvine
-					// 37 Cannon Gaurd Tower Kit - Aresden, Elvine
-					// 38 Mana Collector Kit - Aresden, Elvine
-					// 39 Detector Constructor Kit - Aresden, Elvine
-					// 40 Energy Shield Generator - Aresden, Elvine
-					// 41 Grand Master Generator - Aresden Elvine
-					// 42 Mana Stone
-					// 43 Light War Beetle - Aresden, Elvine
-					// 44 God's Hand Knight
-					// 45 Mounted God's Hand Knight
-					// 46 Temple Knight
-					// 47 Battle Golem
+						// 36 Arrow Gaurd Tower Kit - Aresden, Elvine
+						// 37 Cannon Gaurd Tower Kit - Aresden, Elvine
+						// 38 Mana Collector Kit - Aresden, Elvine
+						// 39 Detector Constructor Kit - Aresden, Elvine
+						// 40 Energy Shield Generator - Aresden, Elvine
+						// 41 Grand Master Generator - Aresden Elvine
+					case 42:  strcpy(cNpcName,"ManaStone");		iProbSA = 0;  iKindSA = 1;  break;
+						// 43 Light War Beetle - Aresden, Elvine
+						// 44 God's Hand Knight
+						// 45 Mounted God's Hand Knight
+						// 46 Temple Knight
+						// 47 Battle Golem
 					case 48:  strcpy(cNpcName,"Stalker");			iProbSA = 20; iKindSA = 3;  break;
 					case 49:  
 						if (iDice(1, 7200) == 135) {
@@ -28010,7 +28069,7 @@ void CGame::MobGenerator()
 							iKindSA = 1;
 						}
 						break;
-					
+
 					case 50:  
 						if (iDice(1, 7200) == 135) {
 							strcpy(cNpcName,"Tigerworm");
@@ -28023,7 +28082,7 @@ void CGame::MobGenerator()
 							iKindSA = 1;
 						}
 						break;
-					//51 Catapult
+						//51 Catapult
 					case 52:  strcpy(cNpcName,"Gagoyle");			iProbSA = 15; iKindSA = 9;  break;
 					case 53:  strcpy(cNpcName,"Beholder");			iProbSA = 15; iKindSA = 7;  break;
 					case 54:  strcpy(cNpcName,"Dark-Elf");			iProbSA = 20; iKindSA = 2;  break;
@@ -28036,9 +28095,12 @@ void CGame::MobGenerator()
 					case 61:  strcpy(cNpcName,"Rudolph");			iProbSA = 15; iKindSA = 1;  break;
 					case 62:  strcpy(cNpcName,"DireBoar");			iProbSA = 15; iKindSA = 1;  break;
 					case 63:  strcpy(cNpcName,"Frost");				iProbSA = 0;  iKindSA = 1;  break;
-					// 64 Crops
+						// 64 Crops
 					case 65:  strcpy(cNpcName,"Ice");				iProbSA = 15; iKindSA = 1;  break;
 					case 66:  strcpy(cNpcName,"Wyvern");			iProbSA = 15; iKindSA = 9;  break;
+					case 67:  strcpy(cNpcName,"McGaffin");			iProbSA = 15; iKindSA = 1;  break;
+					case 68:  strcpy(cNpcName,"Perry");				iProbSA = 15; iKindSA = 1;  break;
+					case 69:  strcpy(cNpcName,"Devlin");			iProbSA = 15; iKindSA = 1;  break;
 					case 70:  strcpy(cNpcName,"Barlog");			iProbSA = 15; iKindSA = 1;  break;
 					case 71:  strcpy(cNpcName,"Centaurus");			iProbSA = 15; iKindSA = 10; break;
 					case 72:  strcpy(cNpcName,"Claw-Turtle");		iProbSA = 15; iKindSA = 1;  break;
@@ -28067,24 +28129,24 @@ void CGame::MobGenerator()
 						iProbSA = 15; 
 						iKindSA = 1; 
 						break;
-					}
+							}
 
-					// Spot Mob Generator??FirmBersek??紐ъ뒪?곕? ?앹꽦?쒕떎.
-					bFirmBerserk = FALSE;
-					if ((m_pMapList[i]->m_cRandomMobGeneratorLevel >= 9) && (iDice(1,3) == 1)) bFirmBerserk = TRUE;
-					
-					ZeroMemory(cName_Master, sizeof(cName_Master));
-					wsprintf(cName_Master, "XX%d", iNamingValue);
-					cName_Master[0] = '_';
-					cName_Master[1] = i + 65;
-			
-					// v1.411 紐ъ뒪?곗쓽 ?뱀닔 ?뱀꽦移섎? ?낅젰?쒕떎. ?붾???寃쎌슦???뱀닔 ?뱀꽦移??낅젰 ?덊븿.
-					cSA = 0;
-					if ((m_pMapList[i]->m_stSpotMobGenerator[j].iMobType != 34) && (iDice(1,100) <= iProbSA)) {
-						cSA = _cGetSpecialAbility(iKindSA);
-					}
+							// Spot Mob Generator??FirmBersek??紐ъ뒪?곕? ?앹꽦?쒕떎.
+							bFirmBerserk = FALSE;
+							if ((m_pMapList[i]->m_cRandomMobGeneratorLevel >= 9) && (iDice(1,3) == 1)) bFirmBerserk = TRUE;
 
-					switch (m_pMapList[i]->m_stSpotMobGenerator[j].cType) {
+							ZeroMemory(cName_Master, sizeof(cName_Master));
+							wsprintf(cName_Master, "XX%d", iNamingValue);
+							cName_Master[0] = '_';
+							cName_Master[1] = i + 65;
+
+							// v1.411 紐ъ뒪?곗쓽 ?뱀닔 ?뱀꽦移섎? ?낅젰?쒕떎. ?붾???寃쎌슦???뱀닔 ?뱀꽦移??낅젰 ?덊븿.
+							cSA = 0;
+							if ((m_pMapList[i]->m_stSpotMobGenerator[j].iMobType != 34) && (iDice(1,100) <= iProbSA)) {
+								cSA = _cGetSpecialAbility(iKindSA);
+							}
+
+							switch (m_pMapList[i]->m_stSpotMobGenerator[j].cType) {
 					case 1:
 						// RANDOMAREA
 						if (bCreateNewNpc(cNpcName, cName_Master, m_pMapList[i]->m_cName, (rand() % 3), cSA, DEF_MOVETYPE_RANDOMAREA, &pX, &pY, cWaypoint, &m_pMapList[i]->m_stSpotMobGenerator[j].rcRect, j, -1, FALSE, FALSE, bFirmBerserk) == FALSE) {
@@ -28110,23 +28172,15 @@ void CGame::MobGenerator()
 							//wsprintf(G_cTxt, "SpotMobGenerator(RANDOMWAYPOINT) - Map:%d TotalActiveObject:%d Mob:%s (%d %d)", i, m_pMapList[i]->m_iTotalActiveObject, cNpcName, pX, pY);
 							//PutLogList(G_cTxt);
 							m_pMapList[i]->m_stSpotMobGenerator[j].iCurMobs++;
-					  	}
+						}
 						break;
+							}
+						}
 					}
-				}
-			}
 		}
 		// spot mob generator ^
- 	}
+	}
 }
-
-
-
-
-
-
-
-
 void CGame::CalcNextWayPointDestination(int iNpcH)
 {
  short sRange, sX, sY;
@@ -28199,37 +28253,42 @@ CNW_GET_VALIDLOC_SUCCESS:;
 
 	m_pNpcList[iNpcH]->m_tmp_iError  = 0; // @@@ !!! @@@
 }
+
 void CGame::DeleteNpc(int iNpcH)
 {
- int  i, iNamingValue;
- char cTmp[21], cItemName[21];
- class CItem * pItem;
- DWORD dwCount, dwTime;
- 
+	int  i, iNamingValue, iNumItem, iItemID, iItemIDs[MAX_NPCITEMDROP];
+	char cTmp[21], cItemName[21];
+	class CItem * pItem;
+	DWORD dwCount, dwTime;
+    POINT ItemPositions[MAX_NPCITEMDROP];
 	if (m_pNpcList[iNpcH] == NULL) return;
 
 	dwTime = timeGetTime();
 
-	//죽어있던 위치에서 삭제 
+	//Init number of items to 1 unless its a multidrop;
+	iNumItem = 1;
+	iItemID = 0; // No current item
+
+	//ì£½ì–´ìžˆë˜ ìœ„ì¹˜ì—ì„œ ì‚­ì œ 
 	SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_LOG, DEF_MSGTYPE_REJECT, NULL, NULL, NULL);
 	m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(11, iNpcH, DEF_OWNERTYPE_NPC, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY);
 
 	ZeroMemory(cTmp, sizeof(cTmp));
 	strcpy(cTmp, (char *)(m_pNpcList[iNpcH]->m_cName + 2));
-	// NPC의 NamigValue를 얻어와 사용중인 표시를 해지한다.
+	// NPCì˜ NamigValueë¥¼ ì–»ì–´ì™€ ì‚¬ìš©ì¤‘ì¸ í‘œì‹œë¥¼ í•´ì§€í•œë‹¤.
 	iNamingValue = atoi(cTmp);
 
-	// NamingValue를 비우고 동작중인 개체 수를 감소시킨다.
+	// NamingValueë¥¼ ë¹„ìš°ê³  ë™ìž‘ì¤‘ì¸ ê°œì²´ ìˆ˜ë¥¼ ê°ì†Œì‹œí‚¨ë‹¤.
 	m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->SetNamingValueEmpty(iNamingValue);
 	m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->m_iTotalActiveObject--;
 
-	// Spot-mob-generator정보 
+	// Spot-mob-generatorì •ë³´ 
 	if ( m_pNpcList[iNpcH]->m_iSpotMobIndex != NULL )
 		m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->m_stSpotMobGenerator[m_pNpcList[iNpcH]->m_iSpotMobIndex].iCurMobs--;
 
 	RemoveFromTarget(iNpcH, DEF_OWNERTYPE_NPC);
-	
-	// 크루세이드용 건축물이라면 지휘관 통보용 건축물 리스트를 해제
+
+	// í¬ë£¨ì„¸ì´ë“œìš© ê±´ì¶•ë¬¼ì´ë¼ë©´ ì§€íœ˜ê´€ í†µë³´ìš© ê±´ì¶•ë¬¼ ë¦¬ìŠ¤íŠ¸ë¥¼ í•´ì œ
 	switch (m_pNpcList[iNpcH]->m_sType) {
 	case 36:
 	case 37:
@@ -28237,427 +28296,372 @@ void CGame::DeleteNpc(int iNpcH)
 	case 39:
 	case 42:
 		m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->bRemoveCrusadeStructureInfo(m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY);
-		
-		// 길드 건축물 개수도 감소시킴 
+
+		// ê¸¸ë“œ ê±´ì¶•ë¬¼ ê°œìˆ˜ë„ ê°ì†Œì‹œí‚´ 
 		for (i = 0; i < DEF_MAXGUILDS; i++) 
-		if (m_pGuildTeleportLoc[i].m_iV1 == m_pNpcList[iNpcH]->m_iGuildGUID) {
-			m_pGuildTeleportLoc[i].m_dwTime = dwTime;
-			m_pGuildTeleportLoc[i].m_iV2--;
-			if (m_pGuildTeleportLoc[i].m_iV2 < 0) m_pGuildTeleportLoc[i].m_iV2 = 0;
-			break;	
-		}
-		break;
+			if (m_pGuildTeleportLoc[i].m_iV1 == m_pNpcList[iNpcH]->m_iGuildGUID) {
+				m_pGuildTeleportLoc[i].m_dwTime = dwTime;
+				m_pGuildTeleportLoc[i].m_iV2--;
+				if (m_pGuildTeleportLoc[i].m_iV2 < 0) m_pGuildTeleportLoc[i].m_iV2 = 0;
+				break;	
+			}
+			break;
 	}
 
-	// DelayEvent를 삭제 
+	// DelayEventë¥¼ ì‚­ì œ 
 	bRemoveFromDelayEventList(iNpcH, DEF_OWNERTYPE_NPC, NULL);
 	if (m_pNpcList[iNpcH]->m_bIsSummoned == FALSE) {
-		// 소환몹이 아니라면 연금 재료가 나온다.
+		// ì†Œí™˜ëª¹ì´ ì•„ë‹ˆë¼ë©´ ì—°ê¸ˆ ìž¬ë£Œê°€ ë‚˜ì˜¨ë‹¤.
 		pItem = new class CItem;
 		ZeroMemory(cItemName, sizeof(cItemName));
 		switch (m_pNpcList[iNpcH]->m_sType) {
-		
+
 		case 10: // Slime
-			switch (iDice(1,2)) {
-			case 1: if (iDice(1,16) == 1) strcpy(cItemName, "SlimeJelly"); // 1/16
-			case 2: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			default: break;
-			}
-			break;
-
-		case 16: // Giant-Ant
-			switch (iDice(1,4)) {
-			case 1: if (iDice(1,9) == 1)  strcpy(cItemName, "AntLeg"); break;	// 1/18
-			case 2: if (iDice(1,10) == 1) strcpy(cItemName, "AntFeeler"); break;	// 1/20
-			case 3: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-		case 4: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
-			default: break;
-			}
-			break;
-
-		case 22: // Amphis
-			switch (iDice(1,6)) {
-			case 1: if (iDice(1,5) == 1) strcpy(cItemName, "SnakeMeat"); break;	// 1/20
-			case 2: if (iDice(1,6) == 1) strcpy(cItemName, "SnakeSkin"); break;	// 1/24
-			case 3: if (iDice(1,6) == 1) strcpy(cItemName, "SnakeTeeth"); break;	// 1/24
-			case 4: if (iDice(1,7) == 1) strcpy(cItemName, "SnakeTongue"); break;	// 1/28
-			case 5: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 6: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;	
-			default: break;
-			}
-			break;
-
-		case 14: // Orc
-			switch (iDice(1,5)) {
-			case 1: if (iDice(1,7) == 1) strcpy(cItemName, "OrcMeat"); break;	// 1/21
-			case 2: if (iDice(1,10) == 1) strcpy(cItemName,"OrcLeather"); break;	// 1/30
-			case 3: if (iDice(1,11) == 1) strcpy(cItemName,"OrcTeeth"); break;	// 1/33
-			case 4: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 5: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
-			default: break;
-			}
-			break;
-
-		case 17: // Scorpion
-			switch (iDice(1,6)) {
-			case 1: if (iDice(1,7) == 1) strcpy(cItemName, "ScorpionPincer"); break;	// 1/28
-			case 2: if (iDice(1,7) == 1) strcpy(cItemName, "ScorpionMeat"); break;	// 1/28
-			case 3: if (iDice(1,9) == 1) strcpy(cItemName, "ScorpionSting"); break;	// 1/36
-			case 4: if (iDice(1,8) == 1) strcpy(cItemName, "ScorpionSkin"); break;	// 1/32
-			case 5: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 6: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
-			default: break;
-			}
-			break;
-
-		case 18: // Zombie
-			switch (iDice(1,2)) {
-			case 1: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 2: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
-			default: break;
-		 	}
+			if (iDice(1,25) == 1) iItemID = 220; break; // SlimeJelly 
 			break;
 
 		case 11: // Skeleton
-			switch (iDice(1,3)) {
-			case 1: if (iDice(1,30) == 1) strcpy(cItemName, "SkeletonBones"); break;	// 1/30
-			case 2: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 3: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+			switch(iDice(1,2))	{
+			case 1:if (iDice(1,20) == 1) iItemID = 219; break; // SkeletonBones
+			case 2: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
-
-		case 23: // Clay-Golem
-			switch (iDice(1,3)) {
-			case 1: if (iDice(1,30) == 1) strcpy(cItemName, "LumpofClay"); break;		// 1/30
-			case 2: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 3: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
-			default: break;
-			}
-			break;
-
+			
 		case 12: // Stone-Golem
-			switch (iDice(1,3)) {
-			case 1: if (iDice(1,30) == 1) strcpy(cItemName, "StoneGolemPiece"); break;	// 1/30  
-			case 2: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 3: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+		switch(iDice(1,2)){
+			case 1:	if (iDice(1,30) == 1) iItemID = 221; break; // StoneGolemPiece
+			case 2: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
-			}
-			break;
-
-		case 27: // Helbound
-			switch (iDice(1,8)) {
-			case 1: if (iDice(1,10) == 1) strcpy(cItemName,"HelboundHeart"); break;	// 1/60
-			case 2: if (iDice(1,8) == 1) strcpy(cItemName, "HelboundLeather"); break;	// 1/48
-			case 3: if (iDice(1,8) == 1) strcpy(cItemName, "HelboundTail"); break;	// 1/48
-			case 4: if (iDice(1,6) == 1)  strcpy(cItemName,"HelboundTeeth"); break;	// 1/36
-			case 5: if (iDice(1,6) == 1)  strcpy(cItemName,"HelboundClaw"); break;	// 1/36
-			case 6: if (iDice(1,10) == 1) strcpy(cItemName,"HelboundTongue"); break;	// 1/60
-			case 7: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 8: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
-			default: break;
-			}
+			}	
 			break;
 
 		case 13: // Cyclops
-			switch (iDice(1,7)) {
-			case 1: if (iDice(1,16) == 1) strcpy(cItemName, "CyclopsEye"); break;	// 1/80
-			case 2: if (iDice(1,20) == 1) strcpy(cItemName, "CyclopsHandEdge"); break;	// 1/100
-			case 3: if (iDice(1,20) == 1)  strcpy(cItemName,"CyclopsHeart"); break;	// 1/100
-			case 4: if (iDice(1,12) == 1)  strcpy(cItemName,"CyclopsMeat"); break;	// 1/60
-			case 5: if (iDice(1,18) == 1)  strcpy(cItemName,"CyclopsLeather"); break;	// 1/90
-			case 6: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 7: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+			switch(iDice(1,6)){
+			case 1:	if (iDice(1,36) == 1) iItemID = 194; break; // CyclopsEye
+			case 2:	if (iDice(1,40) == 1) iItemID = 195; break; // CyclopsHandEdge
+			case 3:	if (iDice(1,30) == 1) iItemID = 196; break; // CyclopsHeart
+			case 4:	if (iDice(1,22) == 1) iItemID = 197; break; // CyclopsMeat
+			case 5:	if (iDice(1,40) == 1) iItemID = 198; break; // CyclopsLeather
+			case 6:	bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
 
-		case 28: // Troll
-			switch (iDice(1,6)) {
-			case 1: if (iDice(1,15) == 1) strcpy(cItemName, "TrollHeart"); break;	// 1/60
-			case 2: if (iDice(1,13) == 1) strcpy(cItemName, "TrollMeat"); break;	// 1/52
-			case 3: if (iDice(1,15) == 1) strcpy(cItemName, "TrollLeather"); break;	// 1/60
-			case 4: if (iDice(1,17) == 1) strcpy(cItemName, "TrollClaw"); break;	// 1/68
-			case 5: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 6: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+		case 14: // Orc, Orc-Mage
+			switch(iDice(1,4)){
+			case 1:	if (iDice(1,11) == 1) iItemID = 206; break; // OrcMeat
+			case 2:	if (iDice(1,20) == 1) iItemID = 207; break; // OrcLeather
+			case 3:	if (iDice(1,21) == 1) iItemID = 208; break; // OrcTeeth
+			case 4: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
+			default: break;
+			}
+			break;
+			
+		case 16: //Giant-Ant
+			switch(iDice(1,3)){
+			case 1:	if (iDice(1,9) == 1) iItemID = 192; break; // AntLeg
+			case 2:	if (iDice(1,10) == 1) iItemID = 193; break; // AntFeeler
+			case 3:	bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
 
-		case 29: // Orge
-			switch (iDice(1,8)) {
-			case 1: if (iDice(1,20) == 1) strcpy(cItemName, "OgreHair"); break;	// 1/120
-			case 2: if (iDice(1,22) == 1) strcpy(cItemName, "OgreHeart"); break;		// 1/132
-			case 3: if (iDice(1,15) == 1) strcpy(cItemName, "OgreMeat"); break;		// 1/90
-			case 4: if (iDice(1,15) == 1) strcpy(cItemName, "OgreLeather"); break;		// 1/90
-			case 5: if (iDice(1,18) == 1) strcpy(cItemName, "OgreTeeth"); break;		// 1/108
-			case 6: if (iDice(1,18) == 1) strcpy(cItemName, "OgreClaw"); break;		// 1/108
-			case 7: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 8: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+		case 17: //Scorpion
+			switch(iDice(1,5)){
+			case 1:	if (iDice(1,50) == 1) iItemID = 215; break; // ScorpionPincers
+			case 2:	if (iDice(1,20) == 1) iItemID = 216; break; // ScorpionMeat
+			case 3: if (iDice(1,50) == 1) iItemID = 217; break; // ScorpionSting
+			case 4: if (iDice(1,40) == 1) iItemID = 218; break; // ScorpionSkin
+			case 5: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
 
-		case 30: // Liche
-			switch (iDice(1,2)) {
-			case 1: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 2: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+		case 18: //Zombie
+			bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
+			break;
+
+		case 22: //Amphis
+			switch(iDice(1,5)){
+			case 1: if (iDice(1,15) == 1) iItemID = 188; break; // SnakeMeat
+			case 2:	if (iDice(1,16) == 1) iItemID = 189; break; // SnakeSkin
+			case 3:	if (iDice(1,16) == 1) iItemID = 190; break; // SnakeTeeth
+			case 4:	if (iDice(1,17) == 1) iItemID = 191; break; // SnakeTongue
+			case 5: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
 
-		case 31: // Demon 
-			switch (iDice(1,6)) {
-			case 1: if (iDice(1,400) == 123) strcpy(cItemName, "DemonHeart"); break;	
-			case 2:	if (iDice(1,100) == 123) strcpy(cItemName, "DemonMeat"); break;	
-			case 3:	if (iDice(1,200) == 123) strcpy(cItemName, "DemonLeather"); break;	
-			case 4:	if (iDice(1,300) == 123) strcpy(cItemName, "DemonEye"); break;	
-			case 5: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 6: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+		case 23: //Clay-Golem
+			switch(iDice(1,2)){
+			case 1: if (iDice(1,30) == 1) iItemID = 205; break; // LumpofClay
+			case 2: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
 
-		case 32: // Unicorn
-			switch (iDice(1,6)) {
-			case 1: if (iDice(1,2000) == 396) strcpy(cItemName, "UnicornHorn");   break;	  
-			case 2: if (iDice(1,500) == 3)    strcpy(cItemName, "UnicornHeart"); break;	
-			case 3: if (iDice(1,100) == 3)    strcpy(cItemName, "UnicornMeat"); break;	
-			case 4: if (iDice(1,200) == 3)    strcpy(cItemName, "UnicornLeather"); break;	
-			case 5: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-					break;
-			case 6: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+
+		case 27: //Hellbound
+			switch(iDice(1,7)){
+			case 1:	if (iDice(1,40) == 1) iItemID = 199; break; // HelboundHeart
+			case 2:	if (iDice(1,38) == 1) iItemID = 200; break; // HelboundLeather
+			case 3:	if (iDice(1,38) == 1) iItemID = 201; break; // HelboundTail
+			case 4:	if (iDice(1,36) == 1) iItemID = 202; break; // HelboundTeeth
+			case 5:	if (iDice(1,36) == 1) iItemID = 203; break; // HelboundClaw
+			case 6:	if (iDice(1,50) == 1) iItemID = 204; break; // HelboundTongue
+			case 7: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
 
-		case 33: // Werewolf
-			switch (iDice(1,8)) {
-			case 1: if (iDice(1,20) == 3) strcpy(cItemName, "WerewolfTail"); break;	    // 1/120
-			case 2: if (iDice(1,22) == 3) strcpy(cItemName, "WerewolfHeart"); break;		// 1/132
-			case 3: if (iDice(1,15) == 3) strcpy(cItemName, "WerewolfMeat"); break;		// 1/90
-			case 4: if (iDice(1,15) == 3) strcpy(cItemName, "WerewolfLeather"); break;		// 1/90
-			case 5: if (iDice(1,18) == 3) strcpy(cItemName, "WerewolfTeeth"); break;		// 1/108
-			case 6: if (iDice(1,18) == 3) strcpy(cItemName, "WerewolfClaw"); break;		// 1/108
-			case 7: if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-			case 8: bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+		case 28: //Troll
+			switch(iDice(1,5)){
+			case 1:	if (iDice(1,35) == 1) iItemID = 222; break; // TrollHeart
+			case 2:	if (iDice(1,23) == 1) iItemID = 223; break; // TrollMeat
+			case 3:	if (iDice(1,25) == 1) iItemID = 224; break; // TrollLeather
+			case 4:	if (iDice(1,27) == 1) iItemID = 225; break; // TrollClaw
+			case 5: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
 			default: break;
 			}
 			break;
 
-			case 80:
-			case 79:
-			case 78:
-			case 77:
-			case 76:
-			case 75:
-			case 74:
-			case 72:
-			case 71:
-			case 70:
-			case 65:
-			case 62:
-			case 63:
-			case 61:
-			case 60:
-			case 59:
-			case 58:
-			case 57:
-			case 56:
-			case 55:
-			case 54:
-			case 53:
-			case 52:
-				if (iDice(1,50) == 25) 
-						switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "AncientTablet(LU)"); break;
-						case 2: strcpy(cItemName, "AncientTablet(LD)"); break;
-						case 3: strcpy(cItemName, "AncientTablet(RU)"); break;
-						case 4: strcpy(cItemName, "AncientTablet(RD)"); break;
-					}
-				else bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
-				break;
+		case 29: //Orge
+			switch(iDice(1,7)){
+			case 1:	if (iDice(1,20) == 1) iItemID = 209; break; // OgreHair
+			case 2:	if (iDice(1,22) == 1) iItemID = 210; break; // OgreHeart
+			case 3:	if (iDice(1,25) == 1) iItemID = 211; break; // OgreMeat
+			case 4:	if (iDice(1,25) == 1) iItemID = 212; break; // OgreLeather
+			case 5:	if (iDice(1,28) == 1) iItemID = 213; break; // OgreTeeth
+			case 6:	if (iDice(1,28) == 1) iItemID = 214; break; // OgreClaw
+			case 7: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
+			default: break;
+			}
+			break;
 
+		case 30: //Liche
+			bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
+			break;
 
-		case 48:
-		case 49:
-		case 50:
-		case 66:
-		case 73:
+		case 31: //Demon
+			switch(iDice(1,5)){
+			case 1:	if (iDice(1,400) == 123) iItemID = 541; break; // DemonHeart
+			case 2:	if (iDice(1,1000) == 123) iItemID = 542; break; // DemonMeat
+			case 3:	if (iDice(1,200) == 123) iItemID = 543; break; // DemonLeather
+			case 4:	if (iDice(1,300) == 123) iItemID = 540; break; // DemonEye
+			case 5: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
+			default: break;
+			}
+			break;
+
+		case 32: //Unicorn
+			switch(iDice(1,5)){
+			case 1:	if (iDice(1,3000) == 396) iItemID = 544; break; // UnicornHeart
+			case 2:	if (iDice(1,500) == 3) iItemID = 545; break; // UnicornHorn
+			case 3:	if (iDice(1,100) == 3) iItemID = 546; break; // UnicornMeat
+			case 4:	if (iDice(1,200) == 3) iItemID = 547; break; // UnicornLeather
+			case 5: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
+			default: break;
+			}
+			break;
+
+		case 33: //WereWolf
+			switch(iDice(1,8)){
+			case 1: if (iDice(1,30) == 3) iItemID = 551; break; // WerewolfTail
+			case 2:	if (iDice(1,28) == 3) iItemID = 548; break; // WerewolfHeart
+			case 3:	if (iDice(1,25) == 3) iItemID = 550; break; // WerewolfMeat
+			case 4:	if (iDice(1,35) == 3) iItemID = 553; break; // WerewolfLeather
+			case 5:	if (iDice(1,28) == 3) iItemID = 552; break; // WerewolfTeeth
+			case 6:	if (iDice(1,28) == 3) iItemID = 554; break; // WerewolfClaw
+			case 7:	if (iDice(1,38) == 3) iItemID = 549; break; // WerewolfNail
+			case 8: bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); break;
+			default: break;
+			}
+			break;
+
+		case 48: //Stalker
+		case 49: //Hellclaw
+		case 50: //Tigerworm
+		case 52: //Gagoyle
+		case 53: //Beholder
+		case 54: //Dark-Elf
+		case 55: //Rabbit
+		case 56: //Cat
+		case 57: //Giant-Frog
+		case 58: //Mountain-Giant
+		case 59: //Ettin
+		case 60: //Cannibal-Plant
+		case 61: //Rudolph
+		case 62: //DireBoar
+		case 63: //Frost
+		case 65: //Ice
+			bGetItemNameWhenDeleteNpc(iItemID, m_pNpcList[iNpcH]->m_sType); 
+			break;
+
+		// new 05/10/2004
+		case 66: // Wyvern
+			bGetMultipleItemNamesWhenDeleteNpc( m_pNpcList[iNpcH]->m_sType,	// NPC Type
+												50,							// È®·ü( ÃÖ¼Ò ~ ÃÖ´ë »çÀÌÀÇ ¾ÆÀÌÅÛÀÌ ³ª¿Ã È®·ü , 100 ÀÌ¸é ÃÖ´ë °¹¼ö ¸¸Å­ ³ª¿Â´Ù.)
+												5,							// ³ª¿Í¾ß ÇÏ´Â Item ÃÖ¼Ò °³¼ö
+												15,							// ³ª¿Ã¼ö ÀÖ´Â Item ÃÖ´ë °³¼ö
+												m_pNpcList[iNpcH]->m_sX,	// ±âÁØ ÁÂÇ¥ X
+												m_pNpcList[iNpcH]->m_sY,	// ±âÁØ ÁÂÇ¥ Y
+												DEF_ITEMSPREAD_FIXED,		// ¾ÆÀÌÅÛ »Ñ¸®´Â ¹æ¹ý (RANDOM, FIXED)
+												4,							// ¾ÆÀÌÅÛ »Ñ¸± ¹üÀ§, DEF_ITEMSPREAD_RANDOM ÀÏ¶§¸¸ »ç¿ë
+												iItemIDs,					// ¹Þ¾Æ¿Ã ¾ÆÀÌÅÛ Idµé
+												ItemPositions,				// ¾ÆÀÌÅÛµéÀÇ À§Ä¡
+												&iNumItem);					// ¾ÆÀÌÅÛÀÇ ÃÑ °¹¼ö
+			break;
+
+		case 73: // Fire-Wyvern
+			bGetMultipleItemNamesWhenDeleteNpc( m_pNpcList[iNpcH]->m_sType,	// NPC Type
+												50,							// È®·ü( ÃÖ¼Ò ~ ÃÖ´ë »çÀÌÀÇ ¾ÆÀÌÅÛÀÌ ³ª¿Ã È®·ü , 100 ÀÌ¸é ÃÖ´ë °¹¼ö ¸¸Å­ ³ª¿Â´Ù.)
+												5,							// ³ª¿Í¾ß ÇÏ´Â Item ÃÖ¼Ò °³¼ö
+												15,							// ³ª¿Ã¼ö ÀÖ´Â Item ÃÖ´ë °³¼ö
+												m_pNpcList[iNpcH]->m_sX,	// ±âÁØ ÁÂÇ¥ X
+												m_pNpcList[iNpcH]->m_sY,	// ±âÁØ ÁÂÇ¥ Y
+												2,		// ¾ÆÀÌÅÛ »Ñ¸®´Â ¹æ¹ý (RANDOM, FIXED)
+												4,							// ¾ÆÀÌÅÛ »Ñ¸± ¹üÀ§, DEF_ITEMSPREAD_RANDOM ÀÏ¶§¸¸ »ç¿ë
+												iItemIDs,					// ¹Þ¾Æ¿Ã ¾ÆÀÌÅÛ Idµé
+												ItemPositions,				// ¾ÆÀÌÅÛµéÀÇ À§Ä¡
+												&iNumItem);					// ¾ÆÀÌÅÛÀÇ ÃÑ °¹¼ö
+			break;
 		case 81:
-			bGetItemNameWhenDeleteNpc(cItemName, m_pNpcList[iNpcH]->m_sType); break;
+			bGetMultipleItemNamesWhenDeleteNpc( m_pNpcList[iNpcH]->m_sType,	// NPC Type
+												50,							// È®·ü( ÃÖ¼Ò ~ ÃÖ´ë »çÀÌÀÇ ¾ÆÀÌÅÛÀÌ ³ª¿Ã È®·ü , 100 ÀÌ¸é ÃÖ´ë °¹¼ö ¸¸Å­ ³ª¿Â´Ù.)
+												12,							// ³ª¿Í¾ß ÇÏ´Â Item ÃÖ¼Ò °³¼ö
+												20,							// ³ª¿Ã¼ö ÀÖ´Â Item ÃÖ´ë °³¼ö
+												m_pNpcList[iNpcH]->m_sX,	// ±âÁØ ÁÂÇ¥ X
+												m_pNpcList[iNpcH]->m_sY,	// ±âÁØ ÁÂÇ¥ Y
+												DEF_ITEMSPREAD_FIXED,		// ¾ÆÀÌÅÛ »Ñ¸®´Â ¹æ¹ý (RANDOM, FIXED)
+												65,							// ¾ÆÀÌÅÛ »Ñ¸± ¹üÀ§, DEF_ITEMSPREAD_RANDOM ÀÏ¶§¸¸ »ç¿ë
+												iItemIDs,					// ¹Þ¾Æ¿Ã ¾ÆÀÌÅÛ Idµé
+												ItemPositions,				// ¾ÆÀÌÅÛµéÀÇ À§Ä¡
+												&iNumItem);
 			break;
 		}
 
-		// 특수 아이템이 안나온 경우 리치나 데몬, 유니콘은 Gold가 대체된다.
+		// íŠ¹ìˆ˜ ì•„ì´í…œì´ ì•ˆë‚˜ì˜¨ ê²½ìš° ë¦¬ì¹˜ë‚˜ ë°ëª¬, ìœ ë‹ˆì½˜ì€ Goldê°€ ëŒ€ì²´ëœë‹¤.
 		dwCount = 1;
-		if (strlen(cItemName) == 0) {
+		if (iItemID == 0) {
 			switch (m_pNpcList[iNpcH]->m_sType) {
 			case 30:
 			case 31:
 			case 32:
+			case 66:
+			case 73:
+			case 81:
 				strcpy(cItemName, "Gold");
 				dwCount = (DWORD)(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 4) + m_pNpcList[iNpcH]->m_iExpDice);
 				dwCount = dwCount - (dwCount/3);
+
 				break;
 			}
 		}
-		
-		if (_bInitItemAttr(pItem, cItemName) == FALSE) {
-			delete pItem;
-			pItem = NULL;
-		}
-		else {
-			// 아이템 수량 입력 
-			pItem->m_dwCount = dwCount;
-			
-			// 아이템에 고유 코드 입력 
-			pItem->m_sTouchEffectType   = DEF_ITET_ID;
-			pItem->m_sTouchEffectValue1 = iDice(1,100000);
-			pItem->m_sTouchEffectValue2 = iDice(1,100000);
-			//pItem->m_sTouchEffectValue3 = timeGetTime();
-			// 마지막 숫자는 아이템 생성 월, 일	
-			SYSTEMTIME SysTime;
-			char cTemp[256];
-			GetLocalTime(&SysTime);
-			ZeroMemory(cTemp, sizeof(cTemp));
-			wsprintf(cTemp, "%d%2d",  (short)SysTime.wMonth, (short)SysTime.wDay);
-			pItem->m_sTouchEffectValue3 = atoi(cTemp);
-			
-			// 아이템을 서있는 위치에 떨어뜨린다. 
-			m_pMapList[ m_pNpcList[iNpcH]->m_cMapIndex ]->bSetItem(m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, pItem);
-						
-			// 다른 클라이언트에게 아이템이 떨어진 것을 알린다. 
-			SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_ITEMDROP, m_pNpcList[iNpcH]->m_cMapIndex,
-				    	                m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
-						                pItem->m_sSprite, pItem->m_sSpriteFrame, pItem->m_cItemColor); // v1.4 color
 
-			// 로그 남긴다.
-			_bItemLog(DEF_ITEMLOG_NEWGENDROP, NULL, NULL, pItem);
+		if(iNumItem == 1 && iItemID != 0){ // Only 1 item drop
+			if (memcmp(cItemName,"Gold", 4) == 0) {
+				for (i = 0; i < DEF_MAXITEMTYPES; i++) 
+					if (m_pItemConfigList[i] != NULL)
+						if (memcmp(cItemName, m_pItemConfigList[i]->m_cName, 20) == 0){
+							iItemID = m_pItemConfigList[i]->m_sIDnum;
+							goto CONTINUE_DROP;
+						}
+				//Awwww no gold in cfg
+				delete pItem;
+				pItem = NULL;
+				delete m_pNpcList[iNpcH];
+				m_pNpcList[iNpcH] = NULL;
+				return;
+			}
+
+			CONTINUE_DROP:;
+			if (_bInitItemAttr(pItem, iItemID) == FALSE) {
+				delete pItem;
+				pItem = NULL;
+			}
+			else {
+				// ì•„ì´í…œ ìˆ˜ëŸ‰ ìž…ë ¥ 
+				pItem->m_dwCount = dwCount;
+
+				// ì•„ì´í…œì— ê³ ìœ  ì½”ë“œ ìž…ë ¥ 
+				pItem->m_sTouchEffectType   = DEF_ITET_ID;
+				pItem->m_sTouchEffectValue1 = iDice(1,100000);
+				pItem->m_sTouchEffectValue2 = iDice(1,100000);
+				//pItem->m_sTouchEffectValue3 = timeGetTime();
+				// ë§ˆì§€ë§‰ ìˆ«ìžëŠ” ì•„ì´í…œ ìƒì„± ì›”, ì¼	
+				SYSTEMTIME SysTime;
+				char cTemp[256];
+				GetLocalTime(&SysTime);
+				ZeroMemory(cTemp, sizeof(cTemp));
+				wsprintf(cTemp, "%d%2d",  (short)SysTime.wMonth, (short)SysTime.wDay);
+				pItem->m_sTouchEffectValue3 = atoi(cTemp);
+
+				// ì•„ì´í…œì„ ì„œìžˆëŠ” ìœ„ì¹˜ì— ë–¨ì–´ëœ¨ë¦°ë‹¤. 
+				m_pMapList[ m_pNpcList[iNpcH]->m_cMapIndex ]->bSetItem(m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, pItem);
+
+				// ë‹¤ë¥¸ í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ì•„ì´í…œì´ ë–¨ì–´ì§„ ê²ƒì„ ì•Œë¦°ë‹¤. 
+				SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_ITEMDROP, m_pNpcList[iNpcH]->m_cMapIndex,
+					m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
+					pItem->m_sSprite, pItem->m_sSpriteFrame, pItem->m_cItemColor); // v1.4 color
+
+				// ë¡œê·¸ ë‚¨ê¸´ë‹¤.
+				_bItemLog(DEF_ITEMLOG_NEWGENDROP, NULL, NULL, pItem);
+			}
 		}
+		else{ // MultiItem drop
+			for(int i = 0; i < iNumItem; i++){
+				if (pItem == NULL) {
+					pItem = new class CItem;
+				}
+				if (_bInitItemAttr(pItem, iItemIDs[i]) == FALSE) {
+					delete pItem;
+					pItem = NULL;
+				}
+
+				else {
+					// ì•„ì´í…œ ìˆ˜ëŸ‰ ìž…ë ¥ 
+					if (iItemIDs[i] == 90) {
+						dwCount = (DWORD)(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 4) + m_pNpcList[iNpcH]->m_iExpDice);
+						dwCount = dwCount - (dwCount/3);
+						pItem->m_dwCount = dwCount;
+					}
+					else pItem->m_dwCount = 1;
+
+					// ì•„ì´í…œì— ê³ ìœ  ì½”ë“œ ìž…ë ¥ 
+					pItem->m_sTouchEffectType   = DEF_ITET_ID;
+					pItem->m_sTouchEffectValue1 = iDice(1,100000);
+					pItem->m_sTouchEffectValue2 = iDice(1,100000);
+					//pItem->m_sTouchEffectValue3 = timeGetTime();
+					// ë§ˆì§€ë§‰ ìˆ«ìžëŠ” ì•„ì´í…œ ìƒì„± ì›”, ì¼	
+					SYSTEMTIME SysTime;
+					char cTemp[256];
+					GetLocalTime(&SysTime);
+					ZeroMemory(cTemp, sizeof(cTemp));
+					wsprintf(cTemp, "%d%2d",  (short)SysTime.wMonth, (short)SysTime.wDay);
+					pItem->m_sTouchEffectValue3 = atoi(cTemp);
+
+					// ì•„ì´í…œì„ ì„œìžˆëŠ” ìœ„ì¹˜ì— ë–¨ì–´ëœ¨ë¦°ë‹¤. 
+					m_pMapList[ m_pNpcList[iNpcH]->m_cMapIndex ]->bSetItem(ItemPositions[i].x, ItemPositions[i].y, pItem);
+
+					// ë‹¤ë¥¸ í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ì•„ì´í…œì´ ë–¨ì–´ì§„ ê²ƒì„ ì•Œë¦°ë‹¤. 
+					SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_ITEMDROP, m_pNpcList[iNpcH]->m_cMapIndex,
+						ItemPositions[i].x, ItemPositions[i].y,
+						pItem->m_sSprite, pItem->m_sSpriteFrame, pItem->m_cItemColor); // v1.4 color
+
+					// ë¡œê·¸ ë‚¨ê¸´ë‹¤.
+					_bItemLog(DEF_ITEMLOG_NEWGENDROP, NULL, NULL, pItem);
+					pItem = NULL; // Make a new item, no need to delete
+				}
+			}//for
+			//Cleanup
+		} //else
+        
 	}
 
 	delete m_pNpcList[iNpcH];
 	m_pNpcList[iNpcH] = NULL;
 }
-
 
 void CGame::RequestFullObjectData(int iClientH, char *pData)
 {
@@ -29701,8 +29705,10 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 											
 						if (bExp == TRUE) 
-							 m_pClientList[sAttackerH]->m_iExpStock += iExp;     //iDamage;
-						else m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(iDamage/2);
+							 //New 09/05/2004
+							 //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //iDamage;
+							 GetExp(sAttackerH, iExp, TRUE);
+						else GetExp(sAttackerH, iExp/2, TRUE); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(iDamage/2);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp -= iDamage;
 					}
 					else {
@@ -29711,8 +29717,10 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 						
 						if (bExp == TRUE) 
-							 m_pClientList[sAttackerH]->m_iExpStock += iExp;     //m_pNpcList[sTargetH]->m_iNoDieRemainExp;
-						else m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(m_pNpcList[sTargetH]->m_iNoDieRemainExp/2);
+							 // New 09/05/2004
+							 //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //m_pNpcList[sTargetH]->m_iNoDieRemainExp;
+							 GetExp(sAttackerH, iExp, TRUE);
+						else GetExp(sAttackerH, iExp/2, TRUE); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(m_pNpcList[sTargetH]->m_iNoDieRemainExp/2);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp = 0;
 					}
 				}
@@ -30106,8 +30114,10 @@ EDSD_SKIPDAMAGEMOVE:;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 						
 						if (bExp == TRUE) 
-							 m_pClientList[sAttackerH]->m_iExpStock += iExp;     //iDamage;
-						else m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(iDamage/2);
+							 // New 09/05/2004
+							 //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //iDamage;
+							 GetExp(sAttackerH, iExp, TRUE);
+						else GetExp(sAttackerH, iExp/2, TRUE); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(iDamage/2);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp -= iDamage;
 					}
 					else {
@@ -30116,8 +30126,10 @@ EDSD_SKIPDAMAGEMOVE:;
 						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
 
 						if (bExp == TRUE) 
-							 m_pClientList[sAttackerH]->m_iExpStock += iExp;     //m_pNpcList[sTargetH]->m_iNoDieRemainExp;
-						else m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(m_pNpcList[sTargetH]->m_iNoDieRemainExp/2);
+							 // New	09/05/2004
+							 //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //m_pNpcList[sTargetH]->m_iNoDieRemainExp;
+							 GetExp(sAttackerH, iExp, TRUE);
+						else GetExp(sAttackerH, iExp/2, TRUE); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(m_pNpcList[sTargetH]->m_iNoDieRemainExp/2);
 						m_pNpcList[sTargetH]->m_iNoDieRemainExp = 0;
 					}
 				}
@@ -30868,10 +30880,6 @@ void CGame::OnKeyUp(WPARAM wParam, LPARAM lParam)
 		if ((m_bF1pressed == TRUE)) {
 			GlobalStartCrusadeMode();
 		}
-		break;
-
-	case VK_END:
-		//LocalEndCrusadeMode();
 		break;
 
 	case VK_INSERT:
@@ -32548,7 +32556,7 @@ int CGame::iCalcTotalWeight(int iClientH)
 void CGame::CheckAndNotifyPlayerConnection(int iClientH, char * pMsg, DWORD dwSize)
 {
  char   seps[] = "= \t\n";
- char   * token, * cp, cName[11], cBuff[256];
+ char   * token, * cp, cName[11], cBuff[256], cPlayerLocation[120];
  class  CStrTok * pStrTok;
  register int i;
  WORD * wp;
@@ -32556,6 +32564,7 @@ void CGame::CheckAndNotifyPlayerConnection(int iClientH, char * pMsg, DWORD dwSi
 	if (m_pClientList[iClientH] == NULL) return;
 	if (dwSize <= 0) return;
 
+	ZeroMemory(cPlayerLocation,sizeof(cPlayerLocation));
 	ZeroMemory(cName, sizeof(cName));
 	ZeroMemory(cBuff, sizeof(cBuff));
 	memcpy(cBuff, pMsg, dwSize);
@@ -32577,8 +32586,21 @@ void CGame::CheckAndNotifyPlayerConnection(int iClientH, char * pMsg, DWORD dwSi
 	for (i = 1; i < DEF_MAXCLIENTS; i++) 
 	if ((m_pClientList[i] != NULL) && (memcmp(cName, m_pClientList[i]->m_cCharName, 10) == 0)) {
 		// °°Àº ÀÌ¸§À» °¡Áø Ä³¸¯ÅÍ¸¦ Ã£¾Ò´Ù. 
+		if(m_pClientList[i]->m_iAdminUserLevel > 0){ // GM's get more info
+			cp = (char *)cPlayerLocation;
 
-		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_PLAYERONGAME, NULL, NULL, NULL, m_pClientList[i]->m_cCharName);
+			memcpy(cp,m_pClientList[i]->m_cMapName,10);
+			cp += 10;
+
+			wp = (WORD *)cp;
+			*wp = m_pClientList[i]->m_sX;
+			cp += 2;
+
+			wp = (WORD *)cp;
+			*wp = m_pClientList[i]->m_sY;
+			cp += 2;
+		}
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_PLAYERONGAME, NULL, NULL, NULL, m_pClientList[i]->m_cCharName,NULL,NULL,NULL,NULL,NULL,NULL,cPlayerLocation);
 
 		delete pStrTok;
 		return;
@@ -32603,7 +32625,10 @@ void CGame::CheckAndNotifyPlayerConnection(int iClientH, char * pMsg, DWORD dwSi
 	memcpy(cp, cName, 10);
 	cp += 10;
 
-	bStockMsgToGateServer(cBuff, 15);
+	memcpy(cp, m_pClientList[i]->m_cCharName, 10);
+	cp += 10;
+
+	bStockMsgToGateServer(cBuff, 25);
 
 	delete pStrTok;
 }
@@ -35153,8 +35178,8 @@ void CGame::AdminOrder_Teleport(int iClientH, char * pData, DWORD dwMsgSize)
 	if (strcmp("huntzone3", cMapName) == 0) bFlag = TRUE;
 	if (strcmp("huntzone4", cMapName) == 0) bFlag = TRUE;
 	if (strcmp("icebound", cMapName) == 0) bFlag = TRUE; 
-	if (strcmp("inferniaa", cMapName) == 0) bFlag = TRUE; 
-	if (strcmp("inferniab", cMapName) == 0) bFlag = TRUE; 
+	if (strcmp("inferniaA", cMapName) == 0) bFlag = TRUE; 
+	if (strcmp("inferniaB", cMapName) == 0) bFlag = TRUE; 
 	if (strcmp("maze", cMapName) == 0) bFlag = TRUE; 
 	if (strcmp("middled1n", cMapName) == 0) bFlag = TRUE;
 	if (strcmp("middled1x", cMapName) == 0) bFlag = TRUE;
@@ -39544,7 +39569,7 @@ int CGame::_iTalkToNpcResult_Guard(int iClientH, int * pQuestType, int * pMode, 
 	// °æºñº´°úÀÇ ´ëÈ­. ÇÃ·¹ÀÌ¾îÀÇ À§Ä¡¿¡ ÀûÀýÇÑ ´ëÈ­ ¸Þ½ÃÁö¸¦ µð½ºÇÃ·¹ÀÌÇÑ´Ù.
 	if (m_pClientList[iClientH] == NULL) return 0;
 
-	if (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) {
+	if (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) {
 		// ¸» °Ç »ç¶÷ÀÌ ¾Æ·¹½ºµ§ ¼Ò¼Ó 
 		if (memcmp(m_pClientList[iClientH]->m_cMapName, "aresden", 7) == 0) {
 			// ÀÚ±â ¸¶À» °æºñ¿¡°Ô ¸»À» °É¾úÀ½.
@@ -39552,21 +39577,21 @@ int CGame::_iTalkToNpcResult_Guard(int iClientH, int * pQuestType, int * pMode, 
 			return 1000;
 		}
 		else
-		if (memcmp(m_pClientList[iClientH]->m_cMapName, "elvine", 6) == 0) {
+		if (memcmp(m_pClientList[iClientH]->m_cMapName, "elv", 3) == 0) {
 			// ´Ù¸¥ ¸¶À» °æºñ¿¡°Ô ¸»À» °É¾úÀ½.	
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_NPCTALK, (201), NULL, NULL, NULL, NULL);
 			return 1001;
 		}
 	}
 	else
-	if (memcmp(m_pClientList[iClientH]->m_cLocation, "elvine", 6) == 0) {
+	if (memcmp(m_pClientList[iClientH]->m_cLocation, "elv", 3) == 0) {
 		if (memcmp(m_pClientList[iClientH]->m_cMapName, "aresden", 7) == 0) {
 			// ´Ù¸¥ ¸¶À» °æºñ¿¡°Ô ¸»À» °É¾úÀ½.	
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_NPCTALK, (202), NULL, NULL, NULL, NULL);
 			return 1002;
 		}
 		else
-		if (memcmp(m_pClientList[iClientH]->m_cMapName, "elvine", 6) == 0) {
+		if (memcmp(m_pClientList[iClientH]->m_cMapName, "elv", 3) == 0) {
 			// ÀÚ±â ¸¶À» °æºñ¿¡°Ô ¸»À» °É¾úÀ½.
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_NPCTALK, (203), NULL, NULL, NULL, NULL);
 			return 1003;
@@ -41835,40 +41860,44 @@ void CGame::AdminOrder_DisconnectAll(int iClientH, char *pData, DWORD dwMsgSize)
 	_iForcePlayerDisconect(DEF_MAXCLIENTS);
 }
 
+// New - Hypnotoad - 3.51 Item Drops
 void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType)
 {
- class CItem * pItem;
- char  cColor, cItemName[21];
- BOOL  bIsGold;
- int   iGenLevel, iResult;
- DWORD dwType, dwValue;
- double dTmp1, dTmp2, dTmp3;
+	class CItem * pItem;
+	char  cColor, cItemName[21];
+	BOOL  bIsGold;
+	int   iGenLevel, iResult, iItemID;
+	DWORD dwType, dwValue;
+	double dTmp1, dTmp2, dTmp3;
 
 	if (m_pNpcList[iNpcH] == NULL) return;
 	if ((cAttackerType != DEF_OWNERTYPE_PLAYER) || (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE)) return;
-	
+
 	ZeroMemory(cItemName, sizeof(cItemName));
 	bIsGold = FALSE;
-	
+
 	switch (m_pNpcList[iNpcH]->m_sType) {
+		// NPC not dropping Gold
 	case 21: // Guard
 	case 34: // Dummy
+	case 64: // Crop
 		return;
 	}
-    	// 6500 default; the lower the greater the Weapon/Armor/Wand Drop
+
+	// 6500 default; the lower the greater the Weapon/Armor/Wand Drop
 	if (iDice(1,10000) >= 6500) {
 		// 35% Drop 60% of that is gold
 		// 35% Chance of drop (35/100)
 		if (iDice(1,10000) <= 6000) {
-			// Gold: (35/100) * (60/100) = 21%
-			strcpy(cItemName, "Gold");
-			// If a non-existing item is created then delete the item
+			iItemID = 90; // Gold: (35/100) * (60/100) = 21%
+			// If a non-existing itemID is given create no item
 			pItem = new class CItem;
-			if (_bInitItemAttr(pItem, cItemName) == FALSE) {
+			if (_bInitItemAttr(pItem, iItemID) == FALSE) {
 				delete pItem;
 				return;	
 			}
-			// NPC 사망시 Gold 발생량
+
+			// NPC experience to Gold ratio
 			pItem->m_dwCount = (DWORD)(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 2)); //(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 3) + m_pNpcList[iNpcH]->m_iExpDice);
 
 			// v1.42 Gold 
@@ -41885,42 +41914,53 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 			if (iDice(1,10000) <= 9000) {
 				// 40% Drop 90% of that is a standard drop
 				// Standard Drop Calculation: (35/100) * (40/100) * (90/100) = 12.6%
-				iResult = iDice(1,10000);
-				if ((iResult >= 1) && (iResult <= 4999))          dwValue = 1;
-				else if ((iResult >= 5000) && (iResult <= 7499))  dwValue = 2;
-				else if ((iResult >= 7500) && (iResult <= 8749))  dwValue = 3;
-				else if ((iResult >= 8750) && (iResult <= 9374))  dwValue = 4;
-				else if ((iResult >= 9375) && (iResult <= 9687))  dwValue = 5;
-				else if ((iResult >= 9688) && (iResult <= 9843))  dwValue = 6;
-				else if ((iResult >= 9844) && (iResult <= 9921))  dwValue = 7;
-				else if ((iResult >= 9922) && (iResult <= 10000)) dwValue = 8;
-							
-            switch (dwValue) { 
-            case 1: 
-               switch (iDice(1,2)) { 
-               case 1: strcpy(cItemName, "GreenPotion");   break; 
-			   case 2: strcpy(cItemName, "RedPotion"); break; 
-               } 
-               break; 
-            case 2: strcpy(cItemName, "BigRedPotion"); break; 
-            case 3: strcpy(cItemName, "BluePotion"); break; 
-            case 4: strcpy(cItemName, "BigGreenPotion"); break; 
-            case 5: strcpy(cItemName, "BigRedPotion"); break; 
-            case 6: strcpy(cItemName, "BigBluePotion"); break; 
-            case 7: strcpy(cItemName, "PowerGreenPotion"); break; 
-            case 8: 
-				switch (iDice(1,6)) { 
-                  case 1: strcpy(cItemName, "StoneOfMerien"); break; 
-                  case 2: strcpy(cItemName, "StoneOfXelima"); break; 
-                  case 3: strcpy(cItemName, "ZemstoneofSacrifice"); break; 
-                  case 4: 
-                  case 5: 
-                  case 6: strcpy(cItemName, "SuperGreenPotion"); break;
+				iResult = iDice(1,12000);
+				if ((iResult >= 1) && (iResult <= 3000))          dwValue = 1;
+				else if ((iResult >= 3001) && (iResult <= 4000))  dwValue = 2;
+				else if ((iResult >= 4001) && (iResult <= 5500))  dwValue = 3;
+				else if ((iResult >= 5501) && (iResult <= 7000))  dwValue = 4;
+				else if ((iResult >= 7001) && (iResult <= 8500))  dwValue = 5;
+				else if ((iResult >= 8501) && (iResult <= 9100))  dwValue = 6;
+				else if ((iResult >= 9101) && (iResult <= 9800))  dwValue = 7;
+				else if ((iResult >= 9801) && (iResult <= 10000)) dwValue = 8;
+				else if ((iResult >= 10001) && (iResult <= 12000)) dwValue = 9;
+
+				switch (dwValue) {	
+				case 1: iItemID = 95; break; // Green Potion
+				case 2: iItemID = 91; break; // Red Potion
+				case 3: iItemID = 93; break; // Blue Potion
+				case 4: iItemID = 96; break; // Big Green Potion
+				case 5: iItemID = 92; break; // Big Red Potion
+				case 6: iItemID = 94; break; // Big Blue Potion
+				case 7: switch(iDice(1,2)) {
+				case 1: iItemID = 390; break; // Power Green Potion
+				case 2: iItemID = 95;  break; // Green Potion
+						}
+						break;
+				case 8: switch(iDice(1,5)) {
+				case 1: iItemID = 391; break; // Super Power Green Potion
+				case 2: iItemID = 650; break; // Zemstone of Sacrifice
+				case 3: iItemID = 656; break; // Xelima Stone
+				case 4: iItemID = 657; break; // Merien Stone
+				case 5: iItemID = 95;  break; // Green Potion
+						}
+						break;
+				case 9: 		
+					SYSTEMTIME SysTime;
+					GetLocalTime(&SysTime);
+					if (((short)SysTime.wMonth == 12) && (m_pNpcList[iNpcH]->m_sType == 61 || 55)) {
+						switch(iDice(1,4)) {
+				case 1: iItemID = 780; break; // Red Candy
+				case 2: iItemID = 781; break; // Blue Candy
+				case 3: iItemID = 782; break; // Green Candy
+				case 4: iItemID = 91;  break; // Red Potion
+						}
 					}
+					break;
 				}
 				// If a non-existing item is created then delete the item
 				pItem = new class CItem;
-				if (_bInitItemAttr(pItem, cItemName) == FALSE) {
+				if (_bInitItemAttr(pItem, iItemID) == FALSE) {
 					delete pItem;
 					return;	
 				}
@@ -41929,745 +41969,286 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 				// Valuable Drop Calculation: (35/100) * (40/100) * (10/100) = 1.4%
 				// Define iGenLevel using Npc.cfg#
 				switch (m_pNpcList[iNpcH]->m_sType) {
-				
+
 				case 10: // Slime
+				case 16: // Giant-Ant
+				case 22: // Amphis
+				case 55: // Rabbit
+				case 56: //	Cat
 					iGenLevel = 1;
 					break;
 
-				case 55: // Rabbit
-				case 56: //	Cat
-					iGenLevel = 2;
-					break;
-				
-				case 16: // Giant-Ant
-					iGenLevel = 3;
-					break;
-
-				case 22: // Amphis
-					iGenLevel = 4;
-					break; 
-
-				case 14: // Orc, Orc-Mage
-					iGenLevel = 5;
-					break;
-
-				case 18: // Zombie
-					iGenLevel = 6;
-					break;
-
-				case 17: // Scorpion
-					iGenLevel = 7;
-					break;
-				
 				case 11: // Skeleton
-					iGenLevel = 8;
-					break; 
-				
-				case 23: // Clay-Golem
-					iGenLevel = 9;
+				case 14: // Orc, Orc-Mage
+				case 17: // Scorpion
+				case 18: // Zombie
+					iGenLevel = 2;
 					break;
 
 				case 12: // Stone-Golem
-					iGenLevel = 10;
+				case 23: // Clay-Golem
+					iGenLevel = 3;
 					break;
-				
+
 				case 27: // Hellbound
-					iGenLevel = 11;
-					break;
+				case 61: // Rudolph
+					iGenLevel = 4;
+					break; 
 
 				case 13: // Cyclops
-					iGenLevel = 12;
-					break;
-
 				case 28: // Troll
-					iGenLevel = 13;
-					break;
-
 				case 53: // Beholder
-					iGenLevel = 14;
-					break;
-
 				case 60: // Cannibal-Plant
-					iGenLevel = 15;
+				case 62: // DireBoar
+					iGenLevel = 5;
 					break;
-					
+
 				case 29: // Orge
-					iGenLevel = 16;
-					break;
-
-				case 58: // MountainGiant
-					iGenLevel = 17;
-					break;
-				
-				case 30: // Liche
-					iGenLevel = 18;
-					break;
-
-				case 48: // Stalker
-					iGenLevel = 19;
-					break;
-
 				case 33: // WereWolf
-					iGenLevel = 20;
+				case 48: // Stalker
+				case 54: // Dark-Elf
+				case 65: // Ice-Golem
+					iGenLevel = 6;
 					break;
 
-				case 54: // Dark-Elf
-					iGenLevel = 21;
-					break;
-				
-				case 59: // Ettin
-					iGenLevel = 22;
+				case 30: // Liche
+				case 63: // Frost
+					iGenLevel = 7;
 					break;
 
 				case 31: // Demon
-					iGenLevel = 23;
-					break;
-
 				case 32: // Unicorn
-					iGenLevel = 24;
-					break;
-
-				case 52: // Gagoyle
-					iGenLevel = 25;
-					break;
-
 				case 49: // Hellclaw
 				case 50: // Tigerworm
-					iGenLevel = 26;
-					break;
-				
-				case 61: // Rudolph
-					iGenLevel = 27;
+				case 52: // Gagoyle
+					iGenLevel = 8;
+					break; 
+
+				case 58: // MountainGiant
+					iGenLevel = 9;
 					break;
 
-				case 62: // DireBoar
-					iGenLevel = 28;
-					break;
-
-				case 63: // Frost
-					iGenLevel = 29;
-					break;
-
-				case 65: // Ice-Golem
-					iGenLevel = 30;
+				case 59: // Ettin
+					iGenLevel = 10;
 					break;
 				}	
-				
+
 				if (iGenLevel == 0) return;
-				
+
 				// Weapon Drop: 
 				// 1.4% chance Valuable Drop 60% that it is a Weapon
 				if (iDice(1,10000) <= 6000) {
 					if (iDice(1,10000) <= 8000) {
 						// 70% the Weapon is Melee
-                  switch (iGenLevel) { 
-               
-				case 1: // Slime
+						switch (iGenLevel) { 
+
+				case 1: // Slime, Giant-Ant, Amphis, Rabbit, Cat
 					switch (iDice(1,3)) { 
-						case 1: strcpy(cItemName, "Dagger"); break; 
-						case 2: strcpy(cItemName, "ShortSword"); break; 
-						case 3: strcpy(cItemName, "LightAxe"); break; 
-					} 
+				case 1: iItemID = 1;  break; // Dagger
+				case 2: iItemID = 8;  break; // ShortSword
+				case 3: iItemID = 59; break; // LightAxe
+					}
 					break; 
-                      
-				case 2: // Rabbit, Cat
-				case 3: // Giant-Ant
-					switch (iDice(1,2)) {
-						case 1: strcpy(cItemName, "Dagger"); break;
-						case 2: strcpy(cItemName, "ShortSword"); break;
+
+				case 2: // Skeleton, Orc, Orc-Mage, Scorpion, Zombie
+					switch (iDice(1,6)) {
+				case 1: iItemID = 12; break; // MainGauche
+				case 2: iItemID = 15; break; // Gradius
+				case 3: iItemID = 65; break; // SexonAxe
+				case 4: iItemID = 62; break; // Tomahoc
+				case 5: iItemID = 23; break; // Sabre
+				case 6: iItemID = 31; break; // Esterk
 					}
 					break;
 
-				case 4: // Amphis
+				case 3: // Stone-Golem, Clay-Golem
 					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "Dagger"); break;
-						case 2: strcpy(cItemName, "ShortSword"); break;
-						case 3: strcpy(cItemName, "LightAxe"); break;
-						case 4: strcpy(cItemName, "Tomahoc"); break;
+				case 1: iItemID = 17; break; // LongSword
+				case 2: iItemID = 68; break; // DoubleAxe
+				case 3: iItemID = 23; break; // Sabre
+				case 4: iItemID = 31; break; // Esterk
 					}
 					break;
 
-				case 5: // Orc, Orc-Mage
+				case 4: // Hellbound, Rudolph
+					switch (iDice(1,5)) {
+				case 1: iItemID = 23; break; // Sabre
+				case 2: iItemID = 25; break; // Scimitar
+				case 3: iItemID = 28; break; // Falchion
+				case 4: iItemID = 31; break; // Esterk
+				case 5: iItemID = 34; break; // Rapier
+					}
+					break;
+
+				case 5: // Cyclops, Troll, Beholder, Cannibal-Plant, DireBoar
+					switch (iDice(1,3)) {
+				case 1: iItemID = 31; break; // Esterk
+				case 2: iItemID = 34; break; // Rapier
+				case 3: iItemID = 73; break; // WarAxe
+					}
+					break;
+
+				case 6: // Orge, WereWolf, Stalker, Dark-Elf, Ice-Golem
+					switch (iDice(1,6)) {
+				case 1: iItemID = 50; break; // GreatSword
+				case 2: iItemID = 54; break; // Flameberge
+				case 3: iItemID = 46; break; // Claymore
+				case 4: iItemID = 31; break; // Esterk
+				case 5: iItemID = 34; break; // Rapier
+				case 6: iItemID = 617;break; // CompositeBow
+					}
+					break;
+
+				case 7: // Liche, Frost
+					switch (iDice(1,4)) {
+				case 1: iItemID = 50; break; // GreatSword
+				case 2: iItemID = 54; break; // Flameberge
+				case 3: iItemID = 31; break; // Esterk
+				case 4: iItemID = 34; break; // Rapier
+					}
+					break;
+
+				case 8: // Demon, Unicorn, Hellclaw, Tigerworm, Gagoyle
 					switch (iDice(1,7)) {
-						case 1: strcpy(cItemName, "ShortSword"); break;
-						case 2:	strcpy(cItemName, "MainGauche"); break;
-						case 3: strcpy(cItemName, "Gradius"); break;
-						case 4: strcpy(cItemName, "Tomahoc"); break;
-						case 5: strcpy(cItemName, "SexonAxe"); break;
-						case 6: strcpy(cItemName, "Esterk"); break;
-						case 7: strcpy(cItemName, "Sabre"); break;
+				case 1: iItemID = 50; break; // GreatSword
+				case 2: iItemID = 54; break; // Flameberge
+				case 3: iItemID = 560;break; // BattleAxe
+				case 4: iItemID = 31; break; // Esterk
+				case 5: iItemID = 34; break; // Rapier
+				case 6: iItemID = 55; break; // Flameberge+1
+				case 7: iItemID = 615;break; // GiantSword
 					}
 					break;
 
-				case 6: // Zombie
+				case 9: // MountainGiant
+					switch (iDice(1,6)) {
+				case 1: iItemID = 23; break; // Sabre
+				case 2: iItemID = 25; break; // Scimitar
+				case 3: iItemID = 28; break; // Falchion
+				case 4: iItemID = 31; break; // Esterk
+				case 5: iItemID = 34; break; // Rapier
+				case 6: iItemID = 760;break; // Hammer
+					}
+					break;
+
+				case 10: // Ettin
 					switch (iDice(1,5)) {
-						case 1: strcpy(cItemName, "Gradius"); break;
-						case 2: strcpy(cItemName, "SexonAxe"); break;
-						case 3: strcpy(cItemName, "Esterk"); break;
-						case 4: strcpy(cItemName, "Sabre"); break;
-						case 5: strcpy(cItemName, "Tomahoc"); break;
+				case 1: iItemID = 46; break; // Claymore
+				case 2: iItemID = 31; break; // Esterk
+				case 3: iItemID = 34; break; // Rapier
+				case 4: iItemID = 760;break; // Hammer
+				case 5: iItemID = 761;break; // GiantHammer
 					}
 					break;
-
-				case 7: // Scorpion
-					switch (iDice(1,7)) {
-						case 1: strcpy(cItemName, "MainGauche"); break;
-						case 2: strcpy(cItemName, "Gradius"); break;
-						case 3: strcpy(cItemName, "LightAxe"); break;
-						case 4: strcpy(cItemName, "Tomahoc"); break;
-						case 5: strcpy(cItemName, "SexonAxe"); break;
-						case 6: strcpy(cItemName, "Esterk"); break;
-						case 7: strcpy(cItemName, "Sabre"); break;
+						}
 					}
-					break;
-
-				case 8: // Skeleton
-					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "Tomahoc"); break;
-						case 2: strcpy(cItemName, "Esterk"); break;
-						case 3: strcpy(cItemName, "LongSword"); break;
-						case 4: strcpy(cItemName, "Falchion"); break;
-					}
-					break;
-
-				case 9: // Clay-Golem
-					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "Esterk"); break;
-						case 2: strcpy(cItemName, "LongSword"); break;
-						case 3: strcpy(cItemName, "Sabre"); break;
-						case 4: strcpy(cItemName, "DoubleAxe"); break;
-					}
-					break;
-
-				case 10: // Stone-Golem
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "Esterk"); break;
-						case 2: strcpy(cItemName, "LongSword"); break;
-						case 3: strcpy(cItemName, "DoubleAxe"); break;
-					}
-					break;
-
-				case 11: // Hellbound
-					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "Scimitar"); break;
-						case 2: strcpy(cItemName, "Sabre"); break;
-						case 3: strcpy(cItemName, "Falchion"); break;
-						case 4: strcpy(cItemName, "Esterk"); break;
-					}
-					break;
-
-				case 12: // Cyclops
-					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "GreatSword"); break;
-						case 2: strcpy(cItemName, "WarAxe"); break;
-						case 3: strcpy(cItemName, "Rapier"); break;
-						case 4: strcpy(cItemName, "Esterk"); break;
-					}
-					break;
-	
-				case 13: // Troll
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "WarAxe"); break;
-						case 2: strcpy(cItemName, "Esterk"); break;
-						case 3: strcpy(cItemName, "Rapier"); break;
-					}
-					break;
-
-				case 14: // Beholder
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "WarAxe"); break;
-						case 2: strcpy(cItemName, "Esterk"); break;
-						case 3: strcpy(cItemName, "Flameberge"); break;
-					}
-					break;
-
-				case 15: // Cannibal-Plant
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "WarAxe"); break;
-						case 2: strcpy(cItemName, "Esterk"); break;
-						case 3: strcpy(cItemName, "Rapier"); break;
-					}
-					break;
-
-				case 16: // Orge
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "Claymore"); break;
-						case 2: strcpy(cItemName, "GreatSword"); break;
-						case 3: strcpy(cItemName, "Flameberge"); break;
-					}
-					break;
-
-				case 17: // Mountain-Giant
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "Rapier"); break;
-						case 2: strcpy(cItemName, "Hammer"); break;
-						case 3: strcpy(cItemName, "BattleHammer"); break;
-					}
-					break;
-
-				case 18: // Liche
-					switch (iDice(1,2)) {
-						case 1: strcpy(cItemName, "GreatSword"); break;
-						case 2: strcpy(cItemName, "Flameberge"); break;
-					}
-					break;
-
-				case 19: // Stalker
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "Claymore"); break;
-						case 2: strcpy(cItemName, "GreatSword"); break;
-						case 3: strcpy(cItemName, "Flameberge"); break;
-					}
-					break;
-
-				case 20: // WereWolf
-					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "Claymore"); break;
-						case 2: strcpy(cItemName, "WarAxe"); break;
-						case 3: strcpy(cItemName, "GreatSword"); break;
-						case 4: strcpy(cItemName, "Flameberge"); break;
-					}
-					break;
-
-				case 21: // Dark-Elf
-					switch (iDice(1,3)) {
-						case 1: strcpy(cItemName, "Rapier"); break;
-						case 2: strcpy(cItemName, "GreatSword"); break;
-						case 3: strcpy(cItemName, "Flameberge"); break;
-					}
-					break;
-
-				case 22: // Ettin
-					switch (iDice(1,2)) {
-						case 1: strcpy(cItemName, "Hammer"); break;
-						case 2: strcpy(cItemName, "BattleHammer"); break;
-					}
-					break;
-
-				case 23: // Demon
-					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "Flameberge"); break;
-						case 2: strcpy(cItemName, "Flameberge+1"); break;
-						case 3: strcpy(cItemName, "BattleAxe"); break;
-						case 4: strcpy(cItemName, "GiantSword"); break;
-					}
-					break;
-
-				case 24: // Unicorn
-					switch (iDice(1,5)) {
-						case 1: strcpy(cItemName, "Flameberge"); break;
-						case 2: strcpy(cItemName, "Flameberge+1"); break;
-						case 3: strcpy(cItemName, "BattleAxe"); break;
-						case 4: strcpy(cItemName, "GiantSword"); break;
-						case 5: strcpy(cItemName, "BattleAxe+1"); break;
-
-					}
-					break;
-
-				case 25: // Gagoyle
-					switch (iDice(1,4)) {
-						case 1: strcpy(cItemName, "Flameberge"); break;
-						case 2: strcpy(cItemName, "Flameberge+1"); break;
-						case 3: strcpy(cItemName, "BattleAxe"); break;
-						case 4: strcpy(cItemName, "GiantSword"); break;
-					}
-					break;
-
-				case 26: // Hellclaw, Tigerworm
-					switch (iDice(1,5)) {
-						case 1: strcpy(cItemName, "Flameberge"); break;
-						case 2: strcpy(cItemName, "Flameberge+1"); break;
-						case 3: strcpy(cItemName, "BattleAxe"); break;
-						case 4: strcpy(cItemName, "GiantSword"); break;
-						case 5: strcpy(cItemName, "BattleAxe+1"); break;
-					}
-					break;
-
-				case 27: // Rudolph
-					switch (iDice(1,2)) {
-						case 1: strcpy(cItemName, "Sabre"); break;
-						case 2: strcpy(cItemName, "Scimitar"); break;
-					}
-					break;
-
-				case 28: // DireBoar
-					switch (iDice(1,2)) {
-						case 1: strcpy(cItemName, "WarAxe"); break;
-						case 2: strcpy(cItemName, "Rapier"); break;
-					}
-					break;
-
-				case 29: // Frost
-					switch (iDice(1,2)) {
-						case 1: strcpy(cItemName, "Flameberge"); break;
-						case 2: strcpy(cItemName, "Flameberge+1"); break;
-					}
-					break;
-
-				case 30: // Ice-Golem
-					strcpy(cItemName, "Esterk"); break;
-
-			}
-}
-else {
+					else {
 						// 30% the weapon is a Wand
 						switch (iGenLevel) {
 
-						case 1: // Slime
-						case 2:	// Rabbit, Cat
-						case 3: // Giant-Ant
-						case 4: // Amphis
-						case 8: // Skeleton
-						case 14: // Beholder
-						case 19: // Stalker
-						case 20: // WereWolf
-						case 21: // Dark-Elf
-						case 22: // Ettin
-						case 23: // Demon
-						case 24: // Unicorn
-						case 25: // Gagoyle
-						case 28: // DireBoar
-							break; // NPC that do not drop wand
-						case 5: // Orc, Orc-Mage
-						case 6: // Zombie
-						case 7: // Scorpion
-						case 9: // Clay-Golem
-						case 10: // Stone-Golem
-							strcpy(cItemName, "MagicWand(MS0)"); break;
-						case 11: // Hellbound
-						case 12: // Cyclops
-						case 13: // Troll
-						case 15: // Cannibal-Plant
-						case 16: // Orge
-						case 27: // Rudolph
-							strcpy(cItemName, "MagicWand(MS10)"); break;
-						case 17: // Mountain-Giant
-						case 18: // Liche
-						case 26: // Hellclaw, Tigerworm
-						case 29: // Frost
-							strcpy(cItemName, "MagicWand(MS20)"); break;
+						case 2: 
+						case 3:
+							iItemID = 258; break; // MagicWand(MS0)
+						case 4: 
+						case 5: 
+						case 6: 
+							iItemID = 257; break; // MagicWand(MS10)
+						case 7:
+						case 8:
+							iItemID = 256; break; // MagicWand(MS20)
 						}	
-			}
+					}
 
 				}
-else {
+				else {
 					// 1.4% chance Valuable Drop 40% that drop is an Armor/Shield
-               switch (iGenLevel) {
-				   
-				case 1: // Slime
-				case 3: // Giant-Ant
-				case 4: // Amphis	
-				case 5: // Orc, Orc-Mage
-				case 6: // Zombie
-				case 7: // Scorpion
-				case 8: // Skeleton
+					switch (iGenLevel) {
+
+				case 1: // Slime, Giant-Ant, Amphis, Rabbit, Cat
+				case 2: // Skeleton, Orc, Orc-Mage, Scorpion, Zombie
 					switch (iDice(1,2)) { 
-						case 1: strcpy(cItemName, "WoodShield"); break; 
-						case 2: strcpy(cItemName, "TargeShield"); break; 
-						} 
-						break; 
-
-				case 2:	// Rabbit, Cat
-					strcpy(cItemName, "WoodShield"); break;
-
-				case 9: // Clay-Golem
-					switch (iDice(1,4)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-							} 
-							break; 
-						case 3: strcpy(cItemName, "WoodShield"); break;
-						case 4: strcpy(cItemName, "TargeShield"); break;
+				case 1: iItemID = 79;  break; // WoodShield
+				case 2: iItemID = 81;  break; // TargeShield
 					}
-					break;
-				
-				case 10: // Stone-Golem
-					switch (iDice(1,2)) {
-						case 1:
-							switch (iDice(1,2)) {
-								case 1: strcpy(cItemName, "ChainHose(M)"); break;
-								case 2: strcpy(cItemName, "ChainHose(W)"); break;
-							}
-							break;
-						case 2: strcpy(cItemName, "TargeShield"); break;
-					}
-					break;
+					break; 
 
-				case 11: // Hellbound
-					switch (iDice(1,4)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-							} 
-							break; 
-						case 3:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
-								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
-							} 
-							break; 
-						case 4: strcpy(cItemName, "BlondeShield"); break;
-					}
-					break;
-
-				case 12: // Cyclops
-					switch (iDice(1,5)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-							} 
-							break; 
-						case 3:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
-								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
-							} 
-							break; 
-						case 4: strcpy(cItemName, "BlondeShield"); break;
-						case 5: strcpy(cItemName, "IronShield"); break;
-					}
-					break;
-
-				case 13: // Troll
-					switch (iDice(1,7)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-							} 
-							break; 
-						case 3:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
-								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
-							} 
-							break; 
-						case 4: strcpy(cItemName, "WoodShield"); break;
-						case 5: strcpy(cItemName, "TargeShield"); break;
-						case 6: strcpy(cItemName, "IronShield"); break;
-						case 7: strcpy(cItemName, "BlondeSheild"); break;
-					}
-					break;
-
-				case 15: // Cannibal-Plant
-					strcpy(cItemName, "TargeShield"); break; 
-
-				case 16: // Orge
-					switch (iDice(1,8)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainMail(M)"); break; 
-								case 2: strcpy(cItemName, "ChainMail(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-							} 
-							break; 
-						case 3:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "PlateMail(M)"); break; 
-								case 2: strcpy(cItemName, "PlateMail(W)"); break; 
-							} 
-							break; 
-						case 4:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "PlateLeggings(M)"); break; 
-								case 2: strcpy(cItemName, "PlateLeggings(W)"); break; 
-							} 
-							break; 
-						case 5: strcpy(cItemName, "WoodShield"); break;
-						case 6: strcpy(cItemName, "TargeShield"); break;
-						case 7: strcpy(cItemName, "IronShield"); break;
-						case 8: strcpy(cItemName, "LagiShield"); break;
-					}
-					break;
-
-				case 17: // Mountain-Giant
-					switch (iDice(1,4)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Wings-Helm(M)"); break; 
-								case 2: strcpy(cItemName, "Wings-Helm(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Horned-Helm(M)"); break; 
-								case 2: strcpy(cItemName, "Horned-Helm(W)"); break; 
-							} 
-							break; 
-						case 3: strcpy(cItemName, "Cape"); break;
-						case 4: strcpy(cItemName, "LagiShield"); break;
-					}
-					break;
-					
-				case 20: // WereWolf
-					switch (iDice(1,6)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
-								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-							} 
-							break; 
-						case 3:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainMail(M)"); break; 
-								case 2: strcpy(cItemName, "ChainMail(W)"); break; 
-							} 
-							break; 
-						case 4:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-							} 
-							break; 
-						case 5: 							
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "PlateMail(M)"); break; 
-								case 2: strcpy(cItemName, "PlateMail(W)"); break; 
-							} 
-							break; 
-						case 6: strcpy(cItemName, "LagiShield"); break;
-					}
-					break;
-
-
-				case 21: // Dark-Elf
-					switch (iDice(1,3)) {	
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
-								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainMail(M)"); break; 
-								case 2: strcpy(cItemName, "ChainMail(W)"); break; 
-							} 
-							break; 
-						case 3: strcpy(cItemName, "TargeShield"); break;
-					}
-					break;
-
-				case 22: // Ettin
-					switch (iDice(1,4)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Wings-Helm(M)"); break; 
-								case 2: strcpy(cItemName, "Wings-Helm(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Horned-Helm(M)"); break; 
-								case 2: strcpy(cItemName, "Horned-Helm(W)"); break; 
-							} 
-							break; 
-						case 3:
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-							} 
-							break; 
-
-						case 4: strcpy(cItemName, "Cape"); break;
-					}
-					break;
-				
-				case 23: // Demon
-					switch (iDice(1,3)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "FullHelm(M)"); break; 
-								case 2: strcpy(cItemName, "FullHelm(W)"); break; 
-							} 
-							break;
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Helm(M)"); break; 
-								case 2: strcpy(cItemName, "Helm(W)"); break; 
-							} 
-							break;
-						case 3: strcpy(cItemName, "Cape"); break;
-					}
-					break;
-
-				case 24: // Unicorn
-				case 28: // DireBoar
-				case 29: // Frost
+				case 3: // Stone-Golem, Clay-Golem
 					switch (iDice(1,1)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "PlateMail(M)"); break; 
-								case 2: strcpy(cItemName, "PlateMail(W)"); break; 
-							} 
-							break;
+				case 1: iItemID = 81; break; // TargeShield
 					}
 					break;
 
-				case 25: // Gagoyle
-					strcpy(cItemName, "Cape"); break;
-				
-				case 27: // Rudolph
-					switch (iDice(1,2)) {
-						case 1: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-							} 
-							break; 
-						case 2: 
-							switch (iDice(1,2)) { 
-								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-							} 
-							break; 
+				case 4: // Hellbound, Rudolph
+					switch (iDice(1,5)) {
+				case 1: iItemID = 454; break; // Hauberk(M)
+				case 2: iItemID = 472; break; // Hauberk(W)
+				case 3: iItemID = 461; break; // ChainHose(M)
+				case 4: iItemID = 482; break; // ChainHose(W)
+				case 5: iItemID = 83; break; // BlondeShield
 					}
 					break;
-		}
-}
 
+				case 5: // Cyclops, Troll, Beholder, Cannibal-Plant, DireBoar
+					switch (iDice(1,3)) {
+				case 1: iItemID = 455; break; // LeatherArmor(M)
+				case 2: iItemID = 475; break; // LeatherArmor(W)
+				case 3: iItemID = 84; break; // IronShield
+					}
+					break;
+
+				case 6: // Orge, WereWolf, Stalker, Dark-Elf, Ice-Golem
+					switch (iDice(1,4)) {
+				case 1: switch(iDice(1,2)) {
+				case 1: iItemID = 456; break; // ChainMail(M)
+				case 2: iItemID = 476; break; // ChainMail(W)
+						}
+				case 2: switch(iDice(1,2)) {
+				case 1: iItemID = 458; break; // PlateMail(M)
+				case 2: iItemID = 478; break; // PlateMail(W)
+						}
+				case 3: iItemID = 85; break; // LagiShield
+				case 4: switch(iDice(1,4)) {
+				case 1: iItemID = 750; break; // Horned-Helm(M)
+				case 2: iItemID = 751; break; // Wings-Helm(M)
+				case 3: iItemID = 754; break; // Horned-Helm(W)
+				case 4: iItemID = 755; break; // Wings-Helm(W)
+						}
+					}
+					break;					
+
+				case 7: // Liche, Frost
+					switch (iDice(1,6)) {
+				case 1: switch(iDice(1,2)) {
+				case 1: iItemID = 457; break; // ScaleMail(M)
+				case 2: iItemID = 477; break; // ScaleMail(W)
+						}
+				case 2: switch(iDice(1,2)) {
+				case 1: iItemID = 458; break; // PlateMail(M)
+				case 2: iItemID = 478; break; // PlateMail(W)
+						}
+				case 3: iItemID = 86; break; // KnightShield
+				case 4: iItemID = 87; break; // TowerShield
+				case 5: switch(iDice(1,2)) {
+				case 1: iItemID = 600; break; // Helm(M)
+				case 2: iItemID = 602; break; // Helm(M)
+						}
+				case 6: switch(iDice(1,2)) {
+				case 1: iItemID = 601; break; // Full-Helm(M)
+				case 2: iItemID = 603; break; // Full-Helm(M)
+						}
+					}
+					break;
+
+				case 8: // Demon, Unicorn, Hellclaw, Tigerworm, Gagoyle
+					switch (iDice(1,1)) {
+				case 1: iItemID = 402; break; // Cape
+					}
+					break;
+					}
+				}
 				// 0-None 1-필살기대미지추가 2-중독효과 3-정의의  
 				// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의 10-마법 성공의
-				
+
 				// 아이템을 만들고 
 				pItem = new class CItem;
 				// 기본 특성으로 아이템 생성 
@@ -42675,7 +42256,7 @@ else {
 					delete pItem;
 					return;	
 				}
-				
+
 				if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK) {
 					// 공격 무기류에 붙을 수 있는 접두사를 선택 
 					// 가벼운(3%) 강화된(7%) 필살의(15%) 민첩의(20%) 정의의(20%) 중독의(16%) 예리한(16%) 고대문명의(3%)
@@ -42712,27 +42293,27 @@ else {
 						dwType = 9;
 						cColor = 8;
 					}
-										
+
 					// 아이템 색상 입력 
-					pItem->m_cItemColor = cColor;
 
 					// 가벼운, 강화된, 필살의, 민첩의, 정의의, 중독의, 예리한, 고대문명의
 					// 아이템 Main 특성치 정도값 입력 
-					
-					iResult = iDice(1, 29348);
+					pItem->m_cItemColor = cColor;
+
+					iResult = iDice(1, 30000);
 					if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-					else if ((iResult >= 10000) && (iResult < 16600))  dwValue = 2;  // 6600/29348 = 22.4%
-					else if ((iResult >= 16600) && (iResult < 20956))  dwValue = 3;  // 4356/29348 = 14.8%
-					else if ((iResult >= 20956) && (iResult < 23830))  dwValue = 4;  // 2874/29348 = 9.7%
-					else if ((iResult >= 23830) && (iResult < 25727))  dwValue = 5;  // 1897/29348 = 6.4%
-					else if ((iResult >= 25727) && (iResult < 26979))  dwValue = 6;  // 1252/29348 = 4.2%
-					else if ((iResult >= 26979) && (iResult < 27805))  dwValue = 7;  // 826/29348 = 2.8%
-					else if ((iResult >= 27805) && (iResult < 28350))  dwValue = 8;  // 545/29348 = 1.85%
-					else if ((iResult >= 28350) && (iResult < 28710))  dwValue = 9;  // 360/29348 = 1.2%
-					else if ((iResult >= 28710) && (iResult < 28947))  dwValue = 10; // 237/29348 = 0.8%
-					else if ((iResult >= 28947) && (iResult < 29103))  dwValue = 11; // 156/29348 = 0.5%
-					else if ((iResult >= 29103) && (iResult < 29206))  dwValue = 12; // 103/29348 = 0.3%
-					else if ((iResult >= 29206) && (iResult < 29274))  dwValue = 13; // 68/29348 = 0.2%
+					else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
+					else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
+					else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
+					else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
+					else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
+					else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
+					else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
+					else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
+					else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
+					else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
+					else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
+					else if ((iResult >= 29970) && (iResult < 30000))  dwValue = 13; // 68/29348 = 0.2%
 
 					// 무기의 Main 특성치에 따라 수치 보정 
 					switch (dwType) {
@@ -42749,7 +42330,7 @@ else {
 						if (dwValue <= 2) dwValue = 2;
 						break; 
 					}
-				
+
 					// 아이템 Main 특성치, 값 입력
 					pItem->m_dwAttribute = NULL;
 					dwType  = dwType << 20;
@@ -42758,7 +42339,7 @@ else {
 
 					// 아이템 Sub 특성치가 입력될 확률은 40%
 					if (iDice(1,10000) >= 6000) {
-					
+
 						// 희귀 아이템 Sub 특성치 효과 종류: 
 						//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
 						//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
@@ -42770,22 +42351,22 @@ else {
 						else if ((iResult >= 5000) && (iResult <= 8499))  dwType = 10;
 						else if ((iResult >= 8500) && (iResult <= 9499))  dwType = 12;
 						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 11;
-											
+
 						// 아이템 Sub 특성치 정도값 입력 
-						iResult = iDice(1, 29348);
+						iResult = iDice(1, 30000);
 						if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
-						else if ((iResult >= 10000) && (iResult < 16600))  dwValue = 2;  // 6600/29348 = 22.4%
-						else if ((iResult >= 16600) && (iResult < 20956))  dwValue = 3;  // 4356/29348 = 14.8%
-						else if ((iResult >= 20956) && (iResult < 23830))  dwValue = 4;  // 2874/29348 = 9.7%
-						else if ((iResult >= 23830) && (iResult < 25727))  dwValue = 5;  // 1897/29348 = 6.4%
-						else if ((iResult >= 25727) && (iResult < 26979))  dwValue = 6;  // 1252/29348 = 4.2%
-						else if ((iResult >= 26979) && (iResult < 27805))  dwValue = 7;  // 826/29348 = 2.8%
-						else if ((iResult >= 27805) && (iResult < 28350))  dwValue = 8;  // 545/29348 = 1.85%
-						else if ((iResult >= 28350) && (iResult < 28710))  dwValue = 9;  // 360/29348 = 1.2%
-						else if ((iResult >= 28710) && (iResult < 28947))  dwValue = 10; // 237/29348 = 0.8%
-						else if ((iResult >= 28947) && (iResult < 29103))  dwValue = 11; // 156/29348 = 0.5%
-						else if ((iResult >= 29103) && (iResult < 29206))  dwValue = 12; // 103/29348 = 0.3%
-						else if ((iResult >= 29206) && (iResult < 29274))  dwValue = 13; // 68/29348 = 0.2%
+						else if ((iResult >= 10000) && (iResult < 17400))  dwValue = 2;  // 6600/29348 = 22.4%
+						else if ((iResult >= 17400) && (iResult < 22400))  dwValue = 3;  // 4356/29348 = 14.8%
+						else if ((iResult >= 22400) && (iResult < 25400))  dwValue = 4;  // 2874/29348 = 9.7%
+						else if ((iResult >= 25400) && (iResult < 27400))  dwValue = 5;  // 1897/29348 = 6.4%
+						else if ((iResult >= 27400) && (iResult < 28400))  dwValue = 6;  // 1252/29348 = 4.2%
+						else if ((iResult >= 28400) && (iResult < 28900))  dwValue = 7;  // 826/29348 = 2.8%
+						else if ((iResult >= 28900) && (iResult < 29300))  dwValue = 8;  // 545/29348 = 1.85%
+						else if ((iResult >= 29300) && (iResult < 29600))  dwValue = 9;  // 360/29348 = 1.2%
+						else if ((iResult >= 29600) && (iResult < 29800))  dwValue = 10; // 237/29348 = 0.8%
+						else if ((iResult >= 29800) && (iResult < 29900))  dwValue = 11; // 156/29348 = 0.5%
+						else if ((iResult >= 29900) && (iResult < 29970))  dwValue = 12; // 103/29348 = 0.3%
+						else if ((iResult >= 29970) && (iResult < 30000))  dwValue = 13; // 68/29348 = 0.2%
 
 						// 무기의 Sub 특성치에 따라 수치 보정 
 						switch (dwType) {
@@ -42802,94 +42383,94 @@ else {
 							dwValue = 5;
 							break; 
 						}
-					
+
 						// 아이템 Sub 특성치 입력
 						dwType  = dwType << 12;
 						dwValue = dwValue << 8;
-					
+
 						pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 					}
 				}
-				
+
 				else if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK_MANASAVE) 
-            { 
-               // 아이템 Main 특성치 정도값 입력 
-               pItem->m_cItemColor = 0; 
-               iResult = iDice(1, 10000); 
-               if ((iResult >= 1) && (iResult < 6500))               dwValue = 3;  // = 35% 
-               else if ((iResult >= 6500) && (iResult < 9300))         dwValue = 4;  // = 25% 
-               else if ((iResult >= 9300) && (iResult < 9900))         dwValue = 5; // = 0.01% 
-               else if ((iResult >= 9900) && (iResult < 9990))         dwValue = 6; // = 0.004% 
-               else if ((iResult >= 9990) && (iResult <= 10000 ))      dwValue = 7; // = 0.002% 
-               pItem->m_dwAttribute = NULL; 
-               dwType = 10; //CAST PROBABILITY 
-               dwType  = dwType << 20; 
-               dwValue = dwValue << 16; 
-               pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
-                
-               // 방어구 Sub 특성치가 입력될 확률은 40% 
-                
-               if (iDice(1,10000) >= 6000) 
-               { 
-                   
-                  // 희귀 아이템 Sub 특성치 효과 종류: 
-                  //추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5) 
-                  //MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9) 
-                  //연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12) 
-                   
-                  // 방어구 이기 때문에 
-                  // 추가독성저항(10%)  추가방어값(30%)  SP회복추가(15%)  HP회복추가(10%) 
-                  // MP회복 추가(10%) 추가마법저항(15%) 물리대미지흡수(5%) 마법대미지흡수(5%) 
-                   
-                  iResult = iDice(1,10000); 
-                  if      ((iResult >= 1) && (iResult <= 6000))            dwType = 2; //hp 
-                  else if ((iResult >= 6001) && (iResult <= 9499))         dwType=10; //consecutive Attack Damage 
-                  else if ((iResult >= 9500) && (iResult <= 9899))         dwType=11; //gold 
-                  else if ((iResult >= 9900) && (iResult <= 10000))         dwType=12; //exp 
-                   
-                  // 방어구 Sub 특성치 정도값 입력 
-                  // 방어구의 Sub 특성치에 따라 수치 보정 
-                  switch (dwType) { 
-                  case 2: // 공격명중 최저 +21% //HITTING PROABILITY 
-                     iResult = iDice(1, 10000); 
-                     if ((iResult >= 1) &&(iResult < 8000))               dwValue = 3;  // = 25% 
-                     else if ((iResult >= 8000) && (iResult < 9000))         dwValue = 4;  // = 10% 
-                     else if ((iResult >= 9000) && (iResult < 9500))         dwValue = 5;  // = 10% 
-                     else if ((iResult >= 9500) && (iResult < 9800))         dwValue = 6;  // = 5% 
-                     else if ((iResult >= 9800) && (iResult < 9900))         dwValue = 7;  // = 1% 
-                     else if ((iResult >= 9900) && (iResult < 9970))         dwValue = 8;  // = 0.25% 
-                     else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 9; // = 0.015% 
-                     else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 10; // = 0.01% 
-                     else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 11; // = 0.004% 
-                     else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 12; // = 0.002% 
-                     else if (iResult == 10000)      dwValue = 13; // = 0.002% 
-                     break; 
-                  case 10: // 연속 타격 최저 +1 최대 7 //CONSECUTIVE DAMAGE 
-                     if (dwValue > 7) dwValue = 7; 
-                     iResult = iDice(1, 10000); 
-                  if ((iResult >= 1) &&(iResult < 9500))               dwValue = 1;  // = 1% 
-                  else if ((iResult >= 9500) && (iResult < 9970))         dwValue = 2;  // = 0.25% 
-                  else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 3; // = 0.015% 
-                  else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 4; // = 0.01% 
-                  else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 5; // = 0.004% 
-                  else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 6; // = 0.002% 
-                  else if (iResult == 10000)      dwValue = 7; // = 0.002% 
-                     break; 
-                  case 11: // Exp는 무조건 +20% //EXPERIENCE 
-                     dwValue = 2; 
-                     break; 
-                  case 12: // Gold는 무조건 +50% //GOLD 
-                     dwValue = 5; 
-                     break; 
-                  } 
-               } 
-               dwType  = dwType << 12; 
-               dwValue = dwValue << 8; 
-               pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
-            }
+				{ 
+					// 아이템 Main 특성치 정도값 입력 
+					pItem->m_cItemColor = 5; 
+					iResult = iDice(1, 10000); 
+					if ((iResult >= 1) && (iResult < 6500))               dwValue = 3;  // = 35% 
+					else if ((iResult >= 6500) && (iResult < 9300))         dwValue = 4;  // = 25% 
+					else if ((iResult >= 9300) && (iResult < 9900))         dwValue = 5; // = 0.01% 
+					else if ((iResult >= 9900) && (iResult < 9990))         dwValue = 6; // = 0.004% 
+					else if ((iResult >= 9990) && (iResult <= 10000 ))      dwValue = 7; // = 0.002% 
+					pItem->m_dwAttribute = NULL; 
+					dwType = 10; //CAST PROBABILITY 
+					dwType  = dwType << 20; 
+					dwValue = dwValue << 16; 
+					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
+
+					// 방어구 Sub 특성치가 입력될 확률은 40% 
+
+					if (iDice(1,10000) >= 6000) 
+					{ 
+
+						// 희귀 아이템 Sub 특성치 효과 종류: 
+						//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5) 
+						//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9) 
+						//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12) 
+
+						// 방어구 이기 때문에 
+						// 추가독성저항(10%)  추가방어값(30%)  SP회복추가(15%)  HP회복추가(10%) 
+						// MP회복 추가(10%) 추가마법저항(15%) 물리대미지흡수(5%) 마법대미지흡수(5%) 
+
+						iResult = iDice(1,10000); 
+						if      ((iResult >= 1) && (iResult <= 6000))            dwType = 2; //hp 
+						else if ((iResult >= 6001) && (iResult <= 9499))         dwType=10; //consecutive Attack Damage 
+						else if ((iResult >= 9500) && (iResult <= 9899))         dwType=11; //gold 
+						else if ((iResult >= 9900) && (iResult <= 10000))         dwType=12; //exp 
+
+						// 방어구 Sub 특성치 정도값 입력 
+						// 방어구의 Sub 특성치에 따라 수치 보정 
+						switch (dwType) { 
+				case 2: // 공격명중 최저 +21% //HITTING PROABILITY 
+					iResult = iDice(1, 10000); 
+					if ((iResult >= 1) &&(iResult < 8000))               dwValue = 3;  // = 25% 
+					else if ((iResult >= 8000) && (iResult < 9000))         dwValue = 4;  // = 10% 
+					else if ((iResult >= 9000) && (iResult < 9500))         dwValue = 5;  // = 10% 
+					else if ((iResult >= 9500) && (iResult < 9800))         dwValue = 6;  // = 5% 
+					else if ((iResult >= 9800) && (iResult < 9900))         dwValue = 7;  // = 1% 
+					else if ((iResult >= 9900) && (iResult < 9970))         dwValue = 8;  // = 0.25% 
+					else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 9; // = 0.015% 
+					else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 10; // = 0.01% 
+					else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 11; // = 0.004% 
+					else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 12; // = 0.002% 
+					else if (iResult == 10000)      dwValue = 13; // = 0.002% 
+					break; 
+				case 10: // 연속 타격 최저 +1 최대 7 //CONSECUTIVE DAMAGE 
+					if (dwValue > 7) dwValue = 7; 
+					iResult = iDice(1, 10000); 
+					if ((iResult >= 1) &&(iResult < 9500))               dwValue = 1;  // = 1% 
+					else if ((iResult >= 9500) && (iResult < 9970))         dwValue = 2;  // = 0.25% 
+					else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 3; // = 0.015% 
+					else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 4; // = 0.01% 
+					else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 5; // = 0.004% 
+					else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 6; // = 0.002% 
+					else if (iResult == 10000)      dwValue = 7; // = 0.002% 
+					break; 
+				case 11: // Exp는 무조건 +20% //EXPERIENCE 
+					dwValue = 2; 
+					break; 
+				case 12: // Gold는 무조건 +50% //GOLD 
+					dwValue = 5; 
+					break; 
+						} 
+					} 
+					dwType  = dwType << 12; 
+					dwValue = dwValue << 8; 
+					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
+				}
 				else if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_DEFENSE) {
 					// 방어구에 맞는 접두사와 특성치를 선택, 할당한다.
-					
+
 					// 강화된(60%) 가벼운 (40%)
 					iResult = iDice(1,10000);
 					if ((iResult >= 1) && (iResult <= 5999))          dwType = 8;
@@ -42920,7 +42501,7 @@ else {
 						if (dwValue <= 2) dwValue = 2;
 						break; 
 					}
-				
+
 					// 방어구 Main 특성치, 값 입력
 					pItem->m_dwAttribute = NULL;
 					dwType  = dwType << 20;
@@ -42929,12 +42510,12 @@ else {
 
 					// 방어구 Sub 특성치가 입력될 확률은 40%
 					if (iDice(1,10000) >= 6000) {
-						
+
 						// 희귀 아이템 Sub 특성치 효과 종류: 
 						//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
 						//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
 						//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
-						
+
 						// 방어구 이기 때문에 
 						// 추가독성저항(10%)  추가방어값(30%)  SP회복추가(15%)  HP회복추가(10%) 
 						// MP회복 추가(10%) 추가마법저항(15%) 물리대미지흡수(5%) 마법대미지흡수(5%)
@@ -42947,9 +42528,9 @@ else {
 						else if ((iResult >= 7500) && (iResult <= 8999))  dwType = 7;
 						else if ((iResult >= 9000) && (iResult <= 9499))  dwType = 8;
 						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 9;
-					
+
 						// 방어구 Sub 특성치 정도값 입력 
-						
+
 						iResult = iDice(1, 29348);
 						if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
 						else if ((iResult >= 10000) && (iResult < 16600))  dwValue = 2;  // 6600/29348 = 22.4%
@@ -42975,53 +42556,56 @@ else {
 							if (dwValue <= 3) dwValue = 3;
 							break; 
 						}
-					
+
 						// 아이템 Sub 특성치 입력
 						dwType  = dwType << 12;
 						dwValue = dwValue << 8;
-					
+
 						pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 					}
 				}
-				
+
 				// 마지막으로 특성치를 특수 아이템에 맞게끔 변경 
 				_AdjustRareItemValue(pItem);
 			}
 		}
 
-		// 아이템에 고유 코드 입력 
-		pItem->m_sTouchEffectType   = DEF_ITET_ID;
-		pItem->m_sTouchEffectValue1 = iDice(1,100000);
-		pItem->m_sTouchEffectValue2 = iDice(1,100000);
-		//pItem->m_sTouchEffectValue3 = timeGetTime();
-		// 마지막 숫자는 아이템 생성 월, 일	
-		SYSTEMTIME SysTime;
-		char cTemp[256];
-		GetLocalTime(&SysTime);
-		ZeroMemory(cTemp, sizeof(cTemp));
-		wsprintf(cTemp, "%d%2d",  (short)SysTime.wMonth, (short)SysTime.wDay);
-		pItem->m_sTouchEffectValue3 = atoi(cTemp);
+		if (_bInitItemAttr(pItem, iItemID) == FALSE) {
+			delete pItem;
+			pItem = NULL;
+		}
+		else{
+			// 아이템에 고유 코드 입력 
+			pItem->m_sTouchEffectType   = DEF_ITET_ID;
+			pItem->m_sTouchEffectValue1 = iDice(1,100000);
+			pItem->m_sTouchEffectValue2 = iDice(1,100000);
+			//pItem->m_sTouchEffectValue3 = timeGetTime();
+			// 마지막 숫자는 아이템 생성 월, 일	
+			SYSTEMTIME SysTime;
+			char cTemp[256];
+			GetLocalTime(&SysTime);
+			ZeroMemory(cTemp, sizeof(cTemp));
+			wsprintf(cTemp, "%d%2d",  (short)SysTime.wMonth, (short)SysTime.wDay);
+			pItem->m_sTouchEffectValue3 = atoi(cTemp);
 
-		// 아이템을 서있는 위치에 떨어뜨린다. 
-		m_pMapList[ m_pNpcList[iNpcH]->m_cMapIndex ]->bSetItem(m_pNpcList[iNpcH]->m_sX, 
-			                                                   m_pNpcList[iNpcH]->m_sY, 
-															   pItem);
-			
-		// 다른 클라이언트에게 아이템이 떨어진 것을 알린다. 
-		SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_ITEMDROP, m_pNpcList[iNpcH]->m_cMapIndex,
-			                        m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
-			                        pItem->m_sSprite, pItem->m_sSpriteFrame, pItem->m_cItemColor); //v1.4 color
+			// 아이템을 서있는 위치에 떨어뜨린다. 
+			m_pMapList[ m_pNpcList[iNpcH]->m_cMapIndex ]->bSetItem(m_pNpcList[iNpcH]->m_sX, 
+				m_pNpcList[iNpcH]->m_sY, 
+				pItem);
 
-		// 로그 남긴다.
-		_bItemLog(DEF_ITEMLOG_NEWGENDROP, NULL, NULL, pItem);
+			// 다른 클라이언트에게 아이템이 떨어진 것을 알린다. 
+			SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_ITEMDROP, m_pNpcList[iNpcH]->m_cMapIndex,
+				m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
+				pItem->m_sSprite, pItem->m_sSpriteFrame, pItem->m_cItemColor); //v1.4 color
+
+			// 로그 남긴다.
+			_bItemLog(DEF_ITEMLOG_NEWGENDROP, NULL, NULL, pItem);
+
+			delete pItem;
+			pItem = NULL;
+		}
 	}
 }
-
-
-
-
-
-
 
 BOOL CGame::_bDecodeDupItemIDFileContents(char *pData, DWORD dwMsgSize)
 {
@@ -43491,7 +43075,7 @@ void CGame::RequestRestartHandler(int iClientH)
 		}
 		else {
 			// ¼Ò¼ÓÀÌ ÀÖ´Ù¸é ¼Ò¼Ó ¸¶À»ÀÇ ºÎÈ°Á¸À¸·Î °£´Ù.
-			if (strcmp(m_pClientList[iClientH]->m_cLocation, "aresden") == 0) {
+			if (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) {
 				 memcpy(m_pClientList[iClientH]->m_cMapName, "resurr1", 7);
 			}
 			else {
@@ -44327,256 +43911,188 @@ int CGame::iGetItemWeight(CItem *pItem, int iCount)
 }
 
 
-BOOL CGame::bGetItemNameWhenDeleteNpc(char * pItemName, short sNpcType) 
+BOOL CGame::bGetItemNameWhenDeleteNpc(int & iItemID, short sNpcType)
 { 
- int iResult; 
-   // NPC를 삭제할때 특수 아이템을 발생시킬 것인지의 여부를 계산한다. 
+	int iResult; 
+	// NPC를 삭제할때 특수 아이템을 발생시킬 것인지의 여부를 계산한다. 
 
-   switch (sNpcType) { 
+	switch (sNpcType) { 
 
-   /*   case 73: // Fire-Wyvern
-	  iResult = iDice(1, 10000);
-	  if ((iResult >= 1) && (iResult <= 4999)) {
-		  if (iDice(1,2) ==1)
-			  strcpy(pItemName, "KnecklaceOfFirePro");
-		  else strcpy(pItemName, "Xli");
-	  }
-      else if ((iResult >= 5000) && (iResult <= 7499))  strcpy(pItemName, "Excalibur"); 
-      else if ((iResult >= 7500) && (iResult <= 8749))  strcpy(pItemName, "SwordofIceElemental"); 
-      else if ((iResult >= 8750) && (iResult <= 9374))  strcpy(pItemName, "DragonSword"); 
-      else if ((iResult >= 9375) && (iResult <= 9687))  strcpy(pItemName, "MagicNecklace(MS10)"); 
-      else if ((iResult >= 9688) && (iResult <= 9843))  strcpy(pItemName, "KlonessAxe"); 
-      else if ((iResult >= 9844) && (iResult <= 9921))  strcpy(pItemName, "GBattleHammer"); 
-      else if ((iResult >= 9922) && (iResult <= 9960))  strcpy(pItemName, "StormBringer"); 
-      else if ((iResult >= 9961) && (iResult <= 9980))  strcpy(pItemName, "MagicWand(M.Shield)"); 
-      else if ((iResult >= 9981) && (iResult <= 9990))  strcpy(pItemName, "DragonStaff"); 
-      else if ((iResult >= 9991) && (iResult <= 9996))  strcpy(pItemName, "KlonessMagicWand"); 
-      else if ((iResult >= 9996) && (iResult <= 9998))  strcpy(pItemName, "RingOfGrandMage"); 
-      else if ((iResult >= 9999) && (iResult <= 10000)) strcpy(pItemName, "NecklaceOfXelima"); 
-      return TRUE; 
+		/*   case 49: // Hellclaw 
+		iResult = iDice(1,10000); 
+		if ((iResult >= 1) && (iResult <= 598))  strcpy(pItemName, "ZemstoneofSacrifice"); 
+		else if ((iResult >= 599) && (iResult <= 998))  strcpy(pItemName, "StoneOfMerien"); 
+		else if ((iResult >= 999) && (iResult <= 1398))  strcpy(pItemName, "StoneOfXelima"); 
+		else if ((iResult >= 1399)&& (iResult <= 1798))  strcpy(pItemName, "AncientTablet(LU)"); 
+		else if ((iResult >= 1799) && (iResult <= 2198))  strcpy(pItemName, "AncientTablet(LD)"); 
+		else if ((iResult >= 2199) && (iResult <= 2598))  strcpy(pItemName, "AncientTablet(RU)"); 
+		else if ((iResult >= 2599) && (iResult <= 2999))  strcpy(pItemName, "AncientTablet(RD)"); 
+		else if ((iResult >= 3000) && (iResult <= 3999))  strcpy(pItemName, "PlatinumRing"); 
+		else if ((iResult >= 4000) && (iResult <= 4999))  strcpy(pItemName, "EmeraldRing"); 
+		else if ((iResult >= 5000) && (iResult <= 5999))  strcpy(pItemName, "RubyRing"); 
+		else if ((iResult >= 6000) && (iResult <= 6999))  strcpy(pItemName, "MagicNecklace(DM+1)"); 
+		else if ((iResult >= 7000) && (iResult <= 7499))  strcpy(pItemName, "MagicNecklace(RM10)"); 
+		else if ((iResult >= 7500) && (iResult <= 7999))  strcpy(pItemName, "MagicWand(M.Shield)"); 
+		else if ((iResult >= 8000) && (iResult <= 8249))  strcpy(pItemName, "MagicNecklace(DF+10)"); 
+		else if ((iResult >= 8250) && (iResult <= 8499))  strcpy(pItemName, "MagicNecklace(MS10)"); 
+		else if ((iResult >= 8500) && (iResult <= 8749))  strcpy(pItemName, "RingOfDemonpower"); 
+		else if ((iResult >= 8750) && (iResult <= 8999))  strcpy(pItemName, "NecklaceOfSufferent"); 
+		else if ((iResult >= 9000) && (iResult <= 9249))  strcpy(pItemName, "Flameberge+3(LLF)"); 
+		else if ((iResult >= 9250) && (iResult <= 9449))  strcpy(pItemName, "KnecklaceOfPoisonPro"); 
+		else if ((iResult >= 9500) && (iResult <= 9969))  strcpy(pItemName, "NecklaceOfMedusa");  
+		else if ((iResult >= 9970) && (iResult <= 9979))  strcpy(pItemName, "MerienPlateMail(M)"); 
+		else if ((iResult >= 9980) && (iResult <= 9989))  strcpy(pItemName, "MerienPlateMail(W)"); 
+		else if ((iResult >= 9990) && (iResult <= 10000)) strcpy(pItemName, "MerienShield"); 
+		return TRUE; 
 
-   case 81: // Abaddon
-	  iResult = iDice(1, 10000);
-	  if ((iResult >= 1) && (iResult <= 4999)) {
-		  if (iDice(1,2) ==1)
-			  strcpy(pItemName, "KnecklaceOfIcePro");
-		  else strcpy(pItemName, "KnecklaceOfIceEle");
-	  }
-      else if ((iResult >= 5000) && (iResult <= 7499))  strcpy(pItemName, "Excalibur"); 
-      else if ((iResult >= 7500) && (iResult <= 8749))  strcpy(pItemName, "SwordofIceElemental"); 
-      else if ((iResult >= 8750) && (iResult <= 9374))  strcpy(pItemName, "DragonSword"); 
-      else if ((iResult >= 9375) && (iResult <= 9687))  strcpy(pItemName, "MagicNecklace(MS10)"); 
-      else if ((iResult >= 9688) && (iResult <= 9843))  strcpy(pItemName, "KlonessAxe"); 
-      else if ((iResult >= 9844) && (iResult <= 9921))  strcpy(pItemName, "GBattleHammer"); 
-      else if ((iResult >= 9922) && (iResult <= 9960))  strcpy(pItemName, "StormBringer"); 
-      else if ((iResult >= 9961) && (iResult <= 9980))  strcpy(pItemName, "MagicWand(M.Shield)"); 
-      else if ((iResult >= 9981) && (iResult <= 9990))  strcpy(pItemName, "DragonStaff"); 
-      else if ((iResult >= 9991) && (iResult <= 9996))  strcpy(pItemName, "KlonessMagicWand"); 
-      else if ((iResult >= 9996) && (iResult <= 9998))  strcpy(pItemName, "RingOfGrandMage"); 
-      else if ((iResult >= 9999) && (iResult <= 10000)) strcpy(pItemName, "NecklaceOfXelima"); 
-      return TRUE; */
-
-   case 49: // Hellclaw 
-      iResult = iDice(1,10000); 
-      if ((iResult >= 1) && (iResult <= 598))  strcpy(pItemName, "ZemstoneofSacrifice"); 
-      else if ((iResult >= 599) && (iResult <= 998))  strcpy(pItemName, "StoneOfMerien"); 
-	  else if ((iResult >= 999) && (iResult <= 1398))  strcpy(pItemName, "StoneOfXelima"); 
-      else if ((iResult >= 1399)&& (iResult <= 1798))  strcpy(pItemName, "AncientTablet(LU)"); 
-	  else if ((iResult >= 1799) && (iResult <= 2198))  strcpy(pItemName, "AncientTablet(LD)"); 
-	  else if ((iResult >= 2199) && (iResult <= 2598))  strcpy(pItemName, "AncientTablet(RU)"); 
-	  else if ((iResult >= 2599) && (iResult <= 2999))  strcpy(pItemName, "AncientTablet(RD)"); 
-	  else if ((iResult >= 3000) && (iResult <= 3999))  strcpy(pItemName, "PlatinumRing"); 
-      else if ((iResult >= 4000) && (iResult <= 4999))  strcpy(pItemName, "EmeraldRing"); 
-      else if ((iResult >= 5000) && (iResult <= 5999))  strcpy(pItemName, "RubyRing"); 
-      else if ((iResult >= 6000) && (iResult <= 6999))  strcpy(pItemName, "MagicNecklace(DM+1)"); 
-      else if ((iResult >= 7000) && (iResult <= 7499))  strcpy(pItemName, "MagicNecklace(RM10)"); 
-      else if ((iResult >= 7500) && (iResult <= 7999))  strcpy(pItemName, "MagicWand(M.Shield)"); 
-      else if ((iResult >= 8000) && (iResult <= 8249))  strcpy(pItemName, "MagicNecklace(DF+10)"); 
-      else if ((iResult >= 8250) && (iResult <= 8499))  strcpy(pItemName, "MagicNecklace(MS10)"); 
-      else if ((iResult >= 8500) && (iResult <= 8749))  strcpy(pItemName, "RingOfDemonpower"); 
-      else if ((iResult >= 8750) && (iResult <= 8999))  strcpy(pItemName, "NecklaceOfSufferent"); 
-      else if ((iResult >= 9000) && (iResult <= 9249))  strcpy(pItemName, "Flameberge+3(LLF)"); 
-      else if ((iResult >= 9250) && (iResult <= 9449))  strcpy(pItemName, "KnecklaceOfPoisonPro"); 
-      else if ((iResult >= 9500) && (iResult <= 9969))  strcpy(pItemName, "NecklaceOfMedusa");  
-      else if ((iResult >= 9970) && (iResult <= 9979))  strcpy(pItemName, "MerienPlateMail(M)"); 
-      else if ((iResult >= 9980) && (iResult <= 9989))  strcpy(pItemName, "MerienPlateMail(W)"); 
-      else if ((iResult >= 9990) && (iResult <= 10000)) strcpy(pItemName, "MerienShield"); 
-	  return TRUE; 
-
-   case 50: // Tigerworm 
-      iResult = iDice(1,10000); 
-      if ((iResult >= 1) && (iResult <= 598))  strcpy(pItemName, "ZemstoneofSacrifice"); 
-      else if ((iResult >= 599) && (iResult <= 998))  strcpy(pItemName, "StoneOfMerien"); 
-	  else if ((iResult >= 999) && (iResult <= 1398))  strcpy(pItemName, "StoneOfXelima"); 
-      else if ((iResult >= 1399)&& (iResult <= 1798))  strcpy(pItemName, "AncientTablet(LU)"); 
-	  else if ((iResult >= 1799) && (iResult <= 2198))  strcpy(pItemName, "AncientTablet(LD)"); 
-	  else if ((iResult >= 2199) && (iResult <= 2598))  strcpy(pItemName, "AncientTablet(RU)"); 
-	  else if ((iResult >= 2599) && (iResult <= 2999))  strcpy(pItemName, "AncientTablet(RD)"); 
-      else if ((iResult >= 3000) && (iResult <= 3999))  strcpy(pItemName, "MagicNecklace(DF+10)"); 
-      else if ((iResult >= 4000) && (iResult <= 4999))  strcpy(pItemName, "MagicNecklace(DM+1)"); 
-      else if ((iResult >= 5000) && (iResult <= 5999))  strcpy(pItemName, "MagicNecklace(MS10)"); 
-      else if ((iResult >= 6000) && (iResult <= 6999))  strcpy(pItemName, "RingOftheAbaddon"); 
-      else if ((iResult >= 7000) && (iResult <= 7499))  strcpy(pItemName, "RingOfXelima"); 
-      else if ((iResult >= 7500) && (iResult <= 7999))  strcpy(pItemName, "RingOfDemonpower"); 
-      else if ((iResult >= 8000) && (iResult <= 8249))  strcpy(pItemName, "Flameberge+3(LLF)"); 
-      else if ((iResult >= 8250) && (iResult <= 8499))  strcpy(pItemName, "BloodSword"); 
-      else if ((iResult >= 8500) && (iResult <= 8749))  strcpy(pItemName, "BloodAxe"); 
-      else if ((iResult >= 8750) && (iResult <= 8999))  strcpy(pItemName, "BloodRapier"); 
-      else if ((iResult >= 9000) && (iResult <= 9249))  strcpy(pItemName, "KnecklaceOfLightPro"); 
-      else if ((iResult >= 9250) && (iResult <= 9499))  strcpy(pItemName, "KnecklaceOfAirEle"); 
-      else if ((iResult >= 9500) && (iResult <= 9968))  strcpy(pItemName, "Excalibur"); 
-      else if ((iResult >= 9970) && (iResult <= 9979))  strcpy(pItemName, "XelimaRapier"); 
-      else if ((iResult >= 9980) && (iResult <= 9989))  strcpy(pItemName, "XelimaBlade"); 
-      else if ((iResult >= 9990) && (iResult <= 10000)) strcpy(pItemName, "XelimaAxe"); 
-	  return TRUE; 
-   
-   case 73: // Fire-Wyvern
-      iResult = iDice(1,10000); 
-	  if ((iResult >= 1) && (iResult <= 610))  strcpy(pItemName, "ZemstoneofSacrifice"); 
-	  else if ((iResult >= 611) && (iResult <= 1156))  strcpy(pItemName, "StoneOfXelima");
-	  else if ((iResult >= 1157) && (iResult <= 1702))  strcpy(pItemName, "StoneOfMerien");
-	  else if ((iResult >= 1703) && (iResult <= 2248))  strcpy(pItemName, "EmeraldRing"); 
-	  else if ((iResult >= 2249) && (iResult <= 2794))  strcpy(pItemName, "RubyRing"); 
-	  else if ((iResult >= 2795) && (iResult <= 3340))  strcpy(pItemName, "GoldRing");
-	  else if ((iResult >= 3341) && (iResult <= 3886))  strcpy(pItemName, "AncientTablet(LU)"); 
-	  else if ((iResult >= 3887) && (iResult <= 4432))  strcpy(pItemName, "AncientTablet(LD)"); 
-	  else if ((iResult >= 4433) && (iResult <= 4978))  strcpy(pItemName, "AncientTablet(RU)"); 
-	  else if ((iResult >= 4979) && (iResult <= 5478))  strcpy(pItemName, "AncientTablet(RD)"); 
-      else if ((iResult >= 5479) && (iResult <= 5978))  strcpy(pItemName, "Fire-Bow"); 
-      else if ((iResult >= 5979) && (iResult <= 6478))  strcpy(pItemName, "MassFireStrikeManual"); 
-      else if ((iResult >= 6479) && (iResult <= 6999))  strcpy(pItemName, "BloodyShockW.Manual"); 
-      else if ((iResult >= 7000) && (iResult <= 7249))  strcpy(pItemName, "Flameberge+3(LLF)"); 
-      else if ((iResult >= 7250) && (iResult <= 7499))  strcpy(pItemName, "KnecklaceOfEfreet"); 
-      else if ((iResult >= 7500) && (iResult <= 7978))  strcpy(pItemName, "KnecklaceOfFirePro"); 
-      else if ((iResult >= 7979) && (iResult <= 8478))  strcpy(pItemName, "BloodRapier"); 
-      else if ((iResult >= 8479) && (iResult <= 8978))  strcpy(pItemName, "BloodAxe"); 
-      else if ((iResult >= 8979) && (iResult <= 9478))  strcpy(pItemName, "BloodSword"); 
-      else if ((iResult >= 9479) && (iResult <= 9979))  strcpy(pItemName, "MagicNecklace(MS10)"); 
-      else if ((iResult >= 9980) && (iResult <= 9989))  strcpy(pItemName, "RingOfGrandMage"); 
-      else if ((iResult >= 9990) && (iResult <= 10000)) strcpy(pItemName, "NecklaceOfXelima"); 
-      return TRUE; 
+		case 50: // Tigerworm 
+		iResult = iDice(1,10000); 
+		if ((iResult >= 1) && (iResult <= 598))  strcpy(pItemName, "ZemstoneofSacrifice"); 
+		else if ((iResult >= 599) && (iResult <= 998))  strcpy(pItemName, "StoneOfMerien"); 
+		else if ((iResult >= 999) && (iResult <= 1398))  strcpy(pItemName, "StoneOfXelima"); 
+		else if ((iResult >= 1399)&& (iResult <= 1798))  strcpy(pItemName, "AncientTablet(LU)"); 
+		else if ((iResult >= 1799) && (iResult <= 2198))  strcpy(pItemName, "AncientTablet(LD)"); 
+		else if ((iResult >= 2199) && (iResult <= 2598))  strcpy(pItemName, "AncientTablet(RU)"); 
+		else if ((iResult >= 2599) && (iResult <= 2999))  strcpy(pItemName, "AncientTablet(RD)"); 
+		else if ((iResult >= 3000) && (iResult <= 3999))  strcpy(pItemName, "MagicNecklace(DF+10)"); 
+		else if ((iResult >= 4000) && (iResult <= 4999))  strcpy(pItemName, "MagicNecklace(DM+1)"); 
+		else if ((iResult >= 5000) && (iResult <= 5999))  strcpy(pItemName, "MagicNecklace(MS10)"); 
+		else if ((iResult >= 6000) && (iResult <= 6999))  strcpy(pItemName, "RingOftheAbaddon"); 
+		else if ((iResult >= 7000) && (iResult <= 7499))  strcpy(pItemName, "RingOfXelima"); 
+		else if ((iResult >= 7500) && (iResult <= 7999))  strcpy(pItemName, "RingOfDemonpower"); 
+		else if ((iResult >= 8000) && (iResult <= 8249))  strcpy(pItemName, "Flameberge+3(LLF)"); 
+		else if ((iResult >= 8250) && (iResult <= 8499))  strcpy(pItemName, "BloodSword"); 
+		else if ((iResult >= 8500) && (iResult <= 8749))  strcpy(pItemName, "BloodAxe"); 
+		else if ((iResult >= 8750) && (iResult <= 8999))  strcpy(pItemName, "BloodRapier"); 
+		else if ((iResult >= 9000) && (iResult <= 9249))  strcpy(pItemName, "KnecklaceOfLightPro"); 
+		else if ((iResult >= 9250) && (iResult <= 9499))  strcpy(pItemName, "KnecklaceOfAirEle"); 
+		else if ((iResult >= 9500) && (iResult <= 9968))  strcpy(pItemName, "Excalibur"); 
+		else if ((iResult >= 9970) && (iResult <= 9979))  strcpy(pItemName, "XelimaRapier"); 
+		else if ((iResult >= 9980) && (iResult <= 9989))  strcpy(pItemName, "XelimaBlade"); 
+		else if ((iResult >= 9990) && (iResult <= 10000)) strcpy(pItemName, "XelimaAxe"); 
+		return TRUE;*/
 
    default: // 다른 몬스터. 확률 계산한다. 
-      break; 
-   }
+	   break; 
+	}
 
 	// 일단 확률 계산.
-	if (iDice(1,50) == 13) {
-		switch (sNpcType) {
-		case 11: if (iDice(1,550) != 11) return FALSE;	 break;	 // Skeleton   2 * 100
-		case 12: if (iDice(1,400) != 11) return FALSE;	 break;	 // Stone-Golem 2 * 100
-		case 13: if (iDice(1,100) != 11) return FALSE;	 break;	 // Cyclops  6 * 100
-		case 14: if (iDice(1,700) != 11) return FALSE;	 break;	 // Orc 4 * 100
-		case 17: if (iDice(1,600) != 11) return FALSE;	 break;	 // Scorpoin 5 * 100
-		case 18: if (iDice(1,850) != 11) return FALSE;	 break;	 // Zombie 1 * 100
-		case 22: if (iDice(1,600) != 11) return FALSE;	 break;	 // Amphis 5 * 100
-		case 23: if (iDice(1,400) != 11) return FALSE;	 break;	 // Clay-Golem 2 * 100
-		case 27: if (iDice(1,100) != 11) return FALSE;	 break;	 // Hellhound 7 * 100
-		case 28: if (iDice(1,100) != 11) return FALSE;	 break;	 // Troll 5 * 100
-		case 29: if (iDice(1,15) != 3) return FALSE;	 break;	 // Orge  7 * 100
-		case 30: if (iDice(1,10) !=  3) return FALSE;	 break;  // Liche 1 * 100
-		case 31:  	                                     break;	 // Demon 5 * 100
-		case 32: if (iDice(1,2) !=  1) return FALSE;	 break;	 // Unicorn 5 * 100
-		case 33: if (iDice(1,30) !=  3) return FALSE;	 break;  // WereWolf 7 * 100
-		case 48: if (iDice(1,30) !=  3) return FALSE;	 break;  // Stalker 
-		default: return FALSE;
-		}
+	/*	if (iDice(1,50) == 13) {
+	switch (sNpcType) {
+	case 11: if (iDice(1,550) != 11) return FALSE;	 break;	 // Skeleton   2 * 100
+	case 12: if (iDice(1,400) != 11) return FALSE;	 break;	 // Stone-Golem 2 * 100
+	case 13: if (iDice(1,100) != 11) return FALSE;	 break;	 // Cyclops  6 * 100
+	case 14: if (iDice(1,700) != 11) return FALSE;	 break;	 // Orc 4 * 100
+	case 17: if (iDice(1,600) != 11) return FALSE;	 break;	 // Scorpoin 5 * 100
+	case 18: if (iDice(1,850) != 11) return FALSE;	 break;	 // Zombie 1 * 100
+	case 22: if (iDice(1,600) != 11) return FALSE;	 break;	 // Amphis 5 * 100
+	case 23: if (iDice(1,400) != 11) return FALSE;	 break;	 // Clay-Golem 2 * 100
+	case 27: if (iDice(1,100) != 11) return FALSE;	 break;	 // Hellhound 7 * 100
+	case 28: if (iDice(1,100) != 11) return FALSE;	 break;	 // Troll 5 * 100
+	case 29: if (iDice(1,15) != 3) return FALSE;	 break;	 // Orge  7 * 100
+	case 30: if (iDice(1,10) !=  3) return FALSE;	 break;  // Liche 1 * 100
+	case 31:  	                                     break;	 // Demon 5 * 100
+	case 32: if (iDice(1,2) !=  1) return FALSE;	 break;	 // Unicorn 5 * 100
+	case 33: if (iDice(1,30) !=  3) return FALSE;	 break;  // WereWolf 7 * 100
+	case 48: if (iDice(1,30) !=  3) return FALSE;	 break;  // Stalker 
+	default: return FALSE;
 	}
-	else return FALSE;
+	}
+	else return FALSE;*/
 
 	// GenType 결정
-   switch (sNpcType) { 
-   case 11: // 반지류 아이템 나오는 경우 
-   case 17: 
-   case 14: 
-   case 28: 
-      switch (iDice(1,7)) { 
-      case 1: strcpy(pItemName, "LuckyGoldRing"); break; 
-      case 2: strcpy(pItemName, "SapphireRing"); break; 
-      case 3: strcpy(pItemName, "EmeraldRing"); break; 
-      case 4: strcpy(pItemName, "RubyRing"); break; 
-      case 5: strcpy(pItemName, "PlatinumRing"); break; 
-      case 6: if (iDice(1,15) == 3) strcpy(pItemName, "RingOfWizard"); break; 
-      case 7: if (iDice(1,25) == 3) strcpy(pItemName, "RingOfMage"); break; 
-      } 
-      break; 
-    
-   case 13: // 목걸이류 아이템 나오는 경우 
-   case 27: 
-   case 29: 
-      switch (iDice(1,7)) { 
-      case 1: strcpy(pItemName, "MagicNecklace(DF+10)"); break; 
-      case 2: if (iDice(1,20) == 13) strcpy(pItemName, "MagicNecklace(MS10)"); break; 
-      case 3: if (iDice(1,10) == 13) strcpy(pItemName, "MagicNecklace(DM+1)"); break; 
-      case 4: strcpy(pItemName, "MagicNecklaceRM10"); break; 
-      case 5: if (iDice(1,30) == 13) strcpy(pItemName, "RingOfOgrepower"); break; 
-      case 6: if (iDice(1,30) == 13) strcpy(pItemName, "KnecklaceOfLightPro"); break; 
-      case 7: if (iDice(1,30) == 13) strcpy(pItemName, "KnecklaceOfFirePro"); break; 
-      } 
-      break; 
+	switch (sNpcType) { 
+		/*   case 11: // 반지류 아이템 나오는 경우 
+		case 17: 
+		case 14: 
+		case 28: 
+		switch (iDice(1,7)) { 
+		case 1: strcpy(pItemName, "LuckyGoldRing"); break; 
+		case 2: strcpy(pItemName, "SapphireRing"); break; 
+		case 3: strcpy(pItemName, "EmeraldRing"); break; 
+		case 4: strcpy(pItemName, "RubyRing"); break; 
+		case 5: strcpy(pItemName, "PlatinumRing"); break; 
+		case 6: if (iDice(1,15) == 3) strcpy(pItemName, "RingOfWizard"); break; 
+		case 7: if (iDice(1,25) == 3) strcpy(pItemName, "RingOfMage"); break; 
+		} 
+		break; 
 
-   case 18: 
-   case 22: 
-      switch (iDice(1,4)) { 
-      case 1: if (iDice(1,75) == 13) strcpy(pItemName, "SwordofMedusa"); break; 
-      case 2: if (iDice(1,20) == 13) strcpy(pItemName, "KnecklaceOfPoisonPro"); break; 
-      case 3: if (iDice(1,40) == 13) strcpy(pItemName, "NecklaceOfMedusa"); break; 
-      case 4: if (iDice(1,30) == 13) strcpy(pItemName, "NecklaceOfSufferent"); break; 
-      } 
-      break; 
+		case 13: // 목걸이류 아이템 나오는 경우 
+		case 27: 
+		case 29: 
+		switch (iDice(1,7)) { 
+		case 1: strcpy(pItemName, "MagicNecklace(DF+10)"); break; 
+		case 2: if (iDice(1,20) == 13) strcpy(pItemName, "MagicNecklace(MS10)"); break; 
+		case 3: if (iDice(1,10) == 13) strcpy(pItemName, "MagicNecklace(DM+1)"); break; 
+		case 4: strcpy(pItemName, "MagicNecklaceRM10"); break; 
+		case 5: if (iDice(1,30) == 13) strcpy(pItemName, "RingOfOgrepower"); break; 
+		case 6: if (iDice(1,30) == 13) strcpy(pItemName, "KnecklaceOfLightPro"); break; 
+		case 7: if (iDice(1,30) == 13) strcpy(pItemName, "KnecklaceOfFirePro"); break; 
+		} 
+		break; 
 
-   case 12: 
-   case 23: 
-   case 32: 
-      switch (iDice(1,4)) { 
-      case 1: if (iDice(1,30) == 13) strcpy(pItemName, "MerienShield"); break; 
-      case 2: if (iDice(1,30) == 13) strcpy(pItemName, "MerienPlateMail(M)"); break; 
-      case 3: if (iDice(1,30) == 13) strcpy(pItemName, "MerienPlateMail(W)"); break; 
-      case 4: if (iDice(1,20) == 11) strcpy(pItemName, "KnecklaceOfAirEle"); break; 
-      } 
-      break; 
+		case 18: 
+		case 22: 
+		switch (iDice(1,4)) { 
+		case 1: if (iDice(1,75) == 13) strcpy(pItemName, "SwordofMedusa"); break; 
+		case 2: if (iDice(1,20) == 13) strcpy(pItemName, "KnecklaceOfPoisonPro"); break; 
+		case 3: if (iDice(1,40) == 13) strcpy(pItemName, "NecklaceOfMedusa"); break; 
+		case 4: if (iDice(1,30) == 13) strcpy(pItemName, "NecklaceOfSufferent"); break; 
+		} 
+		break; 
 
-   case 33: 
-   case 48: 
-      switch (iDice(1,2)) { 
-      case 1: if (iDice(1,30) == 3) strcpy(pItemName, "Flameberge+3(LLF)"); break; 
-      case 2: strcpy(pItemName, "4BladeGoldenAxe"); break; 
-      } 
-      break; 
+		case 12: 
+		case 23: 
+		case 32: 
+		switch (iDice(1,4)) { 
+		case 1: if (iDice(1,30) == 13) strcpy(pItemName, "MerienShield"); break; 
+		case 2: if (iDice(1,30) == 13) strcpy(pItemName, "MerienPlateMail(M)"); break; 
+		case 3: if (iDice(1,30) == 13) strcpy(pItemName, "MerienPlateMail(W)"); break; 
+		case 4: if (iDice(1,20) == 11) strcpy(pItemName, "KnecklaceOfAirEle"); break; 
+		} 
+		break; 
 
-   case 30: 
-      switch (iDice(1,7)) { 
-      case 1: if (iDice(1,5) == 3) strcpy(pItemName, "IceStormManual"); break; 
-      case 2: strcpy(pItemName, "MagicWand(M.Shield)");  break; 
-      case 3: if (iDice(1,20) == 3) strcpy(pItemName, "MagicWand(MS30-LLF)"); break; 
-      case 4: if (iDice(1,10) == 3) strcpy(pItemName, "SwordofIceElemental"); break; 
-      case 5: if (iDice(1,10) == 3) strcpy(pItemName, "KnecklaceOfIcePro"); break; 
-      case 6: if (iDice(1,15) == 3) strcpy(pItemName, "KnecklaceOfIceEle"); break; 
-      case 7: if (iDice(1,20) == 3) strcpy(pItemName, "RingOfGrandMage"); break; 
-      } 
-      break; 
+		case 33: 
+		case 48: 
+		switch (iDice(1,2)) { 
+		case 1: if (iDice(1,30) == 3) strcpy(pItemName, "Flameberge+3(LLF)"); break; 
+		case 2: strcpy(pItemName, "4BladeGoldenAxe"); break; 
+		} 
+		break; 
 
-   case 31: 
-      switch (iDice(1,12)) { 
-      case 1: if (iDice(1,15) == 3) strcpy(pItemName, "BloodyShockW.Manual"); break; 
-      case 2: strcpy(pItemName, "BloodAxe"); break; 
-      case 3: if (iDice(1,5) == 3) strcpy(pItemName, "BloodSword"); break; 
-      case 4: strcpy(pItemName, "BloodRapier"); break; 
-      case 5: if (iDice(1,10) == 3) strcpy(pItemName, "XelimaBlade"); break; 
-      case 6: if (iDice(1,10) == 3) strcpy(pItemName, "XelimaAxe"); break; 
-      case 7: if (iDice(1,10) == 3) strcpy(pItemName, "XelimaRapier"); break; 
-      case 8: if (iDice(1,5) == 3)  strcpy(pItemName, "MassFireStrikeManual"); break; 
-      case 9: if (iDice(1,10) == 3)  strcpy(pItemName, "RingOfDemonpower"); break; 
-      case 10: if (iDice(1,10) == 3) strcpy(pItemName, "KnecklaceOfEfreet"); break; 
-      case 11: if (iDice(1,20) == 3)  strcpy(pItemName, "RingOfXelima"); break; 
-      case 12: if (iDice(1,30) == 3) strcpy(pItemName, "RingOftheAbaddon"); break; 
-      } 
-      break; 
-   } 
-    
-   if (strlen(pItemName) == 0) 
-       return FALSE; 
-   else return TRUE; 
+		case 30: 
+		switch (iDice(1,7)) { 
+		case 1: if (iDice(1,5) == 3) strcpy(pItemName, "IceStormManual"); break; 
+		case 2: strcpy(pItemName, "MagicWand(M.Shield)");  break; 
+		case 3: if (iDice(1,20) == 3) strcpy(pItemName, "MagicWand(MS30-LLF)"); break; 
+		case 4: if (iDice(1,10) == 3) strcpy(pItemName, "SwordofIceElemental"); break; 
+		case 5: if (iDice(1,10) == 3) strcpy(pItemName, "KnecklaceOfIcePro"); break; 
+		case 6: if (iDice(1,15) == 3) strcpy(pItemName, "KnecklaceOfIceEle"); break; 
+		case 7: if (iDice(1,20) == 3) strcpy(pItemName, "RingOfGrandMage"); break; 
+		} 
+		break; 
+
+		case 31: 
+		switch (iDice(1,12)) { 
+		case 1: if (iDice(1,15) == 3) strcpy(pItemName, "BloodyShockW.Manual"); break; 
+		case 2: strcpy(pItemName, "BloodAxe"); break; 
+		case 3: if (iDice(1,5) == 3) strcpy(pItemName, "BloodSword"); break; 
+		case 4: strcpy(pItemName, "BloodRapier"); break; 
+		case 5: if (iDice(1,10) == 3) strcpy(pItemName, "XelimaBlade"); break; 
+		case 6: if (iDice(1,10) == 3) strcpy(pItemName, "XelimaAxe"); break; 
+		case 7: if (iDice(1,10) == 3) strcpy(pItemName, "XelimaRapier"); break; 
+		case 8: if (iDice(1,5) == 3)  strcpy(pItemName, "MassFireStrikeManual"); break; 
+		case 9: if (iDice(1,10) == 3)  strcpy(pItemName, "RingOfDemonpower"); break; 
+		case 10: if (iDice(1,10) == 3) strcpy(pItemName, "KnecklaceOfEfreet"); break; 
+		case 11: if (iDice(1,20) == 3)  strcpy(pItemName, "RingOfXelima"); break; 
+		case 12: if (iDice(1,30) == 3) strcpy(pItemName, "RingOftheAbaddon"); break; 
+		} 
+		break;*/
+	} 
+
+	if (iItemID == 0) 
+		return FALSE; 
+	else return TRUE; 
 } 
 
 void CGame::UpdateMapSectorInfo()
@@ -44803,7 +44319,6 @@ BOOL CGame::_bNpcBehavior_Detector(int iNpcH)
 int dX, dY;
  short sOwnerH;
  char  cOwnerType, cSide;
-;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
  BOOL  bFlag = FALSE;
                        
 	if (m_pNpcList[iNpcH] == NULL) return FALSE;
@@ -44932,6 +44447,7 @@ void CGame::LocalStartCrusadeMode(DWORD dwCrusadeGUID)
 	CreateCrusadeStructures();
 	
 	PutLogList("(!)Crusade Mode ON.");
+	_bCrusadeLog(DEF_CRUSADELOG_STARTCRUSADE, NULL, NULL, NULL);
 }
 
 void CGame::LocalEndCrusadeMode(int iWinnerSide)
@@ -44950,9 +44466,12 @@ void CGame::LocalEndCrusadeMode(int iWinnerSide)
 	// ¼³Ä¡µÇ¾ú´ø Å©·ç¼¼ÀÌµå °ÇÃà¹° Á¦°Å.
 	RemoveCrusadeStructures();
 
+	RemoveCrusadeNpcs();
+
 	// ÀÌ±äÂÊ »çÀÌµå¸¦ ÀÔ·Â.
 	_CreateCrusadeGUID(m_dwCrusadeGUID, iWinnerSide);
 	m_iCrusadeWinnerSide = iWinnerSide;
+	m_iLastCrusadeWinner = iWinnerSide;
 
 	for (i = 1; i < DEF_MAXCLIENTS; i++)
 	if ((m_pClientList[i] != NULL) && (m_pClientList[i]->m_bIsInitComplete == TRUE)) {
@@ -44960,6 +44479,21 @@ void CGame::LocalEndCrusadeMode(int iWinnerSide)
 		m_pClientList[i]->m_iCrusadeDuty = 0;
 		m_pClientList[i]->m_iConstructionPoint = 0;
 		SendNotifyMsg(NULL, i, DEF_NOTIFY_CRUSADE, (DWORD)m_bIsCrusadeMode, NULL, NULL, NULL, m_iCrusadeWinnerSide);
+	}
+	RemoveCrusadeRecallTime();
+
+	if (iWinnerSide == 2) {
+		_bCrusadeLog(DEF_CRUSADELOG_ENDCRUSADE, FALSE, FALSE, "Elvine Win!");
+	}
+	else if (iWinnerSide == 1) {
+		_bCrusadeLog(DEF_CRUSADELOG_ENDCRUSADE, FALSE, FALSE, "Aresden Win!");
+	}
+	else{
+		_bCrusadeLog(DEF_CRUSADELOG_ENDCRUSADE, FALSE, FALSE, "Drawn!");
+	}
+
+	if (m_iMiddlelandMapIndex != -1) {
+		//bSendMsgToLS(0x3D00123C, 0, TRUE, NULL);
 	}
 }
 
@@ -45044,6 +44578,10 @@ void CGame::CreateCrusadeStructures()
 						strcpy(cNpcName, "GMG-Elvine");
 					break;
 
+				case 42:
+					strcpy(cNpcName, "ManaStone");
+					break;
+
 				default: 
 					strcpy(cNpcName, m_pNpcConfigList[m_stCrusadeStructures[i].cType]->m_cNpcName); 
 					break;
@@ -45054,7 +44592,7 @@ void CGame::CreateCrusadeStructures()
 				if (bCreateNewNpc(cNpcName, cName, m_pMapList[z]->m_cName, 0, 0, DEF_MOVETYPE_RANDOM, 
 					              &tX, &tY, cNpcWayPoint, NULL, NULL, -1, FALSE) == FALSE) {
 					// ½ÇÆÐÇßÀ¸¹Ç·Î ¿¹¾àµÈ NameValue¸¦ ÇØÁ¦½ÃÅ²´Ù.
-					m_pMapList[ m_pClientList[i]->m_cMapIndex ]->SetNamingValueEmpty(iNamingValue);
+					m_pMapList[z]->SetNamingValueEmpty(iNamingValue);
 				} 
 				else {
 					wsprintf(G_cTxt, "(!) Creating Crusade Structure(%s) at %s(%d, %d)", cNpcName, m_stCrusadeStructures[i].cMapName, tX, tY);
@@ -45071,14 +44609,8 @@ void CGame::SendCollectedMana()
  char * cp, cData[120];
  WORD * wp;
 
-	//SendMsgToGateServer(MSGID_COLLECTEDMANA, NULL);
-
 	// ¸ðÀÎ ¸¶³ª°¡ ¾ø´Ù¸é ¸Þ½ÃÁö Àü¼ÛÇÏÁö ¾Ê´Â´Ù. ¸¶³ª ½ºÅæÀÌ ¾ø´Â ¸Ê¿¡¼­ ¸Þ½ÃÁö¸¦ Àü¼ÛÇÏ¸é ¾ÈµÈ´Ù.
 	if ((m_iCollectedMana[1] == 0) && m_iCollectedMana[2] == 0) return;
-
-	//testcode
-	//wsprintf(G_cTxt, "Sending Collected Mana: %d %d", m_iCollectedMana[1], m_iCollectedMana[2]);
-	//PutLogList(G_cTxt);
 
 	ZeroMemory(cData, sizeof(cData));
 	cp = (char *)(cData);
@@ -45101,39 +44633,34 @@ void CGame::SendCollectedMana()
 	m_iCollectedMana[2] = 0;
 }
 
-
+// New 12/05/2004 Changed
 void CGame::CollectedManaHandler(WORD wAresdenMana, WORD wElvineMana)
 {
-	//wsprintf(G_cTxt, "Collected Mana Handler %d %d      %d %d",  wAresdenMana, wElvineMana, m_iAresdenMapIndex, m_iElvineMapIndex);
-	//PutLogList(G_cTxt);
-
 	if (m_iAresdenMapIndex != -1) {
 		m_iAresdenMana += wAresdenMana;
-		//testcode
 		if (wAresdenMana > 0) {
-			//wsprintf(G_cTxt, "Aresden Mana: %d Total:%d", wAresdenMana, m_iAresdenMana);
-			//PutLogList(G_cTxt);
+			wsprintf(G_cTxt, "Aresden Mana: %d Total:%d", wAresdenMana, m_iAresdenMana);
+			PutLogList(G_cTxt);
 		}
 	}
 
 	if (m_iElvineMapIndex != -1) {
 		m_iElvineMana += wElvineMana;
-		//testcode
 		if (wAresdenMana > 0) {
-			//wsprintf(G_cTxt, "Elvine Mana: %d Total:%d", wElvineMana, m_iElvineMana);
-			//PutLogList(G_cTxt);
+			wsprintf(G_cTxt, "Elvine Mana: %d Total:%d", wElvineMana, m_iElvineMana);
+			PutLogList(G_cTxt);
 		}
 	}
 }
 
-
+// New 12/05/2004 Changed
 void CGame::_NpcBehavior_GrandMagicGenerator(int iNpcH)
 {
 	switch (m_pNpcList[iNpcH]->m_cSide) {
 	case 1:
 		if (m_iAresdenMana > DEF_GMGMANACONSUMEUNIT) {
 			// ¸¶³ª¸¦ Èí¼öÇÑ´Ù.
-			m_iAresdenMana -= DEF_GMGMANACONSUMEUNIT;
+			m_iAresdenMana = 0;
 			m_pNpcList[iNpcH]->m_iManaStock++;
 			// ¸¸¾à ¸¶¹ý °ø°ÝÀ» ÇÏ±â¿¡ ÃæºÐÇÑ ¸¶³ª°¡ Ã¡´Ù¸é Àû±¹À¸·Î ¸¶¹ý °ø°Ý
 			if (m_pNpcList[iNpcH]->m_iManaStock > m_pNpcList[iNpcH]->m_iMaxMana) {
@@ -45144,6 +44671,8 @@ void CGame::_NpcBehavior_GrandMagicGenerator(int iNpcH)
 				m_pNpcList[iNpcH]->m_iManaStock = 0;
 				m_iAresdenMana = 0;
 				// °ø°Ý µ¿ÀÛÀ» ÇÑ´Ù.
+				wsprintf(G_cTxt,"(!) Aresden GMG %d/%d",m_pNpcList[iNpcH]->m_iManaStock,m_pNpcList[iNpcH]->m_iMaxMana,m_pNpcList[iNpcH]->m_iMaxMana);
+				PutLogList(G_cTxt);
 			}
 		}
 		break;
@@ -45151,7 +44680,7 @@ void CGame::_NpcBehavior_GrandMagicGenerator(int iNpcH)
 	case 2:
 		if (m_iElvineMana > DEF_GMGMANACONSUMEUNIT) {
 			// ¸¶³ª¸¦ Èí¼öÇÑ´Ù.
-			m_iElvineMana -= DEF_GMGMANACONSUMEUNIT;
+			m_iElvineMana = 0;
 			m_pNpcList[iNpcH]->m_iManaStock++;
 			// ¸¸¾à ¸¶¹ý °ø°ÝÀ» ÇÏ±â¿¡ ÃæºÐÇÑ ¸¶³ª°¡ Ã¡´Ù¸é Àû±¹À¸·Î ¸¶¹ý °ø°Ý
 			if (m_pNpcList[iNpcH]->m_iManaStock > m_pNpcList[iNpcH]->m_iMaxMana) {
@@ -45162,6 +44691,8 @@ void CGame::_NpcBehavior_GrandMagicGenerator(int iNpcH)
 				m_pNpcList[iNpcH]->m_iManaStock = 0;
 				m_iElvineMana = 0;
 				// °ø°Ý µ¿ÀÛÀ» ÇÑ´Ù.
+				wsprintf(G_cTxt,"(!) Elvine GMG %d/%d",m_pNpcList[iNpcH]->m_iManaStock,m_pNpcList[iNpcH]->m_iMaxMana,m_pNpcList[iNpcH]->m_iMaxMana);
+				PutLogList(G_cTxt);
 			}
 		}
 		break;
@@ -45256,7 +44787,7 @@ LSPMI_LOOPBREAK:;
 	}
 }
 
-
+// New 12/05/2004 Changed
 void CGame::MeteorStrikeHandler(int iMapIndex)
 {
  int i, ix, iy, dX, dY, iIndex, iTargetIndex, iTotalESG, iEffect;
@@ -45871,15 +45402,25 @@ void CGame::CheckConnectionHandler(int iClientH, char *pData)
 	}
 }
 
-
 void CGame::SelectCrusadeDutyHandler(int iClientH, int iDuty)
 {
+
 	if (m_pClientList[iClientH] == NULL) return;
-	// ±æµå ¸¶½ºÅÍ°¡ ¾Æ´Ñµ¥ ÁöÈÖ°ü ¿ªÇÒÀ» ¸Ã°Ú´Ù´Â ¸Þ½ÃÁö°¡ ¼ö½ÅµÇ¸é ¹«½Ã.
 	if ((m_pClientList[iClientH]->m_iGuildRank != 0) && (iDuty == 3)) return;
 
+	if (m_iLastCrusadeWinner == m_pClientList[iClientH]->m_cSide &&
+		m_pClientList[iClientH]->m_dwCrusadeGUID == 0 && iDuty == 3) {
+			m_pClientList[iClientH]->m_iConstructionPoint = 3000;
+	}
 	m_pClientList[iClientH]->m_iCrusadeDuty = iDuty;
+
 	SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CRUSADE, (DWORD)m_bIsCrusadeMode, m_pClientList[iClientH]->m_iCrusadeDuty, NULL, NULL);
+	if (iDuty == 1) 
+		_bCrusadeLog(DEF_CRUSADELOG_SELECTDUTY,iClientH,NULL,"Fighter");
+	else if (iDuty == 2) 
+		_bCrusadeLog(DEF_CRUSADELOG_SELECTDUTY,iClientH,NULL,"Constructor");
+	else
+		_bCrusadeLog(DEF_CRUSADELOG_SELECTDUTY,iClientH,NULL,"Commander");
 }
 
 void CGame::MapStatusHandler(int iClientH, int iMode, char * pMapName)
@@ -46109,7 +45650,7 @@ void CGame::ServerStockMsgHandler(char *pData)
 {
  char * cp, cTemp[120], cName[11];
  short * sp;
- WORD * wp, wServerID, wClientH, wV1, wV2, wV3, wV4;
+ WORD * wp, wServerID, wClientH, wV1, wV2, wV3, wV4, wV5;
  DWORD * dwp;
  BOOL bFlag = FALSE;
  int * ip, i, iTotal, iV1, iV2, iV3;
@@ -46251,6 +45792,7 @@ void CGame::ServerStockMsgHandler(char *pData)
 			}
 			break;
 		
+		//New Changed 11/05/2004
 		case  GSM_GRANDMAGICRESULT:
 			cp++;
 			ZeroMemory(cTemp, sizeof(cTemp));
@@ -46268,7 +45810,11 @@ void CGame::ServerStockMsgHandler(char *pData)
 			wp  = (WORD *)cp;
 			wV4 = *wp;
 			cp += 2;
-			GrandMagicResultHandler(cTemp, wV1, wV2, wV3, wV4);
+			wp  = (WORD *)cp;
+			wV5 = *wp;
+			cp += 2; // Stupid simentech didnt add this ?
+
+			GrandMagicResultHandler(cTemp, wV1, wV2, wV3, wV4, wV5, cp);
 			break;
 		
 		case GSM_REQUEST_FINDCHARACTER:
@@ -46346,7 +45892,7 @@ void CGame::GSM_RequestFindCharacter(WORD wReqServerID, WORD wReqClientH, char *
 	}
 }
 
-
+// New 11/05/2004 Changed
 void CGame::DoMeteorStrikeDamageHandler(int iMapIndex)
 {
  int i, iDamage;
@@ -46361,6 +45907,14 @@ void CGame::DoMeteorStrikeDamageHandler(int iMapIndex)
 		// ÃÖ´ë 255ÀÌ»óÀÇ ´ë¹ÌÁö´Â ¹ÞÁö ¾Ê´Â´Ù.
 		if (iDamage > 255) iDamage = 255;
 	
+		if (m_pClientList[i]->m_cMagicEffectStatus[ DEF_MAGICTYPE_PROTECT ] == 2) { //magic cut in half
+			iDamage = (iDamage/2) - 2;
+		}
+
+		if (m_pClientList[i]->m_iAdminUserLevel > 0) { // Admins get no damage
+			iDamage = 0;
+		}
+
 		m_pClientList[i]->m_iHP -= iDamage;
 		if (m_pClientList[i]->m_iHP <= 0) {
 			// ÇÃ·¹ÀÌ¾î°¡ »ç¸ÁÇß´Ù.
@@ -46394,20 +45948,26 @@ void CGame::DoMeteorStrikeDamageHandler(int iMapIndex)
 	}
 }
 
-
+//New Changed 11/05/2004
 void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 {
  int i, iActiveStructure;
- char * cp, cData[120], cWinnerSide;
+ char * cp, * cp2, cData[120], cData2[120], cWinnerSide;
  WORD * wp;
+ int iMapStrikePointHP[DEF_MAXSTRIKEPOINTS];
 
 	if (m_bIsCrusadeMode == FALSE) return;
+
+	for(i = 0; i < DEF_MAXSTRIKEPOINTS; i++){
+		iMapStrikePointHP[i] = 0;
+	}
 
 	// Æø°ÝÀÇ È¿°ú¸¦ °è»êÇÑ´Ù. ¸ðµç °Ç¹°ÀÌ ÆÄ±«µÇ¾ú´Ù¸é Àü¸éÀü ¸ðµå Á¾·á. ±×·¸Áö ¾ÊÀ¸¸é °á°ú¸¦ ¸ðµç ¼­¹ö¿¡ ¸®Æ÷Æ®.
 	iActiveStructure = 0;
 	for (i = 1; i <= m_pMapList[iMapIndex]->m_iTotalStrikePoints; i++) {
 		if (m_pMapList[iMapIndex]->m_stStrikePoint[i].iHP > 0) {
 			iActiveStructure++;
+			iMapStrikePointHP[i] = m_pMapList[iMapIndex]->m_stStrikePoint[i].iHP;
 		}
 	}
 	
@@ -46458,7 +46018,7 @@ void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 		bStockMsgToGateServer(cData, 18);
 		
 		// ÇöÀç ¼­¹ö¿¡´Â ½ºÅå ¸Þ½ÃÁö°¡ ¿ÀÁö ¾ÊÀ¸¹Ç·Î Á÷Á¢ Àü´ÞÇÑ´Ù.
-		GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure);
+		//GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure);
 	}
 	else {
 		// ÇÇÇØ »óÈ²À» ¸ðµç ¼­¹ö·Î ¸®Æ÷Æ®.
@@ -46486,14 +46046,26 @@ void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 		*wp = iActiveStructure;
 		cp += 2;
 		
-		bStockMsgToGateServer(cData, 19);
+		ZeroMemory(cData2,sizeof(cData2));
+		cp2 = (char *)(cData2);
 
-		//testcode
-		wsprintf(G_cTxt, "(!) Reporting Grand Magic Strike Result (%s %d %d %d %d)", m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure);
-		PutLogList(G_cTxt);
+		wp = (WORD *)cp2;
+		*wp = m_pMapList[iMapIndex]->m_iTotalStrikePoints;
+		cp2 += 2;
 
+		for(i = 1; i <= m_pMapList[iMapIndex]->m_iTotalStrikePoints; i++){
+			wp = (WORD *)cp2;
+			*wp = (WORD)iMapStrikePointHP[i];
+			cp2 += 2;
+		}
+
+		memcpy(cp,cData2,(m_pMapList[iMapIndex]->m_iTotalStrikePoints*2)+2);
+
+		bStockMsgToGateServer(cData, (m_pMapList[iMapIndex]->m_iTotalStrikePoints*2)+21); // Stupid simentech cant count
+
+		GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure, m_pMapList[iMapIndex]->m_iTotalStrikePoints, cData2);
 		// ÇöÀç ¼­¹ö¿¡´Â ½ºÅå ¸Þ½ÃÁö°¡ ¿ÀÁö ¾ÊÀ¸¹Ç·Î Á÷Á¢ Àü´ÞÇÑ´Ù.
-		GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure);
+		//GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure);
 	}
 
 	// °á°ú º¸°í¿ë ½ºÆ®·°Ãç Å¬¸®¾î
@@ -46502,14 +46074,14 @@ void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 	m_stMeteorStrikeResult.iStructureDamageAmount = 0;
 }
 
-
-void CGame::GrandMagicResultHandler(char *cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure)
+//New Changed 11/05/2004
+void CGame::GrandMagicResultHandler(char *cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure, int iTotalStrikePoints, char * cData)
 {
  int i;
 	
 	for (i = 1; i < DEF_MAXCLIENTS; i++)
 	if (m_pClientList[i] != NULL) {
-		SendNotifyMsg(NULL, i, DEF_NOTIFY_GRANDMAGICRESULT, iCrashedStructureNum, iStructureDamageAmount, iCasualities, cMapName, iActiveStructure);
+		SendNotifyMsg(NULL, i, DEF_NOTIFY_GRANDMAGICRESULT, iCrashedStructureNum, iStructureDamageAmount, iCasualities, cMapName, iActiveStructure, NULL, NULL, NULL, NULL, iTotalStrikePoints, cData);
 	}
 }
 
@@ -46733,6 +46305,17 @@ void CGame::GlobalStartCrusadeMode()
 {
  char * cp, cData[120];
  DWORD * dwp, dwCrusadeGUID;
+ SYSTEMTIME SysTime;
+
+	GetLocalTime(&SysTime);
+
+	if (m_sLastCrusadeDate != -1) {
+		if (m_sLastCrusadeDate == SysTime.wDayOfWeek) {
+			return;
+		}
+	}
+
+	m_sLastCrusadeDate = SysTime.wDayOfWeek;
 
 	dwCrusadeGUID = timeGetTime();
 
@@ -46946,8 +46529,9 @@ BOOL CGame::bReadCrusadeGUIDFile(char * cFn)
 					break;
 
 				case 2:
-					m_iCrusadeWinnerSide = atoi(token);
-					wsprintf(G_cTxt, "CrusadeWinnerSide = %d", m_iCrusadeWinnerSide);
+					// New 13/05/2004 Changed
+					m_iLastCrusadeWinner = atoi(token);
+					wsprintf(G_cTxt, "CrusadeWinnerSide = %d", m_iLastCrusadeWinner);
 					PutLogList(G_cTxt);
 					cReadMode = 0;
 					break;
@@ -47484,9 +47068,6 @@ void CGame::RequestChangePlayMode(int iClientH)
 			SendEventToNearClient_TypeA(iClientH,DEF_OWNERTYPE_PLAYER,MSGID_EVENT_MOTION,100,NULL,NULL,NULL);
 		}
 }
-/*==================================================================
-====================================================================
-==================================================================*/
 
 void CGame::AdminOrder_SetStatus(int iClientH, char *pData, DWORD dwMsgSize)
 {
@@ -48980,13 +48561,165 @@ void CGame::GetExp(int iClientH, int iExp, BOOL bIsAttackerOwn)
 	double dV1, dV2, dV3;
 	int i, iH, iUnitValue;
 	DWORD dwTime = timeGetTime();
+	int iTotalPartyMembers;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if (iExp <= 0) return;
+
+	if (m_pClientList[iClientH]->m_iLevel <= 80) {
+		dV1 = (double)(80 - m_pClientList[iClientH]->m_iLevel);
+		dV2 = dV1 * 0.025f;
+		dV3 = (double)iExp;
+		dV1 = (dV2 + 1.025f)*dV3;
+		iExp = (int)dV1;
+	}
+	else { //Lower exp
+		if ((m_pClientList[iClientH]->m_iLevel >= 100) &&((strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "arefarm") == 0) 
+			|| (strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "elvfarm") == 0))) {
+				iExp = (iExp/10) ;
+			}
+		else if ((strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "arefarm") == 0) 
+			|| (strcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cName, "elvfarm") == 0)) {
+				iExp = (iExp*1/4) ;
+			}
+	}
+
+	//Check for party status, else give exp to player
+	//if ((m_pClientList[iClientH]->m_iPartyID != NULL) && (m_pClientList[iClientH]->m_iPartyStatus == DEF_PARTYSTATUS_CONFIRM) && 
+	//	((dwTime - m_pClientList[iClientH]->m_dwLastActionTime) < 1000*60*5)) {
+	if ((m_pClientList[iClientH]->m_iPartyID != NULL) && (m_pClientList[iClientH]->m_iPartyStatus == DEF_PARTYSTATUS_CONFIRM)) {
+			//Only divide exp if > 1 person and exp > 10
+			if(iExp >= 10 && m_stPartyInfo[m_pClientList[iClientH]->m_iPartyID].iTotalMembers > 0){
+
+				//Calc total ppl in party
+				iTotalPartyMembers = 0;
+				for(i = 0; i < m_stPartyInfo[m_pClientList[iClientH]->m_iPartyID].iTotalMembers; i++){
+					iH = m_stPartyInfo[m_pClientList[iClientH]->m_iPartyID].iIndex[i];
+					if ((m_pClientList[iH] != NULL) && (m_pClientList[iH]->m_iHP > 0)) {
+						//Newly added, Only players on same map get exp :}
+						if(m_pClientList[iH]->m_cMapIndex == m_pClientList[iClientH]->m_cMapIndex)
+							iTotalPartyMembers++;
+					}
+				}
+
+				//Check for party bug
+				if(iTotalPartyMembers > 8){
+					wsprintf(G_cTxt, "(X) Party Bug !! partyMember %d XXXXXXXXXX", iTotalPartyMembers);
+					PutLogFileList(G_cTxt);
+					iTotalPartyMembers = 8;
+				}
+
+				//Figure out how much exp a player gets
+				dV1 = (double)iExp;
+
+				switch(iTotalPartyMembers){
+				case 1:
+					dV2 = dV1;
+					break;
+				case 2:
+					dV2 = (dV1 + (dV1 * 2.0e-2)) / 2.0;
+					break;
+				case 3:
+					dV2 = (dV1 + (dV1 * 5.0e-2)) / 3.0;
+					break;
+				case 4:
+					dV2 = (dV1 + (dV1 * 7.000000000000001e-2)) / 4.0;
+					break;
+				case 5:
+					dV2 = (dV1 + (dV1 * 1.0e-1)) / 5.0;
+					break;
+				case 6:
+					dV2 = (dV1 + (dV1 * 1.4e-1)) / 6.0;
+					break;
+				case 7:
+					dV2 = (dV1 + (dV1 * 1.7e-1)) / 7.0;
+					break;
+				case 8:
+					dV2 = (dV1 + (dV1 * 2.0e-1)) / 8.0;
+					break;
+				}
+
+				dV3 = dV2 + 5.0e-1;
+				iUnitValue = (int)dV3;
+
+				//Divide exp among party members
+				for(i = 0; i < iTotalPartyMembers; i++){
+					iH = m_stPartyInfo[m_pClientList[iClientH]->m_iPartyID].iIndex[i];
+					//Player who kills monster gets more exp
+					if(iH == iClientH){
+						if(m_pClientList[iH] != NULL){ // Is player alive ??
+							//Exp gain based on lvl
+							if(m_pClientList[iH]->m_iLevel > 20 && m_pClientList[iH]->m_iLevel < 121)
+								iUnitValue *= 3;
+							else if (m_pClientList[iH]->m_iLevel > 120 && m_pClientList[iH]->m_iLevel < 161)
+								iUnitValue *= 2;
+							else if (m_pClientList[iH]->m_iLevel > 160 && m_pClientList[iH]->m_iLevel < 180)
+								iUnitValue *= (int)1.5;
+							if((m_pClientList[iClientH]->m_iStatus & 0x10000) != 0)
+								iUnitValue *= 3;
+							//Add exp to player
+							m_pClientList[iH]->m_iExpStock += iUnitValue;
+						}
+					}
+					else{
+						//Other players get normal exp :P
+						if((m_pClientList[iH] != NULL) && m_pClientList[iH]->m_iHP > 0)
+							if(m_pClientList[iH]->m_bSkillUsingStatus[19] != 1)
+								//Only players on same map get exp
+								if(m_pClientList[iH]->m_cMapIndex == m_pClientList[iClientH]->m_cMapIndex)
+									//Add exp to player
+									m_pClientList[iH]->m_iExpStock += iUnitValue;
+					}
+				}
+
+				if (bIsAttackerOwn == TRUE)
+					if(iTotalPartyMembers > 1)
+						m_pClientList[iClientH]->m_iExpStock += (iUnitValue/10);
+			}
+			else{
+				if (m_pClientList[iClientH]->m_iLevel > 20 && m_pClientList[iClientH]->m_iLevel < 121)
+					iExp *= 3;
+				else if (m_pClientList[iClientH]->m_iLevel > 120 && m_pClientList[iClientH]->m_iLevel < 161)
+					iExp *= 2;
+				else if (m_pClientList[iClientH]->m_iLevel > 160 && m_pClientList[iClientH]->m_iLevel < 180)
+					iExp *= (int)1.5;
+
+				if ((m_pClientList[iClientH]->m_iStatus & 0x10000) != 0)
+					iExp *= 3;
+
+				//Add exp to player
+				m_pClientList[iClientH]->m_iExpStock += iExp;
+			}
+		}
+		else{
+			if (m_pClientList[iClientH]->m_iLevel > 20 && m_pClientList[iClientH]->m_iLevel < 121)
+				iExp *= 3;
+			else if (m_pClientList[iClientH]->m_iLevel > 120 && m_pClientList[iClientH]->m_iLevel <= 161)
+				iExp *= 2;
+			else if (m_pClientList[iClientH]->m_iLevel > 160 && m_pClientList[iClientH]->m_iLevel < 180)
+				iExp *= (int)1.5;
+
+			if ((m_pClientList[iClientH]->m_iStatus & 0x10000) != 0)
+				iExp *= 3;
+
+			//Add exp to player
+			m_pClientList[iClientH]->m_iExpStock += iExp;
+		}
+}
+
+/*
+void CGame::GetExp(int iClientH, int iExp, BOOL bIsAttackerOwn)
+{
+	double dV1, dV2, dV3;
+	int i, iH, iUnitValue;
+	DWORD dwTime = timeGetTime();
 
 	// v2.1 ÆÄÆ¼Á¦¿¡ ¸ÂÃß¾î °æÇèÄ¡¸¦ ³ª´©°í, ·¹º§ÀÌ 80 ¹Ì¸¸ÀÎ °æ¿ì °æÇèÄ¡¸¦ ´õ ¾ò´Â´Ù.
 	if (m_pClientList[iClientH] == NULL) return;
 	if (iExp <= 0) return;
 
 	// ·¹º§ 80 ÀÌÇÏ´Â º¸³Ê½º °æÇèÄ¡°¡ Àû¿ëµÈ´Ù.
-	if (m_pClientList[iClientH]->m_iLevel < 80) {
+	if (m_pClientList[iClientH]->m_iLevel <= 80) {
 		dV1 = (double)(80 - m_pClientList[iClientH]->m_iLevel);
 		dV2 = dV1 * 0.025f;
 		dV3 = (double)iExp;
@@ -49029,10 +48762,16 @@ void CGame::GetExp(int iClientH, int iExp, BOOL bIsAttackerOwn)
 				iUnitValue = iUnitValue * 10;
 #endif
 
+
 				// °æÇèÄ¡¸¦ ³ª´«´Ù.
 				for (i = 0; i < m_stPartyInfo[m_pClientList[iClientH]->m_iPartyID].iTotalMembers; i++) {
 					iH = m_stPartyInfo[m_pClientList[iClientH]->m_iPartyID].iIndex[i];
-					if ((m_pClientList[iH] != NULL) && (m_pClientList[iH]->m_iHP > 0)) m_pClientList[iH]->m_iExpStock += iUnitValue;
+					if ((m_pClientList[iH] != NULL) && (m_pClientList[iH]->m_iHP > 0)) {
+						char buff[1000];
+						wsprintf(buff,"%s GetExp %d",m_pClientList[iH]->m_cCharName,iUnitValue);
+						PutLogList(buff);
+						m_pClientList[iH]->m_iExpStock += iUnitValue;
+					}
 				}
 
 				// °ø°ÝÀÚ ÀÚ½ÅÀÌ¸é
@@ -49049,7 +48788,7 @@ void CGame::GetExp(int iClientH, int iExp, BOOL bIsAttackerOwn)
 #else
 	else m_pClientList[iClientH]->m_iExpStock += iExp;
 #endif
-}
+}*/
 
 BOOL CGame::bCheckAndConvertPlusWeaponItem(int iClientH, int iItemIndex)
 {
@@ -49058,48 +48797,50 @@ BOOL CGame::bCheckAndConvertPlusWeaponItem(int iClientH, int iItemIndex)
 	if (m_pClientList[iClientH]->m_pItemList[iItemIndex] == NULL) return FALSE;
 
 	switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
-	case 4:  // ´Ü°Ë +1
-	case 9:  // ¼îÆ® ¼Òµå +1
-	case 13: // ¸Á°í½´ +1
-	case 16: // ±×¶óµð¿ì½º +1
-	case 18: // ·Õ¼Òµå +1
-	case 19: // ·Õ¼Òµå +2
-	case 21: // ¿¢½ºÄ®¸®¹ö +1
-	case 24: // ¼¼ÀÌ¹ö +1
-	case 26: // ½Ã¹ÌÅ¸ +1
-	case 27: // ½Ã¹ÌÅ¸ +2
-	case 29: // ÆÈÄ¡¿Â +1
-	case 30: // ÆÈÄ¡¿Â +2
-	case 32: // ¿¡½ºÅÍÅ© +1
-	case 33: // ¿¡½ºÅÍÅ© +2
-	case 35: // ·¹ÀÌÇÇ¾î +1
-	case 36: // ·¹ÀÌÇÇ¾î +2
-	case 39: // ºê·Îµå ¼Òµå +1
-	case 40: // ºê·Îµå ¼Òµå +2
-	case 43: // ¹Ù½ºÅ¸µå ¼Òµå +1
-	case 44: // ¹Ù½ºÅ¸µå ¼Òµå +2
-	case 47: // Å¬·¹ÀÌ¸ð¾î +1
-	case 48: // Å¬·¹ÀÌ¸ð¾î +2
-	case 51: // ±×·¹ÀÌÆ® ¼Òµå +1
-	case 52: // ±×·¹ÀÌÆ® ¼Òµå +2
-	case 55: // ÇÃ·¥¹ö±× +1
-	case 56: // ÇÃ·¥¹ö±× +2
-	case 60: // ¶óÀÌÆ® ¾×½º +1
-	case 61: // ¶óÀÌÆ® ¾×½º +2
-	case 63: // Åä¸¶È£Å© +1
-	case 64: // Åä¸¶È£Å© +2
-	case 66: // »ö½¼¾×½º +1
-	case 67: // »ö½¼¾×½º +2
-	case 69: // ´õºí¾×½º +1
-	case 70: // ´õºí¾×½º +2
-	case 72: // ¿ö¾×½º +1
-	case 73: // ¿ö¾×½º +2
+	case 4:  // Dagger +1
+	case 9:  // Short Sword +1
+	case 13: // Main Gauge +1
+	case 16: // Gradius +1
+	case 18: // Long Sword +1
+	case 19: // Long Sword +2
+	case 21: // Excaliber +1
+	case 24: // Sabre +1
+	case 26: // Scimitar +1
+	case 27: // Scimitar +2
+	case 29: // Falchoin +1
+	case 30: // Falchion +2
+	case 32: // Esterk +1
+	case 33: // Esterk +2
+	case 35: // Rapier +1
+	case 36: // Rapier +2
+	case 39: // Broad Sword +1
+	case 40: // Broad Sword +2
+	case 43: // Bastad Sword +1
+	case 44: // Bastad Sword +2
+	case 47: // Claymore +1
+	case 48: // Claymore +2
+	case 51: // Great Sword +1
+	case 52: // Great Sword +2
+	case 55: // Flameberge +1
+	case 56: // Flameberge +2
+	case 60: // Light Axe +1
+	case 61: // Light Axe +2
+	case 63: // Tomahoc +1
+	case 64: // Tomohoc +2
+	case 66: // Sexon Axe +1
+	case 67: // Sexon Axe +2
+	case 69: // Double Axe +1
+	case 70: // Double Axe +2
+	case 72: // War Axe +1
+	case 73: // War Axe +2
 
-	case 580: // ¹èÆ²¾×½º +1
-	case 581: // ¹èÆ²¾×½º +2
-	case 582: // ¼¼ÀÌ¹ö +2
+	case 580: // Battle Axe +1
+	case 581: // Battle Axe +2
+	case 582: // Sabre +2
+		return TRUE;
 		break;
 	}
+	return FALSE;
 }
 
 void CGame::ArmorLifeDecrement(int iAttackerH, int iTargetH, char cOwnerType, int iValue)
@@ -49208,3 +48949,526 @@ void CGame::ArmorLifeDecrement(int iAttackerH, int iTargetH, char cOwnerType, in
 		}
 	}
 }
+
+void CGame::AdminOrder_GoTo(int iClientH, char* pData, DWORD dwMsgSize)
+{
+	char   seps[] = "= \t\n";
+	char   * token, cBuff[256], cPlayerName[11],cMapName[32];
+	class  CStrTok * pStrTok;
+	char *cp;
+	WORD *wp;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if ((dwMsgSize)	<= 0) return;
+
+	if (m_pClientList[iClientH]->m_iAdminUserLevel < 1) {
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ADMINUSERLEVELLOW, NULL, NULL, NULL, NULL);
+		return;
+	}
+
+	ZeroMemory(cPlayerName, sizeof(cPlayerName));
+	ZeroMemory(cBuff, sizeof(cBuff));
+	memcpy(cBuff, pData, dwMsgSize);
+
+	pStrTok = new class CStrTok(cBuff, seps);
+	token = pStrTok->pGet();
+
+	token = pStrTok->pGet();
+	if (token == NULL) {
+		delete pStrTok;
+		return;
+	}
+
+	if (strlen(token) > 10) {
+		memcpy(cPlayerName,token,10);
+	}
+	else{
+		memcpy(cPlayerName,token,strlen(token));
+	}
+
+	for(int i = 1; i < DEF_MAXCLIENTS; i++){
+		if (m_pClientList[i] != NULL) {
+			if (memcmp(cPlayerName,m_pClientList[i]->m_cCharName,10) == 0) {
+				if (m_pClientList[iClientH]->m_iAdminUserLevel > 0) {
+					if(m_pClientList[i]->m_sX == -1 && m_pClientList[i]->m_sX == -1){
+						wsprintf(cBuff,"GM Order(%s): GoTo MapName(%s)",m_pClientList[iClientH]->m_cCharName,m_pClientList[i]->m_cMapName);
+					}
+					else{
+						wsprintf(cBuff,"GM Order(%s): GoTo MapName(%s)(%d %d)",m_pClientList[iClientH]->m_cCharName,
+							     m_pClientList[i]->m_cMapName,m_pClientList[i]->m_sX,m_pClientList[i]->m_sY);
+					}
+					bSendMsgToLS(MSGID_GAMEMASTERLOG,iClientH,FALSE,cBuff);
+					ZeroMemory(cMapName,sizeof(cMapName));
+					strcpy(cMapName, m_pClientList[i]->m_cMapName);
+					RequestTeleportHandler(iClientH,"2   ",cMapName,m_pClientList[i]->m_sX,m_pClientList[i]->m_sY);
+				}
+				delete pStrTok;
+				return;
+			}
+		}
+	}
+	//m_pClientList[i]->Var_16B4h = 1;
+	ZeroMemory(cBuff,sizeof(cBuff));
+	
+	cp = (char *)cBuff;
+	*cp = 1;
+	cp++;
+
+	wp = (WORD *)cp;
+	*wp = m_wServerID_GSS;
+	cp += 2;
+
+	wp = (WORD *)cp;
+	*wp = iClientH;
+	cp += 2;
+
+	memcpy(cp,cPlayerName,10);
+	cp += 10;
+
+	memcpy(cp,m_pClientList[iClientH]->m_cCharName,10);
+	cp += 10;
+
+	bStockMsgToGateServer(cBuff,25);
+
+	delete pStrTok;
+}
+
+void CGame::AdminOrder_MonsterCount(int iClientH, char* pData, DWORD dwMsgSize)
+{
+	int iMonsterCount;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if ((dwMsgSize)	<= 0) return;
+
+	if (m_pClientList[iClientH]->m_iAdminUserLevel < 1) {
+		// Admin user levelÀÌ ³·¾Æ¼­ ÀÌ ±â´ÉÀ» »ç¿ëÇÒ ¼ö ¾ø´Ù.
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ADMINUSERLEVELLOW, NULL, NULL, NULL, NULL);
+		return;
+	}
+	iMonsterCount = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_iTotalAliveObject;
+	//SendNotifyMsg(0,iClientH,0x0BE3,iMonsterCount,NULL,NULL,NULL);
+}
+
+void CGame::AdminOrder_SetForceRecallTime(int iClientH, char* pData, DWORD dwMsgSize)
+{
+	char   seps[] = "= \t\n";
+	char   * token, * cp, cBuff[256];
+	class  CStrTok * pStrTok;
+	short *sp, sRecallTime;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if ((dwMsgSize)	<= 0) return;
+
+	if (m_pClientList[iClientH]->m_iAdminUserLevel < 3) {
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ADMINUSERLEVELLOW, NULL, NULL, NULL, NULL);
+		return;
+	}
+	ZeroMemory(cBuff,sizeof(cBuff));
+	memcpy(cBuff, pData, dwMsgSize);
+
+	pStrTok = new class CStrTok(cBuff, seps);
+	token = pStrTok->pGet();
+
+	token = pStrTok->pGet();
+	if (token != 0) {
+		sRecallTime = atoi(token);
+	}
+	else sRecallTime = 0;
+
+	if (sRecallTime < 0) sRecallTime = 0;
+
+	//m_sForceRecallTime = sRecallTime;
+	ZeroMemory(cBuff,sizeof(cBuff));
+
+	cp = (char *)cBuff;
+
+	*cp = 18;
+	cp++;
+
+	sp = (short *)cp;
+	*sp = sRecallTime;
+	cp += 2;
+
+	bStockMsgToGateServer(cBuff,3);
+	//wsprintfA(cBuff,"(!) Game Server Force Recall Time (%d)min",m_sForceRecallTime);
+	PutLogList(cBuff);
+
+	delete pStrTok;
+	return;
+}
+
+void CGame::AdminOrder_UnsummonBoss(int iClientH)
+{
+	if (m_pClientList[iClientH] == NULL) return;
+
+	if (m_pClientList[iClientH]->m_iAdminUserLevel < 3) {
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ADMINUSERLEVELLOW, NULL, NULL, NULL, NULL);
+		return;
+	}
+
+	for(int i = 1; i < DEF_MAXNPCS; i++){
+		if (m_pNpcList[i] != NULL && m_pNpcList[i]->m_bIsSummoned == FALSE) {
+			switch(m_pNpcList[i]->m_sType) {
+			case 31: //Demon
+			case 49: //Hellclaw
+			case 45: //GHKABS
+			case 47: //BG
+			case 50: //Tigerworm
+			case 52: //Gagoyle
+			case 81: //Abaddon
+			case 66: //Wyvern
+			case 73: //Fire-Wyvern
+				m_pNpcList[i]->m_bIsKilled = TRUE;
+				NpcKilledHandler(iClientH,DEF_OWNERTYPE_PLAYER,i,0);
+				break;
+			}
+		}
+	}
+}
+
+// New 12/05/2004
+void CGame::RemoveCrusadeNpcs(void)
+{
+	for(int i = 0; i < DEF_MAXNPCS; i++){
+		if (m_pNpcList[i] != NULL) {
+			if ((m_pNpcList[i]->m_sType >= 43 && m_pNpcList[i]->m_sType <= 47) || m_pNpcList[i]->m_sType == 51) {
+				NpcKilledHandler(NULL, NULL, i, NULL);
+			}
+		}
+	}
+}
+
+void CGame::RemoveCrusadeRecallTime(void)
+{
+	for(int i = 1; i < DEF_MAXCLIENTS; i++){
+		if (m_pClientList[i] != NULL) {
+			if (m_pClientList[i]->m_bIsWarLocation == TRUE &&
+				m_pClientList[i]->m_bIsPlayerCivil == TRUE &&
+				m_pClientList[i]->m_bIsInitComplete == TRUE) {
+				m_pClientList[i]->m_iTimeLeft_ForceRecall = 0;
+			}
+		}
+	}
+}
+
+// New 13/05/2004
+BOOL CGame::_bCrusadeLog(int iAction,int iClientH,int iData, char * cName)
+{
+	char  cTxt[200];
+
+	//  ·Î±× ³²±ä´Ù. 
+	ZeroMemory(cTxt, sizeof(cTxt));
+
+	switch (iAction) {
+
+		case DEF_CRUSADELOG_ENDCRUSADE:
+			if (cName == NULL) return FALSE;
+			wsprintf(cTxt,"\tEnd Crusade\t%s",cName);
+			break;
+
+		case DEF_CRUSADELOG_SELECTDUTY :
+			if (cName == NULL) return FALSE;
+			if (m_pClientList[iClientH] == NULL) return FALSE;
+			wsprintf(cTxt, "PC(%s)\tSelect Duty\t(%s)\t \t(%s)", m_pClientList[iClientH]->m_cCharName,cName,m_pClientList[iClientH]->m_cGuildName);
+			break ;
+
+		case DEF_CRUSADELOG_GETEXP :
+			if (m_pClientList[iClientH] == NULL) return FALSE;
+			wsprintf(cTxt, "PC(%s)\tGet Exp\t(%d)\t \t(%s)", m_pClientList[iClientH]->m_cCharName,iData,m_pClientList[iClientH]->m_cGuildName);
+			break ;
+
+		case DEF_CRUSADELOG_STARTCRUSADE:
+			wsprintf(cTxt,"\tStart Crusade");
+			break ;
+
+		default:
+			return FALSE;
+	}
+
+	bSendMsgToLS(MSGID_GAMECRUSADELOG, iClientH, NULL,cTxt);
+	return TRUE ;
+}
+
+// Testcode, found reference to it in 3.51, InitPlayerData and RequestTeleportHandler
+int CGame::iGetPlayerABSStatus(int iClientH)
+{
+	int iRet;
+
+	if (m_pClientList[iClientH] == NULL) return 0;
+
+	iRet = 0;
+
+		if (m_pClientList[iClientH]->m_iPKCount != 0) {
+			iRet = 8;
+		}
+
+
+		if (m_pClientList[iClientH]->m_cSide != 0) {
+			iRet = iRet | 4;
+		}
+
+
+		if (m_pClientList[iClientH]->m_cSide == 1) {
+			iRet = iRet | 2;
+		}
+
+		if (m_pClientList[iClientH]->m_bIsPlayerCivil == TRUE)
+			iRet = iRet | 1;
+
+		return iRet;
+}
+
+//Init item based in its ID
+BOOL CGame::_bInitItemAttr(class CItem * pItem, int iItemID)
+{
+register int i;
+
+for (i = 0; i < DEF_MAXITEMTYPES; i++) 
+	if (m_pItemConfigList[i] != NULL) {
+		if (m_pItemConfigList[i]->m_sIDnum == iItemID) {
+			// °°Àº ÀÌ¸§À» °¡Áø ¾ÆÀÌÅÛ ¼³Á¤À» Ã£¾Ò´Ù. ¼³Á¤°ªÀ» º¹»çÇÑ´Ù.
+			ZeroMemory(pItem->m_cName, sizeof(pItem->m_cName));
+			strcpy(pItem->m_cName, m_pItemConfigList[i]->m_cName);
+			pItem->m_cItemType         = m_pItemConfigList[i]->m_cItemType;
+			pItem->m_cEquipPos         = m_pItemConfigList[i]->m_cEquipPos;
+			pItem->m_sItemEffectType   = m_pItemConfigList[i]->m_sItemEffectType;
+			pItem->m_sItemEffectValue1 = m_pItemConfigList[i]->m_sItemEffectValue1;
+			pItem->m_sItemEffectValue2 = m_pItemConfigList[i]->m_sItemEffectValue2;
+			pItem->m_sItemEffectValue3 = m_pItemConfigList[i]->m_sItemEffectValue3;
+			pItem->m_sItemEffectValue4 = m_pItemConfigList[i]->m_sItemEffectValue4;
+			pItem->m_sItemEffectValue5 = m_pItemConfigList[i]->m_sItemEffectValue5;
+			pItem->m_sItemEffectValue6 = m_pItemConfigList[i]->m_sItemEffectValue6;
+			pItem->m_wMaxLifeSpan      = m_pItemConfigList[i]->m_wMaxLifeSpan;
+			pItem->m_wCurLifeSpan	   = pItem->m_wMaxLifeSpan;
+			pItem->m_sSpecialEffect    = m_pItemConfigList[i]->m_sSpecialEffect;
+
+			pItem->m_sSprite           = m_pItemConfigList[i]->m_sSprite;
+			pItem->m_sSpriteFrame      = m_pItemConfigList[i]->m_sSpriteFrame;
+			pItem->m_wPrice            = m_pItemConfigList[i]->m_wPrice;
+			pItem->m_wWeight           = m_pItemConfigList[i]->m_wWeight;
+			pItem->m_cApprValue        = m_pItemConfigList[i]->m_cApprValue;
+			pItem->m_cSpeed            = m_pItemConfigList[i]->m_cSpeed;
+			pItem->m_sLevelLimit       = m_pItemConfigList[i]->m_sLevelLimit;
+			pItem->m_cGenderLimit      = m_pItemConfigList[i]->m_cGenderLimit;
+
+			pItem->m_sSpecialEffectValue1 = m_pItemConfigList[i]->m_sSpecialEffectValue1;
+			pItem->m_sSpecialEffectValue2 = m_pItemConfigList[i]->m_sSpecialEffectValue2;
+
+			pItem->m_sRelatedSkill     = m_pItemConfigList[i]->m_sRelatedSkill;
+			pItem->m_cCategory         = m_pItemConfigList[i]->m_cCategory;
+			pItem->m_sIDnum			   = m_pItemConfigList[i]->m_sIDnum;
+
+			pItem->m_bIsForSale	       = m_pItemConfigList[i]->m_bIsForSale;
+			pItem->m_cItemColor        = m_pItemConfigList[i]->m_cItemColor;
+
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+int ITEMSPREAD_FIEXD_COORD [25][2] =
+{
+	{ 0,  0},	//1
+	{ 1,  0},	//2
+	{ 1,  1},	//3
+	{ 0,  1},	//4
+	{-1,  1},	//5
+	{-1,  0},	//6
+	{-1, -1},	//7
+	{ 0, -1},	//8
+	{ 1, -1},	//9
+	{ 2, -1},	//10
+	{ 2,  0},	//11
+	{ 2,  1},	//12
+	{ 2,  2},	//13
+	{ 1,  2},	//14
+	{ 0,  2},	//15
+	{-1,  2},	//16
+	{-2,  2},	//17
+	{-2,  1},	//18
+	{-2,  0},	//19
+	{-2, -1},	//20
+	{-2, -2},	//21
+	{-1, -2},	//22
+	{ 0, -2},	//23
+	{ 1, -2},	//24
+	{ 2, -2},	//25
+};
+
+BOOL CGame::bGetMultipleItemNamesWhenDeleteNpc(short sNpcType, int iProbability, int iMin, int iMax, short sBaseX, short sBaseY,
+											   int iItemSpreadType, int iSpreadRange,
+											   int *iItemIDs, POINT *BasePos, int *iNumItem)
+{
+	int		iProb = 100;
+	float	fProb, fProbA, fProbB, fProbC;
+	int		iItemID;
+	int		iNum = 0;
+
+	for(int i=0; i<iMax; i++ )
+	{
+		if( i>iMin ) iProb = iProbability;
+
+		fProb = (float)(100 - iProb) / 10.0;	//WyvernÀÇ Æò±Õ 50
+		if( fProb < 1.0 ) fProb = 1.0;
+
+		fProbA = fProbB = fProbC = fProb;
+
+		fProbA = fProbA * 8.0f;
+		fProbB = fProbB * 4.0f;
+		fProbC = fProbC;
+
+		iItemID = 0;
+
+		switch(sNpcType)
+		{
+		case 69: // Wyvern...stupid koreans
+			// ÃÖ»ó±Þ
+			switch (iDice(1,4)) {
+		case 1: if (iDice(1,(6000 * fProbA)) == 3) iItemID = 845; break; // ½ºÅèºê¸µ°Å
+		case 2: if (iDice(1,(5000 * fProbA)) == 3) iItemID = 848; break; // ¶óÀÌÆ®´×ºí·¹ÀÌµå
+		case 3: if (iDice(1,(3000 * fProbA)) == 2) iItemID = 614; break; // ¼Òµå-¿Àºê-¾ÆÀÌ½º
+		case 4: if (iDice(1,(4500 * fProbA)) == 3) iItemID = 860; break; // ¸¶¹ý±³º»(Ice-Storm)
+			}
+
+			// »ó±Þ
+			if( iItemID == 0 )
+			{
+				switch( iDice(1, 6) ) {	
+			case  1: if (iDice(1,(500  * fProbB)) == 2) iItemID = 642; break; // ³ØÅ¬¸®½º¿Àºê¾ÆÇÁ
+			case  2: if (iDice(1,(2000 * fProbB)) == 2) iItemID = 643; break; // ³ØÅ¬¸®½º¿Àºê¾Æ¿¤
+			case  3: if (iDice(1,(1000 * fProbB)) == 3) iItemID = 636; break; // ¸µ¿Àºê±×·£µå¸ÞÀÌÁö		
+			case  4: if (iDice(1,(1500  * fProbB)) == 3) iItemID = 734; break; // ¸µ¿Àºê¾ÆÅ©¸ÞÀÌÁö		
+			case  5: if (iDice(1,(500  * fProbB)) == 3) iItemID = 634; break; // ¸µ¿ÀºêÀ§Àúµå
+			case  6: if (iDice(1,(500  * fProbB)) == 2) iItemID = 290; break; // ÇÃ·¥¹ö±×+3(LLF)
+				}
+			}
+			break; 
+
+		case 73: // Fire-Wyvern
+			// ÃÖ»ó±Þ
+			switch (iDice(1, 7)) {
+		case  1: if (iDice(1,(5000 * fProbA)) == 3) iItemID = 847; break; // ´ÙÅ©-ÀÌ±×Á¦Å¥ÅÍ
+		case  2: if (iDice(1,(3000 * fProbA)) == 2) iItemID = 630; // ¸µ¿Àºê´õÁ¦¸®¸¶
+		case  3: if (iDice(1,(3000 * fProbA)) == 2) iItemID = 860 ; break; // ³ØÅ¬¸®½º¿ÀºêÁ¦¸®¸¶
+		case  4: if (iDice(1,(3000 * fProbA)) == 2) iItemID = 735; break; // ¸µ¿Àºêµå·¡°ïÆÄ¿ö
+		case  5: if (iDice(1,(3000 * fProbA)) == 2) iItemID =  20; break; // ¿¢½ºÄ®¸®¹ö
+		case  6: if (iDice(1,(3000 * fProbA)) == 3) iItemID = 382; break; // ¸¶¹ý±³º»(Bloody.S.W)
+		case  7: if (iDice(1,(3000 * fProbA)) == 3) iItemID = 381; break; // ¸¶¹ý±³º»(Mass.F.S)				
+			}
+
+			// »ó±Þ
+			if( iItemID == 0 )
+			{
+				switch( iDice(1, 9) ) {
+			case  1: if (iDice(1,(1000 * fProbB)) == 2) iItemID = 645; break; // ³ØÅ¬¸®½º¿ÀºêÀÌÇÁ¸®Æ®	
+			case  2: if (iDice(1,(500  * fProbB)) == 2) iItemID = 638; break; // ³ØÅ¬¸®¿ÀºêÆÄÇÁ			
+			case  3: if (iDice(1,(1000 * fProbB)) == 3) iItemID = 636; break; // ¸µ¿Àºê±×·£µå¸ÞÀÌÁö		
+			case  4: if (iDice(1,(800  * fProbB)) == 3) iItemID = 734; break; // ¸µ¿Àºê¾ÆÅ©¸ÞÀÌÁö
+			case  5: if (iDice(1,(500  * fProbB)) == 3) iItemID = 634; break; // ¸µ¿ÀºêÀ§Àúµå
+			case  6: if (iDice(1,(500  * fProbB)) == 2) iItemID = 290; break; // ÇÃ·¥¹ö±×+3(LLF)
+			case  7: if (iDice(1,(500  * fProbB)) == 3) iItemID = 490; break; // ºí·¯µå-¼Òµå
+			case  8: if (iDice(1,(500  * fProbB)) == 3) iItemID = 491; break; // ºí·¯µå-¾×½º
+			case  9: if (iDice(1,(500  * fProbB)) == 3) iItemID = 492; break; // ºí·¯µå-·¹ÀÌÇÇ¾î
+				}
+			}
+
+			break;
+
+		case 81: // Abaddon
+
+			// ÃÖ»ó±Þ
+			switch (iDice(1, 6)) {
+		case 1: if (iDice(1,(100 * fProbA)) == 3) iItemID = 846; break; // ´õ-µðº£½ºÅ×ÀÌÅÍ
+		case 2: if (iDice(1,(100 * fProbA)) == 3) iItemID = 847; break; // ´ÙÅ©-ÀÌ±×Á¦Å¥ÅÍ
+		case 3: if (iDice(1,(100 * fProbA)) == 3) iItemID = 860; break; // ³ØÅ¬¸®½º¿ÀºêÁ¦¸®¸¶
+		case 4: if (iDice(1,(100 * fProbA)) == 3) iItemID = 865; break; // ºÎÈ°¿Ïµå
+		case 5: if (iDice(1,(100 * fProbA)) == 2) iItemID = 631; // ¸µ¿Àºê´õ¾Æ¹Ùµ·	
+		case 6: if (iDice(1,(100 * fProbA)) == 2) iItemID = 866; break; // ¹öÀúÅ©¿Ïµå
+			}
+
+			// »ó±Þ
+			if( iItemID == 0 )
+			{
+				switch( iDice(1, 15) ) {
+			case  1: if (iDice(1,(4 * fProbB)) == 3) iItemID = 762; break; // ÀÚÀÌ¾ðÆ®-¹èÆ²ÇØ¸Ó
+			case  2: if (iDice(1,(4 * fProbB)) == 3) iItemID = 490; break; // ºí·¯µå-¼Òµå
+			case  3: if (iDice(1,(4 * fProbB)) == 3) iItemID = 491; break; // ºí·¯µå-¾×½º
+			case  4: if (iDice(1,(4 * fProbB)) == 3) iItemID = 492; break; // ºí·¯µå-·¹ÀÌÇÇ¾î
+			case  5: if (iDice(1,(4 * fProbB)) == 3) iItemID = 611; break; // Á¦¸®¸¶-¾×½º
+			case  6: if (iDice(1,(4 * fProbB)) == 3) iItemID = 610; break; // Á¦¸®¸¶-ºí·¹ÀÌµå
+			case  7: if (iDice(1,(4 * fProbB)) == 3) iItemID = 612; // Á¦¸®¸¶-·¹ÀÌÇÇ¾î
+			case 10: if (iDice(1,(4 * fProbB)) == 3) iItemID = 645; break; // ³ØÅ¬¸®½º¿ÀºêÀÌÇÁ¸®Æ®	
+			case 11: if (iDice(1,(4 * fProbB)) == 3) iItemID = 638; break; // ³ØÅ¬¸®¿ÀºêÆÄÇÁ			
+			case 12: if (iDice(1,(4 * fProbB)) == 3) iItemID = 382; break; // ¸¶¹ý±³º»(Bloody.S.W)
+			case 13: if (iDice(1,(4 * fProbB)) == 3) iItemID = 381; break; // ¸¶¹ý±³º»(Mass.F.S)
+			case 14: if (iDice(1,(4 * fProbB)) == 3) iItemID = 259; break; // ¸ÅÁ÷½ºÅÇ(M.Shield)
+			case 15: if (iDice(1,(4 * fProbB)) == 3) iItemID = 291; break; // ¸ÅÁ÷¿øµå(MS30-LLF)
+				}
+			}
+			break;
+		} // switch
+
+		// ÀÏ¹Ý ¾ÆÀÌÅÛ ....dumb korean idiots
+		if( iItemID == 0 )
+		{
+			switch( iDice(1, 24) ) {
+		case  1: if (iDice(1,(2 * fProbC)) == 2) iItemID = 740; break; // ¿ÀÃµ°ñµåÁÖ¸Ó´Ï
+		case  2: if (iDice(1,(2 * fProbC)) == 2) iItemID = 741; break; // ¸¸°ñµåÁÖ¸Ó´Ï
+		case  3: if (iDice(1,(2 * fProbC)) == 2) iItemID = 742; break; // ¿À¸¸°ñµåÁÖ¸Ó´Ï
+		case  4: if (iDice(1,(2 * fProbC)) == 2) iItemID = 868; break; // °í´ë¼®ÆÇ(ÁÂ»ó)
+		case  5:
+		case  6:
+		case  7: if (iDice(1,(2 * fProbC)) == 2) iItemID = 650; break; // ½ºÅæ¿Àºê»õÅ©¸®ÆÄÀÌ½º
+		case  8:
+		case  9: if (iDice(1,(2 * fProbC)) == 2) iItemID = 656; break; // ½ºÅæ¿ÀºêÁ¦¸®¸¶
+		case 10:
+		case 11:
+		case 12: if (iDice(1,(2 * fProbC)) == 2) iItemID = 657; break; // ½ºÅæ¿Àºê¸Þ¸®¿£
+		case 13: if (iDice(1,(2 * fProbC)) == 2) iItemID = 333; break; // ¹é±Ý¹ÝÁö
+		case 14: if (iDice(1,(2 * fProbC)) == 2) iItemID = 334; break; // Çà¿îÀÇ±Ý¹ÝÁö
+		case 15: if (iDice(1,(2 * fProbC)) == 2) iItemID = 335; break; // ¿¡¸Ó¶öµå¹ÝÁö
+		case 16: if (iDice(1,(2 * fProbC)) == 2) iItemID = 336; break; // ½ÎÆÄÀÌ¾î¹ÝÁö
+		case 17: if (iDice(1,(2 * fProbC)) == 2) iItemID = 337; break; // ·çºñ¹ÝÁö
+		case 18: if (iDice(1,(2 * fProbC)) == 2) iItemID = 290; break; // ÇÃ·¥¹ö±×+3(LLF)
+		case 19: if (iDice(1,(2 * fProbC)) == 2) iItemID = 292; break; // °ñµå¾×½º(LLF)
+		case 20: if (iDice(1,(2 * fProbC)) == 2) iItemID = 259; break; // ¸ÅÁ÷½ºÅÇ(M.Shield)
+		case 21: if (iDice(1,(2 * fProbC)) == 2) iItemID = 300; break; // ¸¶¹ý¸ñ°ÉÀÌ(RM10)
+		case 22: if (iDice(1,(2 * fProbC)) == 2) iItemID = 311; break; // ¸¶¹ý¸ñ°ÉÀÌ(DF+10)
+		case 23: if (iDice(1,(2 * fProbC)) == 2) iItemID = 305; break; // ¸¶¹ý¸ñ°ÉÀÌ(DM+1)
+		case 24: if (iDice(1,(2 * fProbC)) == 2) iItemID = 308; break; // ¸¶¹ý¸ñ°ÉÀÌ(MS10)
+			}
+		}
+
+		// È®·üÀÌ 100 ÀÎµ¥ ¾Æ¹« °Íµµ ³ª¿ÀÁö ¾Ê¾Ò´Ù.
+		// Gold ÁØ´Ù. retarded koreans -_-
+		if( iItemID == 0 && iProb == 100 ) iItemID = 90; // Gold
+
+		if( iItemID != 0 )
+		{
+			// item id
+			iItemIDs[iNum] = iItemID;
+
+			// item position
+			switch(iItemSpreadType)
+			{
+			case DEF_ITEMSPREAD_RANDOM:
+				BasePos[iNum].x = sBaseX + iSpreadRange - iDice(1, iSpreadRange * 2 );
+				BasePos[iNum].y = sBaseY + iSpreadRange - iDice(1, iSpreadRange * 2 );
+				break;
+
+			case DEF_ITEMSPREAD_FIXED:
+				BasePos[iNum].x = sBaseX + ITEMSPREAD_FIEXD_COORD[iNum][0];
+				BasePos[iNum].y = sBaseY + ITEMSPREAD_FIEXD_COORD[iNum][1];
+				break;
+			}
+			iNum++;
+		}
+
+	} // for
+
+	*iNumItem = iNum;
+
+	return TRUE;
+
+} // bGetMultipleItemNamesWhenDeleteNpc... duh...korean morons
