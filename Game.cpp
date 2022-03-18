@@ -22541,7 +22541,7 @@ BOOL CGame::bCheckLevelUp(int iClientH)
 //	  		      m_pClientList[iClientH]->m_cLU_Int + m_pClientList[iClientH]->m_cLU_Mag + m_pClientList[iClientH]->m_cLU_Char) <= DEF_TOTALLEVELUPPOINT) {
 				// ·¹º§ ¾÷ ¼¼ÆÃÀÌ 3º¸´Ù °°°Å³ª ÀÛ¾Æ¾ß À¯È¿ÇÏ´Ù. 
 
-					  m_pClientList[iClientH]->m_iLU_Pool += 3;
+//					  m_pClientList[iClientH]->m_iLU_Pool += 3;
 /*
 				if (m_pClientList[iClientH]->m_iStr < DEF_CHARPOINTLIMIT) {
 					m_pClientList[iClientH]->m_iStr  += m_pClientList[iClientH]->m_cLU_Str;
@@ -22844,7 +22844,7 @@ void CGame::LevelUpSettingsHandler(int iClientH, char * pData, DWORD dwMsgSize)
 
 	if (m_pClientList[iClientH] == NULL) return;
 	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
-	if(m_pClientList[iClientH]->m_iLU_Pool <= 3) 
+	if (m_pClientList[iClientH]->m_iLU_Pool <= 3) 
 	{
 		//ÇØÄ¿ÀÎ°¡??
 		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SETTING_FAILED, NULL, NULL, NULL, NULL);
@@ -22903,8 +22903,7 @@ void CGame::LevelUpSettingsHandler(int iClientH, char * pData, DWORD dwMsgSize)
 		m_pClientList[iClientH]->m_iInt + m_pClientList[iClientH]->m_iMag + m_pClientList[iClientH]->m_iCharisma;
 
 	//(·¹º§ Æ¯¼º°ª + ·¹º§¾÷ Æ÷ÀÎÆ® > ·¹º§¾÷ Æ¯¼º°ª Á¤»óÄ¡)¸é ºñÁ¤»óÀÌ´Ù.. Ã³¸® ºÒ°¡.. ·¹º§¾÷ Æ÷ÀÎÆ®¸¦ Á¤»óÄ¡·Î ¸¶Ãß°í Ã³¸® ºÒ°¡..
-	if (iTotalSetting + m_pClientList[iClientH]->m_iLU_Pool -3
-	>	((m_pClientList[iClientH]->m_iLevel-1)*3 + 70)) 
+	if (iTotalSetting + m_pClientList[iClientH]->m_iLU_Pool -3 > ((m_pClientList[iClientH]->m_iLevel-1)*3 + 70))
 	{
 		m_pClientList[iClientH]->m_iLU_Pool = /*m_cLU_Str ÃÊ±â°ª*/3 + (m_pClientList[iClientH]->m_iLevel-1)*3 + 70 - iTotalSetting;
 
