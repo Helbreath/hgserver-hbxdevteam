@@ -73,6 +73,9 @@
 
 #define DEF_ITEMEFFECTTYPE_CONSTRUCTIONKIT		27	// 건축 키트
 
+#define DEF_ITEMEFFECTTYPE_UNFREEZE			28		// Unfreeze pot ?
+#define DEF_ITEMEFFECTTYPE_SLATES			31
+
 #define DEF_ITET_UNIQUE_OWNER				1		// ItemTouchEffect: 주인을 갖는 아이템 
 #define DEF_ITET_ID							2		// 그냥 아이템 아이디
 #define DEF_ITET_DATE						3		// 사용가능한 날짜가 지정된 아이템 

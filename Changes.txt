@@ -2,6 +2,45 @@
 							HBSources (HBXtreme) Release history
 Development Team: Zero, KLKS, Hypnotoad, ArchAngel
 ================================================================================================
+2.10
+- Added Party code
+- Added Upgrade code
+- Added command /goto
+- Added command /unsummonboss
+- Added command /setforcerecalltime
+- Added command /enableadmincommand
+- Added command /MonsterCount
+- Added command /begincrusadetotalwar
+- Added command /endcrusadetotalwar 
+- Added new Mob generator code
+- Added new Drop code
+- Added party chat '$'
+- Added mining code
+- Added multidrop for Wyvern/Fire-Wyvern/Abaddon
+- Added Blizzard
+- Added Cancellation
+- Added Earth-Worm-Strike
+- Added Armor-Break
+- Fixed Unfreeze pot
+- Fixed GMShield, shows "GM" when equipt (only works for GM's)
+- Fixed /who command, Only GM's can use
+- Fixed Single Sell/Repair item bug
+- Fixed bug when meeting items on ground
+- Fixed bug when NPC uses magic to attack causing crash
+- Fixed aura effect being removed when un/equipting weapon/armour
+- Fixed party exp sharing, works properly now i think 
+- Fixed recall time mapname bug
+- Fixed other small misc bugs
+- Fixed guildname not showing properly
+- Fixed /fi command, shows properly now
+- Fixed Crusade, no more crashing
+- Fixed Quests, shouldnt crash hg anymore
+- Enabled back old commands
+- Enabled Candy drops during december
+- Changed /enableadmincreateitem 147258 to /enableadmincreateitem
+- Updated Npc.cfg, Item(123).cfg Magic.cfg
+- SP bonus for less than level 60
+
 2.07
 - Added GM chat "^"
 - Enabled "Test Server" so exp ban will no longer happen and skills will be raised faster (will be disabled in 2.08)

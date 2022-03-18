@@ -52,7 +52,7 @@
 #define DEF_MAXNPCS				5000
 #define DEF_MAXMAPS				100
 #define DEF_MAXITEMTYPES		5000
-#define DEF_MAXNPCTYPES			100
+#define DEF_MAXNPCTYPES			200			// New 14/05/2004 Changed to 3.51
 #define DEF_MAXBUILDITEMS		300
 #define DEF_CLIENTTIMEOUT		1000*10		//(10초)
 #define DEF_AUTOSAVETIME		60000*30	// 자동 저장 시간간격 30분 
