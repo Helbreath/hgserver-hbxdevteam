@@ -1,0 +1,64 @@
+================================================================================================
+							HBSources (HBXtreme) Release history
+Development Team: Zero, KLKS, Hypnotoad, ArchAngel
+================================================================================================
+2.06
+- Added Router Support - New lines in gserver.cfg:
+game-server-internal-address        = IP
+game-server-external-address        = IP
+game-server-mode           = lan/LAN/internet/INTERNET
+- Fixed drop rates
+- Combatant/Civilian mode works 100% now
+- Fixed some Init data messing up some stats and data
+- Fixed fullswing bug
+- Fixed npcs disapearing when logging in or changing maps
+- Fixed random mob spawns
+- RE-Fixed level up system
+
+2.05
+- Npcs now properly show Enemy and stats (like AM/AP/Clair/etc..)
+- Fall down bug fixed 99%. You should only falldown about once an hour if even 
+
+2.041
+- Level up system works 100% 
+
+2.04
+- New Commands:
+/weather 1|2|3|4|5|6
+weather command is to change the weather in the maps characters are connected.
+(/weather 4 10) this means light snow (4) for 10 secs (10). heres all the weather i found.
+0 = normal, 1, 2, 3 = rain( 1 light, 3 heavy), 4, 5, 6 = snow (4 light, 6 heavy).
+- Level up System ALMOST works fully. So far you can level up and spend points(only right after login).
+- Gateserver SHOULD connect every time now with no error. (if it does then please tell us(Tested on a winxp machine and it has yet to fail, so as far as we know it works)).
+- Hero items available at William (not tested)
+- AncientTablet drops added 
+- Misc Arrow/bow fixes 
+- More drop balancing 
+- All monsters, except dummy, drop ancientslates 
+- Fixes to Fire-Wyvern (drop firebow) 
+- Drop ratio balanced, harder to drop xelima/merian items 
+- Now 2.03->3.51 monsters spawn 
+- Fixed Orge spawning 
+- Fixed WereWolf spawning 
+- Fixed Stalker spawning 
+- 2.03->3.51 monsters also spawn in berserk now
+- Abaddon no longer spawns in groups
+- Wyvern attacks with Blizzard, Fire-Wyvern with BSW/MFS, Centaur with ES and paralyze
+- New monsters are clairvoient/explosive/etc.. (Does not show due to Side bug for npcs)
+- Blizzard does damage, Ressurect actually ressurects
+
+
+2.031
+- New Commands:
+/summonplayer charname
+/summonall aresden|elvine|NONE
+/summondeath <- (summons a Wyvern like /summondemon)
+/storm magic# amount1-30
+/kill charname damageoverhead
+/revive charname damageoverhead hptheywillhave
+/setzerk 0|1
+/setfreeze 0|1
+- 90% of the initial data sent on connect works
+- You can level up in game but can't spend points
+- Black and White map fixed
+- Sockets to gate and logs connect (xp may|may not have a problem)

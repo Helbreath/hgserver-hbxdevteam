@@ -183,6 +183,7 @@
 class CGame  
 {
 public:
+	void RequestChangePlayMode(int iClientH);
 	void GetHeroMantleHandler(int iClientH,int iItemID,char * pString);
 	void AdminOrder_Weather(int iClientH, char * pData, DWORD dwMsgSize);
 	void AdminOrder_SendMSG(int iClientH, char *pData, DWORD dwMsgSize);
@@ -568,6 +569,9 @@ public:
 
 	char m_cServerName[11];
 	char m_cGameServerAddr[16];
+	char m_cGameServerAddrInternal[16];
+	char m_cGameServerAddrExternal[16];
+	int  m_iGameServerMode;
 	char m_cLogServerAddr[16];
 	char m_cGateServerAddr[16];
 	int  m_iGameServerPort;

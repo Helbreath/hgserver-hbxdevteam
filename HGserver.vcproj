@@ -37,7 +37,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Documents and Settings\Jimmy\Desktop\Sources\Test\HGserver.NET.exe"
+				OutputFile="C:\Documents and Settings\Administrator.ROOT.000\Desktop\Sources\Test\HGserver.NET.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -159,6 +159,9 @@
 				RelativePath="BuildItem.h">
 			</File>
 			<File
+				RelativePath=".\Changes.txt">
+			</File>
+			<File
 				RelativePath="Client.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -244,9 +247,6 @@
 			</File>
 			<File
 				RelativePath="GuildsMan.h">
-			</File>
-			<File
-				RelativePath=".\HGserver.sln">
 			</File>
 			<File
 				RelativePath="Item.cpp">

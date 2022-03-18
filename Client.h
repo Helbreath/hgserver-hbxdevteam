@@ -309,7 +309,10 @@ public:
 
 	char m_cConstructMapName[11];
 	int  m_iConstructLocX, m_iConstructLocY;
-
+	
+	// 2.06
+	BOOL m_bIsPlayerCivil;
+	//
 };
 
 #endif // !defined(AFX_CLIENT_H__39CC7700_789F_11D2_A8E6_00001C7030A6__INCLUDED_)

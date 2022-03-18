@@ -607,11 +607,13 @@ BOOL CGame::bInit()
 	m_iLimitedUserExp = m_iLevelExpTable[DEF_LEVELLIMIT+1]; // Ã¼ÇèÆÇ À¯Àú´Â 20·¹º§ÀÌ»óÀÇ °æÇèÄ¡´Â ¾òÀ» ¼ö ¾ø´Ù.  ÀÓ½Ã·Î ·¹º§ 60±îÁö
 	m_iLevelExp20     = m_iLevelExpTable[20]; 
 
+	m_iGameServerMode = 0;
 	if (bReadProgramConfigFile("GServer.cfg") == FALSE) {
 		PutLogList(" ");
 		PutLogList("(!!!) CRITICAL ERROR! Cannot execute server! config file contents error!");
 		return FALSE;	
 	}
+
 	
 	srand( (unsigned)time( NULL ) );   
 	// Main Log Socket·ÎÀÇ ¿¬°á ½Ãµµ 
@@ -1191,13 +1193,13 @@ int CGame::iClientMotion_Move_Handler(int iClientH, short sX, short sY, char cDi
 		sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 		
 		sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-		sTemp2 = (short)iGetPlayerABSStatus(wObjectID, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
+		sTemp2 = iGetPlayerABSStatus(wObjectID, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
 		sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
 		*ip = sTemp;
 		//*sp = DEF_TEST;
 		cp += 4;//Original 2
 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 40); // v1.4 
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 41); // v1.4  //Original : 40
 		
 		switch (iRet) {
 		case DEF_XSOCKEVENT_QUENEFULL:
@@ -1342,7 +1344,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	pBuffer = new char [DEF_MSGBUFFERSIZE+1];
 	ZeroMemory(pBuffer, DEF_MSGBUFFERSIZE+1);
 
-	// ÃÖÃÊ Á¢¼Ó µ¥ÀÌÅÍ¸¦ Àü¼ÛÇØ ÁØ´Ù. ¿©±â¼­ ÀÌ¸§ÀÌ ÀÏÄ¡ÇÏ´ÂÁö È®ÀÎÇÒ ¼öµµ ÀÖ´Ù.
+	// 횄횜횄횎 횁짖쩌횙 쨉짜?횑횇횒쨍짝 ?체쩌횤횉횠 횁횠쨈횢. 쩔짤짹창쩌짯 ?횑쨍짠?횑 ?횕횆징횉횕쨈횂횁철 횊짰?횓횉횘 쩌철쨉쨉 ?횜쨈횢.
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
 	ZeroMemory(cPlayerName, sizeof(cPlayerName));
 	memcpy(cPlayerName, cp, 10);
@@ -1353,13 +1355,13 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	ZeroMemory(cPlayerName, sizeof(cPlayerName));
 	memcpy(cPlayerName, cTxt, 10);
 
-	// ÀÌ¸§ÀÌ ÀÏÄ¡ÇÏ´ÂÁö °Ë»çÇÑ´Ù. ÀÏÄ¡ÇÏÁö ¾ÊÀ¸¸é »èÁ¦ÇÏ°í ±ÍÈ¯ÇÑ´Ù. 
+	// ?횑쨍짠?횑 ?횕횆징횉횕쨈횂횁철 째횏쨩챌횉횗쨈횢. ?횕횆징횉횕횁철 쩐횎?쨍쨍챕 쨩챔횁짝횉횕째챠 짹횒횊짱횉횗쨈횢. 
 	if (memcmp(m_pClientList[iClientH]->m_cCharName, cPlayerName, 10) != 0) {
 		DeleteClient(iClientH, FALSE, TRUE);
 		return;
 	}
 
-	// Ä³¸¯ÅÍÀÇ ½Å»óÁ¤º¸¸¦ Àü¼ÛÇÑ´Ù.
+	// 횆쨀쨍짱횇횒?횉 쩍횇쨩처횁짚쨘쨍쨍짝 ?체쩌횤횉횗쨈횢.
 	dwp  = (DWORD *)(pBuffer + DEF_INDEX4_MSGID);
 	*dwp = MSGID_PLAYERCHARACTERCONTENTS; // 0x0FA40000 = 262406144
 	wp   = (WORD *) (pBuffer + DEF_INDEX2_MSGTYPE);
@@ -1368,26 +1370,23 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	cp = (char *)(pBuffer + DEF_INDEX2_MSGTYPE + 2);
 
 	ip   = (int *)cp;
-	//*ip  = m_pClientList[iClientH]->m_iHP;
-	//*ip  = 1;
+	*ip  = m_pClientList[iClientH]->m_iHP;
 	cp  += 4;
 
 	ip   = (int *)cp;
 	*ip  = m_pClientList[iClientH]->m_iMP;
-	//*ip  = 1;
 	cp  += 4;
 
 	ip   = (int *)cp;
 	*ip  = m_pClientList[iClientH]->m_iSP;
-	//*ip  = 1;
 	cp  += 4;
 
 	ip   = (int *)cp;
-	//*ip  = m_pClientList[iClientH]->m_iDefenseRatio;
+	*ip  = m_pClientList[iClientH]->m_iDefenseRatio;
 	cp  += 4;
 
 	ip   = (int *)cp;
-	//*ip  = m_pClientList[iClientH]->m_iHitRatio;
+	*ip  = m_pClientList[iClientH]->m_iHitRatio;
 	cp  += 4;
 
 	ip   = (int *)cp;
@@ -1418,36 +1417,29 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	*ip  = m_pClientList[iClientH]->m_iCharisma;
 	cp  += 4;
 
-	//ip = (int *)cp;
-	//*ip = -1;
 	iStats = (m_pClientList[iClientH]->m_iStr + m_pClientList[iClientH]->m_iDex + m_pClientList[iClientH]->m_iVit +  
 		m_pClientList[iClientH]->m_iInt + m_pClientList[iClientH]->m_iMag + m_pClientList[iClientH]->m_iCharisma); 
 
-	ip = (int *)cp; 
-	*ip = m_pClientList[iClientH]->m_iLevel*3 - (iStats - 70); 
-	cp += 6;
+	m_pClientList[iClientH]->m_iLU_Pool =  m_pClientList[iClientH]->m_iLevel*3 - (iStats - 70);
+	wp = (WORD *)cp; 
+	//*wp = m_pClientList[iClientH]->m_iLevel*3 - (iStats - 70); 
+	*wp = m_pClientList[iClientH]->m_iLU_Pool;
+	cp += 2;
 
+	*cp = 0;
+	cp++;
 
+	*cp = 0;
+	cp++;
 
-	//*cp = m_pClientList[iClientH]->m_iLU_Pool;
-	//sec = (char *)cp;
-	//memcpy(sec, "", 1);
-	//	*cp = 0;
-	//	cp += 4;
+	*cp = 0;
+	cp++;
 
+	*cp = 0;
+	cp++;
 
-//	*cp = 6;
-//	cp++;
-//	*cp = 7;
-//	cp++;
-//	^^ 2 extra bytes Zabuza fix doesn't have
-
-	//*cp = m_pClientList[iClientH]->m_cLU_Str;
-	//*cp = m_pClientList[iClientH]->m_cLU_Vit;
-	//*cp = m_pClientList[iClientH]->m_cLU_Dex;
-	//*cp = m_pClientList[iClientH]->m_cLU_Int;
-	//*cp = m_pClientList[iClientH]->m_cLU_Mag;
-	//*cp = m_pClientList[iClientH]->m_cLU_Char;
+	*cp = 0;
+	cp++;
 
 	ip   = (int *)cp;
 	*ip  = m_pClientList[iClientH]->m_iExp;
@@ -1468,18 +1460,6 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	memcpy(cp, m_pClientList[iClientH]->m_cLocation, 10);
 	cp  += 10;
 
-	ip = (int *)cp;
-	*ip = 0;
-	cp += 1;
-
-	ip = (int *)cp;
-	*ip = 0;
-	cp += 1;
-
-	ip = (int *)cp;
-	*ip = 0;
-	cp += 1;
-
 	memcpy(cp, m_pClientList[iClientH]->m_cGuildName, 20);
 	cp  += 20;
 
@@ -1491,7 +1471,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	*cp = (char)m_pClientList[iClientH]->m_iSuperAttackLeft;
 	cp++;
 
-	// v1.4311-3 Ãß°¡ »çÅõÀå¿¹¾à ¿©ºÎ¸¦ Å¬¶óÀÌ¾ðÆ®¿¡ º¸³½´Ù.
+	// v1.4311-3 횄횩째징 쨩챌횇천?책쩔쨔쩐횪 쩔짤쨘횓쨍짝 횇짭쨋처?횑쩐챨횈짰쩔징 쨘쨍쨀쩍쨈횢.
 	ip   = (int *)cp;
 	*ip  = m_pClientList[iClientH]->m_iFightzoneNumber;
 	cp  += 4;
@@ -1500,31 +1480,31 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	//Syntax : 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345
 	//Syntax : ......145212521152........376.200=200=200=200=200=195=......big.8...17......aresden...NONE......NONE30
 	// 0x0FA40000 = 262406144
-	// ¸Þ½ÃÁö Àü¼Û 
+	// 쨍횧쩍횄횁철 ?체쩌횤 
 
 	//Debug Event
 	DbgWnd->AddEventMsg(MSG_SEND,pBuffer,180,0);
 
-	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 180);// Original : 115
+	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 118);// Original : 115
 	switch (iRet) {
 	case DEF_XSOCKEVENT_QUENEFULL:
 	case DEF_XSOCKEVENT_SOCKETERROR:
 	case DEF_XSOCKEVENT_CRITICALERROR:
 	case DEF_XSOCKEVENT_SOCKETCLOSED:
-		// ¸Þ½ÃÁö¸¦ º¸³¾¶§ ¿¡·¯°¡ ¹ß»ýÇß´Ù¸é Á¦°ÅÇÑ´Ù.
+		// 쨍횧쩍횄횁철쨍짝 쨘쨍쨀쩐쨋짠 쩔징쨌짱째징 쨔횩쨩첵횉횩쨈횢쨍챕 횁짝째횇횉횗쨈횢.
 		DeleteClient(iClientH, TRUE, TRUE);
 		if(pBuffer != NULL) delete pBuffer;
 		return;
 	}
 
-	// Ä³¸¯ÅÍÀÇ ¾ÆÀÌÅÛ Á¤º¸¸¦ Àü¼ÛÇÑ´Ù. 
+	// 횆쨀쨍짱횇횒?횉 쩐횈?횑횇횤 횁짚쨘쨍쨍짝 ?체쩌횤횉횗쨈횢. 
 	dwp  = (DWORD *)(pBuffer + DEF_INDEX4_MSGID);
 	*dwp = MSGID_PLAYERITEMLISTCONTENTS;
 	wp   = (WORD *) (pBuffer + DEF_INDEX2_MSGTYPE);
 	*wp  = DEF_MSGTYPE_CONFIRM;
 
-	// ¸ÕÀú ¼ÒÁöÇÏ°í ÀÖ´Â ¾ÆÀÌÅÛ 
-	// ¾ÆÀÌÅÛÀÇ ÃÑ °¹¼ö 
+	// 쨍횛?첬 쩌횘횁철횉횕째챠 ?횜쨈횂 쩐횈?횑횇횤 
+	// 쩐횈?횑횇횤?횉 횄횗 째쨔쩌철 
 	iTotalItemA = 0;
 	for (i = 0; i < DEF_MAXITEMS; i++)
 		if (m_pClientList[iClientH]->m_pItemList[i] != NULL) 
@@ -1538,7 +1518,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	for (i = 0; i < iTotalItemA; i++) {
 		// ### ERROR POINT!!!
 		if (m_pClientList[iClientH]->m_pItemList[i] == NULL) {
-			// ¿¡·¯ ¹æÁö¿ë ÄÚµåÀÌ´Ù. ¹®Á¦°¡ ÀÖ´Â Ä³¸¯ÅÍÀÇ µ¥ÀÌÅÍ¸¦ ºÐ¼®ÇÒ°Í. ¿Ö ³ÎÀÏ±î?
+			// 쩔징쨌짱 쨔챈횁철쩔챘 횆횣쨉책?횑쨈횢. 쨔짰횁짝째징 ?횜쨈횂 횆쨀쨍짱횇횒?횉 쨉짜?횑횇횒쨍짝 쨘횖쩌짰횉횘째횒. 쩔횜 쨀횓?횕짹챤?
 			wsprintf(G_cTxt, "RequestInitDataHandler error: Client(%s) Item(%d)", m_pClientList[iClientH]->m_cCharName, i);
 			PutLogFileList(G_cTxt);
 
@@ -1582,13 +1562,13 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 		*dwp = m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute;
 		cp += 4;
 		/*
-		*cp = (char)(m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute & 0x00000001); // Custom-ItemÀÎÁöÀÇ ¿©ºÎ 
+		*cp = (char)(m_pClientList[iClientH]->m_pItemList[i]->m_dwAttribute & 0x00000001); // Custom-Item?횓횁철?횉 쩔짤쨘횓 
 		cp++;
 		*/
 	}
 
-	// ´ÙÀ½ º¸°üÁßÀÎ ¾ÆÀÌÅÛ 
-	// ¾ÆÀÌÅÛÀÇ ÃÑ °¹¼ö 
+	// 쨈횢?쩍 쨘쨍째체횁횩?횓 쩐횈?횑횇횤 
+	// 쩐횈?횑횇횤?횉 횄횗 째쨔쩌철 
 	iTotalItemB = 0;
 	for (i = 0; i < DEF_MAXBANKITEMS; i++)
 		if (m_pClientList[iClientH]->m_pItemInBankList[i] != NULL) 
@@ -1598,9 +1578,9 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	cp++;
 
 	for (i = 0; i < iTotalItemB; i++) {
-		// ### ÀÇ½É½º·¯¿î ERROR POINT
+		// ### ?횉쩍횋쩍쨘쨌짱쩔챤 ERROR POINT
 		if (m_pClientList[iClientH]->m_pItemInBankList[i] == NULL) {
-			// ¿¡·¯ ¹æÁö¿ë ÄÚµåÀÌ´Ù. ¹®Á¦°¡ ÀÖ´Â Ä³¸¯ÅÍÀÇ µ¥ÀÌÅÍ¸¦ ºÐ¼®ÇÒ°Í. ¿Ö ³ÎÀÏ±î?
+			// 쩔징쨌짱 쨔챈횁철쩔챘 횆횣쨉책?횑쨈횢. 쨔짰횁짝째징 ?횜쨈횂 횆쨀쨍짱횇횒?횉 쨉짜?횑횇횒쨍짝 쨘횖쩌짰횉횘째횒. 쩔횜 쨀횓?횕짹챤?
 			wsprintf(G_cTxt, "RequestInitDataHandler error: Client(%s) Bank-Item(%d)", m_pClientList[iClientH]->m_cCharName, i);
 			PutLogFileList(G_cTxt);
 
@@ -1642,7 +1622,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 		*dwp = m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute;
 		cp += 4;
 		/*
-		*cp = (char)(m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute & 0x00000001); // Custom-ItemÀÎÁöÀÇ ¿©ºÎ 
+		*cp = (char)(m_pClientList[iClientH]->m_pItemInBankList[i]->m_dwAttribute & 0x00000001); // Custom-Item?횓횁철?횉 쩔짤쨘횓 
 		cp++;
 		*/
 	}
@@ -1657,20 +1637,20 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 		cp++;
 	}
 
-	// ¾ÆÀÌÅÛ Á¤º¸ Àü¼Û 
+	// 쩐횈?횑횇횤 횁짚쨘쨍 ?체쩌횤 
 	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 6 + 1 + iTotalItemA*44 + iTotalItemB*43 + DEF_MAXMAGICTYPE + DEF_MAXSKILLTYPE);
 	switch (iRet) {
 	case DEF_XSOCKEVENT_QUENEFULL:
 	case DEF_XSOCKEVENT_SOCKETERROR:
 	case DEF_XSOCKEVENT_CRITICALERROR:
 	case DEF_XSOCKEVENT_SOCKETCLOSED:
-		// ¸Þ½ÃÁö¸¦ º¸³¾¶§ ¿¡·¯°¡ ¹ß»ýÇß´Ù¸é Á¦°ÅÇÑ´Ù.
+		// 쨍횧쩍횄횁철쨍짝 쨘쨍쨀쩐쨋짠 쩔징쨌짱째징 쨔횩쨩첵횉횩쨈횢쨍챕 횁짝째횇횉횗쨈횢.
 		DeleteClient(iClientH, TRUE, TRUE);
 		if(pBuffer != NULL) delete pBuffer;
 		return;
 	}
 
-	// ¸Êµ¥ÀÌÅÍ¸¦ Àü¼ÛÇÑ´Ù.
+	// 쨍횎쨉짜?횑횇횒쨍짝 ?체쩌횤횉횗쨈횢.
 	dwp  = (DWORD *)(pBuffer + DEF_INDEX4_MSGID);
 	*dwp = MSGID_RESPONSE_INITDATA;
 	wp   = (WORD *)(pBuffer + DEF_INDEX2_MSGTYPE);
@@ -1678,7 +1658,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 
 	cp = (char *)(pBuffer + DEF_INDEX2_MSGTYPE + 2);
 
-	// ÇÃ·¹ÀÌ¾îÀÇ À§Ä¡¸¦ È®Á¤ÇÑ´Ù. v1.41 °ü¶÷ÀÚ ¸ðµå¶ó¸é ±×À§Ä¡ ±×´ë·Î ³õ´Â´Ù.
+	// 횉횄쨌쨔?횑쩐챤?횉 ?짠횆징쨍짝 횊짰횁짚횉횗쨈횢. v1.41 째체쨋첨?횣 쨍챨쨉책쨋처쨍챕 짹횞?짠횆징 짹횞쨈챘쨌횓 쨀천쨈횂쨈횢.
 	if (m_pClientList[iClientH]->m_bIsObserverMode == FALSE)
 		bGetEmptyPosition(&m_pClientList[iClientH]->m_sX, &m_pClientList[iClientH]->m_sY, m_pClientList[iClientH]->m_cMapIndex);
 	else GetMapInitialPoint(m_pClientList[iClientH]->m_cMapIndex, &m_pClientList[iClientH]->m_sX, &m_pClientList[iClientH]->m_sY);
@@ -1688,7 +1668,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	*wp = iClientH;
 	cp += 2;
 
-	// Àü¼ÛÇÒ ¸Ê µ¥ÀÌÅÍÀÇ ±âÁØÀ§Ä¡. ÇÃ·¹ÀÌ¾î´Â ±âÁØÀ§Ä¡ (x, y)·ÎºÎÅÍ (x+14, y+12)¿¡ À§Ä¡ÇÑ´Ù.
+	// ?체쩌횤횉횘 쨍횎 쨉짜?횑횇횒?횉 짹창횁횠?짠횆징. 횉횄쨌쨔?횑쩐챤쨈횂 짹창횁횠?짠횆징 (x, y)쨌횓쨘횓횇횒 (x+14, y+12)쩔징 ?짠횆징횉횗쨈횢.
 	sp  = (short *)cp;
 	*sp = m_pClientList[iClientH]->m_sX - 14 - 5;
 	cp += 2;
@@ -1721,25 +1701,25 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	*ip = m_pClientList[iClientH]->m_iApprColor;
 	cp += 4;
 
-	sp  = (short *)cp;
-	*sp = m_pClientList[iClientH]->m_iStatus;
+	ip  = (int *)cp;
+	*ip = m_pClientList[iClientH]->m_iStatus;
 	cp += 4;// Original : 2
 
-	// (!) ÇÃ·¹ÀÌ¾î°¡ À§Ä¡ÇÏ´Â ¸ÊÀÌ¸§À» ±â·ÏÇÑ´Ù.
+	// (!) 횉횄쨌쨔?횑쩐챤째징 ?짠횆징횉횕쨈횂 쨍횎?횑쨍짠?쨩 짹창쨌횕횉횗쨈횢.
 	memcpy(cp, m_pClientList[iClientH]->m_cMapName, 10);
 	cp += 10;
 
-	// ¸íÄª»óÀÇ ¸Ê ÀÌ¸§À» ÀÔ·ÂÇÑ´Ù. 
+	// 쨍챠횆짧쨩처?횉 쨍횎 ?횑쨍짠?쨩 ?횚쨌횂횉횗쨈횢. 
 	memcpy(cp, m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, 10);
 	cp += 10;
 
-	// ÁÖ¾ß°£ ¸ðµå¸¦ »ðÀÔ 
+	// 횁횜쩐횩째짙 쨍챨쨉책쨍짝 쨩챨?횚 
 	if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_bIsFixedDayMode == TRUE) 
 		*cp = 1;
 	else *cp = m_cDayOrNight;
 	cp++;
 
-	// ±â»ó »óÅÂ ¸ðµå¸¦ »ðÀÔ 
+	// 짹창쨩처 쨩처횇횂 쨍챨쨉책쨍짝 쨩챨?횚 
 	if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_bIsFixedDayMode == TRUE) 
 		*cp = NULL;
 	else *cp = m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cWhetherStatus;
@@ -1750,9 +1730,9 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	*ip = m_pClientList[iClientH]->m_iContribution;
 	cp += 4;
 
-	// @@@ ÇÃ·¹ÀÌ¾î¸¦ ¸Ê»ó¿¡ ÃÖÃÊ·Î À§Ä¡½ÃÅ²´Ù.
+	// @@@ 횉횄쨌쨔?횑쩐챤쨍짝 쨍횎쨩처쩔징 횄횜횄횎쨌횓 ?짠횆징쩍횄횇짼쨈횢.
 
-	// v1.41 ¿©±â¼­ °ü¶÷ÀÚ ¸ðµå¶ó¸é À§Ä¡½ÃÅ°Áö ¾Ê´Â´Ù. 
+	// v1.41 쩔짤짹창쩌짯 째체쨋첨?횣 쨍챨쨉책쨋처쨍챕 ?짠횆징쩍횄횇째횁철 쩐횎쨈횂쨈횢. 
 	if (m_pClientList[iClientH]->m_bIsObserverMode == FALSE) {
 		m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->SetOwner(iClientH, 
 			DEF_OWNERTYPE_PLAYER, 
@@ -1774,11 +1754,14 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	*ip = m_pClientList[iClientH]->m_iHP;
 	cp += 4;
 
+	//Unknown variable
+	*cp = 0;
+	cp++;
 
-	// ¸ÊÀÇ Á¤º¸¸¦ Ãß°¡ÇÑ´Ù. 
+	// 쨍횎?횉 횁짚쨘쨍쨍짝 횄횩째징횉횗쨈횢. 
 	iSize = iComposeInitMapData(m_pClientList[iClientH]->m_sX - 10, m_pClientList[iClientH]->m_sY - 7, iClientH, cp );
 
-	// ¸Þ½ÃÁö Àü¼Û 
+	// 쨍횧쩍횄횁철 ?체쩌횤 
 	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 46 + iSize +4 +4 +1 +4 +4+3); // Zabuza fix
 	//iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 59 + iSize +4 +4 +1 +4 +4); // v1.41
 	//	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(pBuffer, 46 + iSize +4 +4 +1 +4 +4); // v1.41
@@ -1787,7 +1770,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 	case DEF_XSOCKEVENT_SOCKETERROR:
 	case DEF_XSOCKEVENT_CRITICALERROR:
 	case DEF_XSOCKEVENT_SOCKETCLOSED:
-		// ¸Þ½ÃÁö¸¦ º¸³¾¶§ ¿¡·¯°¡ ¹ß»ýÇß´Ù¸é Á¦°ÅÇÑ´Ù.
+		// 쨍횧쩍횄횁철쨍짝 쨘쨍쨀쩐쨋짠 쩔징쨌짱째징 쨔횩쨩첵횉횩쨈횢쨍챕 횁짝째횇횉횗쨈횢.
 		DeleteClient(iClientH, TRUE, TRUE);
 		if(pBuffer != NULL) delete pBuffer;
 		return;
@@ -1795,12 +1778,12 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 
 	if(pBuffer != NULL) delete pBuffer;
 
-	// ´Ù¸¥ Å¬¶óÀÌ¾ðÆ®µé¿¡°Ô »õ ÇÃ·¹ÀÌ¾î Á¢¼ÓÀ» ¾Ë¸°´Ù. 
+	// 쨈횢쨍짜 횇짭쨋처?횑쩐챨횈짰쨉챕쩔징째횚 쨩천 횉횄쨌쨔?횑쩐챤 횁짖쩌횙?쨩 쩐횏쨍째쨈횢. 
 	SendEventToNearClient_TypeA(iClientH, DEF_OWNERTYPE_PLAYER, MSGID_EVENT_LOG, DEF_MSGTYPE_CONFIRM, NULL, NULL, NULL);
 
 	int iTL_;
 
-	// ÇÃ·¹ÀÌ¾î°¡ ´Ù¸¥ ¸Ê¿¡ µé¾î°¬´Ù. ¸¸¾à Àû±¹ÀÌ¶ó¸é ½Ã°£À» ¼³Á¤ÇÑ´Ù.
+	// 횉횄쨌쨔?횑쩐챤째징 쨈횢쨍짜 쨍횎쩔징 쨉챕쩐챤째짭쨈횢. 쨍쨍쩐횪 ?청짹쨔?횑쨋처쨍챕 쩍횄째짙?쨩 쩌쨀횁짚횉횗쨈횢.
 	if ( (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) && 
 		(memcmp(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName, "elvine", 6) == 0) ) {
 
@@ -1808,30 +1791,30 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 			m_pClientList[iClientH]->m_bIsWarLocation = TRUE;
 			// v1.42
 			if (m_pClientList[iClientH]->m_iTimeLeft_ForceRecall == 0) {
-				// ³²¾ÆÀÖÀ» ¼ö ÀÖ´Â ÀÜÁ¸ ½Ã°£À» ¼³Á¤ÇØ ÁØ´Ù. 
-				// ½Ã°£À» ±¸ÇÑ´ÙÀ½ iWarPeriod¸¦ ±¸ÇÑ´Ù.
+				// 쨀짼쩐횈?횜?쨩 쩌철 ?횜쨈횂 ?횥횁쨍 쩍횄째짙?쨩 쩌쨀횁짚횉횠 횁횠쨈횢. 
+				// 쩍횄째짙?쨩 짹쨍횉횗쨈횢?쩍 iWarPeriod쨍짝 짹쨍횉횗쨈횢.
 				GetLocalTime(&SysTime);
 				switch (SysTime.wDayOfWeek) {
-			case 1:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //¿ù¿äÀÏ 2ºÐ
-			case 2:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //È­¿äÀÏ 2ºÐ
-			case 3:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //¼ö¿äÀÏ 2ºÐ
-			case 4:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //¸ñ¿äÀÏ 2ºÐ
-			case 5:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*10 +100; break; //±Ý¿äÀÏ 15ºÐ
-			case 6:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*30 +300; break; //Åä¿äÀÏ 45ºÐ 
-			case 0:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*60; break; //ÀÏ¿äÀÏ 60ºÐ
+			case 1:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //쩔첫쩔채?횕 2쨘횖
+			case 2:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //횊짯쩔채?횕 2쨘횖
+			case 3:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //쩌철쩔채?횕 2쨘횖
+			case 4:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;  //쨍챰쩔채?횕 2쨘횖
+			case 5:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*10 +100; break; //짹횦쩔채?횕 15쨘횖
+			case 6:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*30 +300; break; //횇채쩔채?횕 45쨘횖 
+			case 0:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*60; break; //?횕쩔채?횕 60쨘횖
 				}
 			}
 			else {
-				// ÀÜÁ¸½Ã°£ÀÌ ÀÖ´Ù. ¿äÀÏº° ÀÜÁ¸½Ã°£º¸´Ù Å©¸é 1·Î ÃÊ±âÈ­ 
+				// ?횥횁쨍쩍횄째짙?횑 ?횜쨈횢. 쩔채?횕쨘째 ?횥횁쨍쩍횄째짙쨘쨍쨈횢 횇짤쨍챕 1쨌횓 횄횎짹창횊짯 
 				GetLocalTime(&SysTime);
 				switch (SysTime.wDayOfWeek) {
-			case 1:	iTL_ = 40; break;   //¿ù¿äÀÏ 30ÃÊ
-			case 2:	iTL_ = 40; break;   //È­¿äÀÏ 30ÃÊ
-			case 3:	iTL_ = 40; break;   //¼ö¿äÀÏ 30ÃÊ
-			case 4:	iTL_ = 40; break;   //¸ñ¿äÀÏ 30ÃÊ
-			case 5:	iTL_ = 20*10+100; break; //±Ý¿äÀÏ 10ºÐ
-			case 6:	iTL_ = 20*30+300; break; //Åä¿äÀÏ 30ºÐ 
-			case 0:	iTL_ = 20*60; break; //ÀÏ¿äÀÏ 60ºÐ
+			case 1:	iTL_ = 40; break;   //쩔첫쩔채?횕 30횄횎
+			case 2:	iTL_ = 40; break;   //횊짯쩔채?횕 30횄횎
+			case 3:	iTL_ = 40; break;   //쩌철쩔채?횕 30횄횎
+			case 4:	iTL_ = 40; break;   //쨍챰쩔채?횕 30횄횎
+			case 5:	iTL_ = 20*10+100; break; //짹횦쩔채?횕 10쨘횖
+			case 6:	iTL_ = 20*30+300; break; //횇채쩔채?횕 30쨘횖 
+			case 0:	iTL_ = 20*60; break; //?횕쩔채?횕 60쨘횖
 				}
 
 				if (m_pClientList[iClientH]->m_iTimeLeft_ForceRecall > iTL_) 
@@ -1847,30 +1830,30 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 
 				// v1.42
 				if (m_pClientList[iClientH]->m_iTimeLeft_ForceRecall == 0) {
-					// ³²¾ÆÀÖÀ» ¼ö ÀÖ´Â ÀÜÁ¸ ½Ã°£À» ¼³Á¤ÇØ ÁØ´Ù. 
-					// ½Ã°£À» ±¸ÇÑ´ÙÀ½ iWarPeriod¸¦ ±¸ÇÑ´Ù.
+					// 쨀짼쩐횈?횜?쨩 쩌철 ?횜쨈횂 ?횥횁쨍 쩍횄째짙?쨩 쩌쨀횁짚횉횠 횁횠쨈횢. 
+					// 쩍횄째짙?쨩 짹쨍횉횗쨈횢?쩍 iWarPeriod쨍짝 짹쨍횉횗쨈횢.
 					GetLocalTime(&SysTime);
 					switch (SysTime.wDayOfWeek) {
-			case 1:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //¿ù¿äÀÏ 30ÃÊ
-			case 2:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //È­¿äÀÏ 30ÃÊ
-			case 3:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //¼ö¿äÀÏ 30ÃÊ
-			case 4:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //¸ñ¿äÀÏ 30ÃÊ
-			case 5:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*10 +100; break; //±Ý¿äÀÏ 10ºÐ
-			case 6:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*30 +300; break; //Åä¿äÀÏ 30ºÐ 
-			case 0:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*60; break; //ÀÏ¿äÀÏ 60ºÐ
+			case 1:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //쩔첫쩔채?횕 30횄횎
+			case 2:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //횊짯쩔채?횕 30횄횎
+			case 3:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //쩌철쩔채?횕 30횄횎
+			case 4:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 40; break;   //쨍챰쩔채?횕 30횄횎
+			case 5:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*10 +100; break; //짹횦쩔채?횕 10쨘횖
+			case 6:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*30 +300; break; //횇채쩔채?횕 30쨘횖 
+			case 0:	m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 20*60; break; //?횕쩔채?횕 60쨘횖
 					}
 				}
 				else {
-					// ÀÜÁ¸½Ã°£ÀÌ ÀÖ´Ù. ¿äÀÏº° ÀÜÁ¸½Ã°£º¸´Ù Å©¸é 1·Î ÃÊ±âÈ­ 
+					// ?횥횁쨍쩍횄째짙?횑 ?횜쨈횢. 쩔채?횕쨘째 ?횥횁쨍쩍횄째짙쨘쨍쨈횢 횇짤쨍챕 1쨌횓 횄횎짹창횊짯 
 					GetLocalTime(&SysTime);
 					switch (SysTime.wDayOfWeek) {
-			case 1:	iTL_ = 40; break;   //¿ù¿äÀÏ 30ÃÊ
-			case 2:	iTL_ = 40; break;   //È­¿äÀÏ 30ÃÊ
-			case 3:	iTL_ = 40; break;   //¼ö¿äÀÏ 30ÃÊ
-			case 4:	iTL_ = 40; break;   //¸ñ¿äÀÏ 30ÃÊ
-			case 5:	iTL_ = 20*10 +100; break; //±Ý¿äÀÏ 10ºÐ
-			case 6:	iTL_ = 20*30 +300; break; //Åä¿äÀÏ 30ºÐ 
-			case 0:	iTL_ = 20*60; break; //ÀÏ¿äÀÏ 60ºÐ
+			case 1:	iTL_ = 40; break;   //쩔첫쩔채?횕 30횄횎
+			case 2:	iTL_ = 40; break;   //횊짯쩔채?횕 30횄횎
+			case 3:	iTL_ = 40; break;   //쩌철쩔채?횕 30횄횎
+			case 4:	iTL_ = 40; break;   //쨍챰쩔채?횕 30횄횎
+			case 5:	iTL_ = 20*10 +100; break; //짹횦쩔채?횕 10쨘횖
+			case 6:	iTL_ = 20*30 +300; break; //횇채쩔채?횕 30쨘횖 
+			case 0:	iTL_ = 20*60; break; //?횕쩔채?횕 60쨘횖
 					}
 
 					if (m_pClientList[iClientH]->m_iTimeLeft_ForceRecall > iTL_) 
@@ -1878,17 +1861,17 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 				}
 			}
 
-			// ´Ù¸¥ ¼­¹ö¿¡ ÀÖ´Â »çÅõÀåÀ¸·Î ÀÔÀåÇÏ´Â °æ¿ì 
-			// v1.4311-3 Ãß°¡ »çÅõÀå¿¡ ÀÔÀåÇÏ¸é °­ÄÝÅ¸ÀÓÀ» ½ÃÀÛÇÑ´Ù.
+			// 쨈횢쨍짜 쩌짯쨔철쩔징 ?횜쨈횂 쨩챌횇천?책?쨍쨌횓 ?횚?책횉횕쨈횂 째챈쩔챙 
+			// v1.4311-3 횄횩째징 쨩챌횇천?책쩔징 ?횚?책횉횕쨍챕 째짯횆횦횇쨍?횙?쨩 쩍횄?횤횉횗쨈횢.
 		else if ((m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_bIsFightZone == TRUE) &&
-			(m_iFightzoneNoForceRecall == 0)) {  // ¿î¿µÀÚ°¡ °­ÄÝ¸ðµå¸¦ ¼³Á¤ÇÏÁö ¾Ê´Â°æ¿ì¿¡¸¸ °­ÄÝÅ¸ÀÓÀÌ ¼³Á¤µÈ´Ù.
+			(m_iFightzoneNoForceRecall == 0)) {  // 쩔챤쩔쨉?횣째징 째짯횆횦쨍챨쨉책쨍짝 쩌쨀횁짚횉횕횁철 쩐횎쨈횂째챈쩔챙쩔징쨍쨍 째짯횆횦횇쨍?횙?횑 쩌쨀횁짚쨉횊쨈횢.
 
 				m_pClientList[iClientH]->m_dwWarBeginTime = timeGetTime();
 				m_pClientList[iClientH]->m_bIsWarLocation = TRUE;
 
-				// ³²¾ÆÀÖÀ» ¼ö ÀÖ´Â ÀÜÁ¸ ½Ã°£À» ¼³Á¤ÇØ ÁØ´Ù. 
-				// 0 ½ÃºÎÅÍ 2½Ã°£ °£°ÝÀ¸·Î °è»êµÈ´Ù Áï 0½Ã¿¡ ÀÔÀåÇÏ¸é 2½Ã°£µ¿¾È ³²¾Æ ÀÖÀ»¼ö ÀÖ´Ù.
-				// ¼­¹ö°£ÀÇ ½Ã°£ Â÷ÀÌ¸¦ °í·ÁÇÏ¿© ¿©À¯½Ã°£ 2ºÐ ÀÖ´Ù. Áï 2½Ã°£ µÇ±â 2ºÐÀüºÎÅÍ ¸®ÄÝµÈ´Ù.
+				// 쨀짼쩐횈?횜?쨩 쩌철 ?횜쨈횂 ?횥횁쨍 쩍횄째짙?쨩 쩌쨀횁짚횉횠 횁횠쨈횢. 
+				// 0 쩍횄쨘횓횇횒 2쩍횄째짙 째짙째횦?쨍쨌횓 째챔쨩챗쨉횊쨈횢 횁챦 0쩍횄쩔징 ?횚?책횉횕쨍챕 2쩍횄째짙쨉쩔쩐횊 쨀짼쩐횈 ?횜?쨩쩌철 ?횜쨈횢.
+				// 쩌짯쨔철째짙?횉 쩍횄째짙 횂첨?횑쨍짝 째챠쨌횁횉횕쩔짤 쩔짤?짱쩍횄째짙 2쨘횖 ?횜쨈횢. 횁챦 2쩍횄째짙 쨉횉짹창 2쨘횖?체쨘횓횇횒 쨍짰횆횦쨉횊쨈횢.
 				GetLocalTime(&SysTime);
 				m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 2*60*20 - ((SysTime.wHour%2)*20*60 + SysTime.wMinute*20) - 2*20; 
 
@@ -1898,7 +1881,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 				m_pClientList[iClientH]->m_iTimeLeft_ForceRecall = 0;
 			}
 
-			// Ãß°¡·Î º¸³»Áà¾ß ÇÒ Á¤º¸¸¦ º¸³½´Ù. v1.1
+			// 횄횩째징쨌횓 쨘쨍쨀쨩횁횪쩐횩 횉횘 횁짚쨘쨍쨍짝 쨘쨍쨀쩍쨈횢. v1.1
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SAFEATTACKMODE, NULL, NULL, NULL, NULL);
 			// v1.3
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_DOWNSKILLINDEXSET, m_pClientList[iClientH]->m_iDownSkillIndex, NULL, NULL, NULL);
@@ -1913,35 +1896,35 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SPECIALABILITYENABLED, NULL, NULL, NULL, NULL);
 			}
 
-			// Crusade ÇöÀç Å©·ç¼¼ÀÌµå ¸ðµåÀÌ°í ÇÃ·¹ÀÌ¾îÀÇ CrusadeGUID°¡ 0 È¤Àº ÇöÀç¿Í ´Ù¸£´Ù¸é Ã³À½ ÇÒ´çµÇ´Â °ÍÀÌ´Ù. Å©·ç¼¼ÀÌµå ¿ªÇÒ ÃÊ±âÈ­.
+			// Crusade 횉철?챌 횇짤쨌챌쩌쩌?횑쨉책 쨍챨쨉책?횑째챠 횉횄쨌쨔?횑쩐챤?횉 CrusadeGUID째징 0 횊짚?쨘 횉철?챌쩔횒 쨈횢쨍짙쨈횢쨍챕 횄쨀?쩍 횉횘쨈챌쨉횉쨈횂 째횒?횑쨈횢. 횇짤쨌챌쩌쩌?횑쨉책 쩔짧횉횘 횄횎짹창횊짯.
 			if (m_bIsCrusadeMode == TRUE) {
 				if (m_pClientList[iClientH]->m_dwCrusadeGUID == 0) {
-					// Å©·ç¼¼ÀÌµå¸ðµåÀÌ°í ÇÃ·¹ÀÌ¾îÀÇ GUID°¡ 0ÀÌ¶õ °ÍÀº Ã³À½ Å©·ç¼¼ÀÌµå ¸ðµå¿¡ µé¾î¿Ô´Ù´Â ÀÇ¹Ì. ¿ªÇÒ ÃÊ±âÈ­.
+					// 횇짤쨌챌쩌쩌?횑쨉책쨍챨쨉책?횑째챠 횉횄쨌쨔?횑쩐챤?횉 GUID째징 0?횑쨋천 째횒?쨘 횄쨀?쩍 횇짤쨌챌쩌쩌?횑쨉책 쨍챨쨉책쩔징 쨉챕쩐챤쩔횚쨈횢쨈횂 ?횉쨔횑. 쩔짧횉횘 횄횎짹창횊짯.
 					m_pClientList[iClientH]->m_iCrusadeDuty = 0;
 					m_pClientList[iClientH]->m_iConstructionPoint = 0;
 					m_pClientList[iClientH]->m_dwCrusadeGUID = m_dwCrusadeGUID;
 				}
 				else if (m_pClientList[iClientH]->m_dwCrusadeGUID != m_dwCrusadeGUID) {
-					// Å©·ç¼¼ÀÌµå¸ðµåÀÌ°í ÇÃ·¹ÀÌ¾îÀÇ GUID°¡ ÇöÀç Å©·ç¼¼ÀÌµå ¾ÆÀÌµð¿Í ´Ù¸£´Ù´Â °ÍÀº Àú¹ø¿¡ ¹ú¾îÁ³´ø Å©·ç¼¼ÀÌµåÀÇ °á°úÀÌ´Ù.
-					// ÀÌ·± °æ¿ì Àü°ø¿¡ µû¸¥ Æ÷»óÀ» ÇÒ ¼ö ¾ø´Ù. ÃÖ¼ÒÇÑ Å©·ç¼¼ÀÌµå ¸ðµå°¡ Á¾·áµÈ ´ÙÀ½ ´ÙÀ½ Àü¸éÀüÀÌ ½ÃÀÛµÇ±â Àü¿¡ Á¢¼ÓÀ» ÇØ¾ß Æ÷»óÀ» ¾òÀ» ¼ö ÀÖ´Ù.
-					// ÀÌÀü¿¡ ÇÒ´çµÇ¾ú´ø ¿ªÇÒ, °Ç¼³ Æ÷ÀÎÆ®, ÀüÀï °øÇåµµ ÃÊ±âÈ­.
+					// 횇짤쨌챌쩌쩌?횑쨉책쨍챨쨉책?횑째챠 횉횄쨌쨔?횑쩐챤?횉 GUID째징 횉철?챌 횇짤쨌챌쩌쩌?횑쨉책 쩐횈?횑쨉챨쩔횒 쨈횢쨍짙쨈횢쨈횂 째횒?쨘 ?첬쨔첩쩔징 쨔첬쩐챤횁쨀쨈첩 횇짤쨌챌쩌쩌?횑쨉책?횉 째찼째첬?횑쨈횢.
+					// ?횑쨌짹 째챈쩔챙 ?체째첩쩔징 쨉청쨍짜 횈첨쨩처?쨩 횉횘 쩌철 쩐첩쨈횢. 횄횜쩌횘횉횗 횇짤쨌챌쩌쩌?횑쨉책 쨍챨쨉책째징 횁쩐쨌찼쨉횊 쨈횢?쩍 쨈횢?쩍 ?체쨍챕?체?횑 쩍횄?횤쨉횉짹창 ?체쩔징 횁짖쩌횙?쨩 횉횠쩐횩 횈첨쨩처?쨩 쩐챵?쨩 쩌철 ?횜쨈횢.
+					// ?횑?체쩔징 횉횘쨈챌쨉횉쩐첬쨈첩 쩔짧횉횘, 째횉쩌쨀 횈첨?횓횈짰, ?체?챦 째첩횉책쨉쨉 횄횎짹창횊짯.
 					m_pClientList[iClientH]->m_iCrusadeDuty       = 0;
 					m_pClientList[iClientH]->m_iConstructionPoint = 0;
 					m_pClientList[iClientH]->m_iWarContribution   = 0;
 					m_pClientList[iClientH]->m_dwCrusadeGUID = m_dwCrusadeGUID;
-					// Å©·ç¼¼ÀÌµå GUID°¡ ´Ù¸£´Ù. Æ÷»ó ºÒ°¡.
+					// 횇짤쨌챌쩌쩌?횑쨉책 GUID째징 쨈횢쨍짙쨈횢. 횈첨쨩처 쨘횘째징.
 					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CRUSADE, (DWORD)m_bIsCrusadeMode, NULL, 0, NULL, -1);		
 				}
 				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CRUSADE, (DWORD)m_bIsCrusadeMode, m_pClientList[iClientH]->m_iCrusadeDuty, NULL, NULL);
 			}
 			else {
-				// Å©·ç¼¼ÀÌµå ¸ðµå°¡ ¾Æ´Ñ °æ¿ì ¿ªÇÒ°ú °øÇå Æ÷ÀÎÆ®¸¸ ÃÊ±âÈ­. ÀüÀï °øÇåµµ´Â Àá½ÃÈÄ¿¡ °è»êµÇ¾î¼­ Æ÷»óµÈ´Ù.
+				// 횇짤쨌챌쩌쩌?횑쨉책 쨍챨쨉책째징 쩐횈쨈횗 째챈쩔챙 쩔짧횉횘째첬 째첩횉책 횈첨?횓횈짰쨍쨍 횄횎짹창횊짯. ?체?챦 째첩횉책쨉쨉쨈횂 ?찼쩍횄횊횆쩔징 째챔쨩챗쨉횉쩐챤쩌짯 횈첨쨩처쨉횊쨈횢.
 				if (m_pClientList[iClientH]->m_dwCrusadeGUID == m_dwCrusadeGUID) {
 					m_pClientList[iClientH]->m_iCrusadeDuty = 0;
 					m_pClientList[iClientH]->m_iConstructionPoint = 0;
 				}
 				else if ((m_pClientList[iClientH]->m_dwCrusadeGUID != NULL) && (m_pClientList[iClientH]->m_dwCrusadeGUID != m_dwCrusadeGUID)) {
-					// Å©·ç¼¼ÀÌµå GUID°¡ ´Ù¸£´Ù. Æ÷»ó ºÒ°¡.
+					// 횇짤쨌챌쩌쩌?횑쨉책 GUID째징 쨈횢쨍짙쨈횢. 횈첨쨩처 쨘횘째징.
 					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_CRUSADE, (DWORD)m_bIsCrusadeMode, NULL, 0, NULL, -1);		
 					m_pClientList[iClientH]->m_iWarContribution   = 0;
 					m_pClientList[iClientH]->m_dwCrusadeGUID = 0;
@@ -1960,6 +1943,7 @@ void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 //			SendEventToNearClient_TypeA(iClientH, DEF_OWNERTYPE_PLAYER, MSGID_EVENT_MOTION, DEF_OBJECTNULLACTION, NULL, NULL, NULL);
 
 }
+
 
 /*void CGame::RequestInitDataHandler(int iClientH, char * pData, char cKey)
 {
@@ -2686,7 +2670,7 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
 					// sStatusÀÇ »óÀ§ 4ºñÆ®°¡ FOE °ü°è¸¦ ³ªÅ¸³½´Ù. 
 					sTemp = m_pClientList[pTile->m_sOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-					sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
+					sTemp2 = iGetPlayerABSStatus(pTile->m_sOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
 					*ip = sTemp;
 					//*sp = DEF_TEST;
@@ -2787,7 +2771,7 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
 					// sStatusÀÇ »óÀ§ 4ºñÆ®°¡ FOE °ü°è¸¦ ³ªÅ¸³½´Ù. 
 					sTemp = m_pClientList[pTile->m_sDeadOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-					sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sDeadOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sDeadOwner);
+					sTemp2 = iGetPlayerABSStatus(pTile->m_sDeadOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sDeadOwner);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
 					*ip = sTemp;
 					//*sp = DEF_TEST;
@@ -3050,6 +3034,7 @@ void CGame::DeleteClient(int iClientH, BOOL bSave, BOOL bNotify, BOOL bCountLogo
 }
 
 
+
 void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dwMsgID, WORD wMsgType, short sV1, short sV2, short sV3)
 {
 	int * ip, i, iRet, iShortCutIndex;
@@ -3168,53 +3153,53 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 		iTemp = m_pClientList[sOwnerH]->m_iStatus & 0xF0;
 		iTemp3 = m_pClientList[sOwnerH]->m_iStatus & 0x0F0FFFF7F;
 
-			if (wMsgType == DEF_OBJECTNULLACTION) {
-				if (m_pClientList[sOwnerH]->m_bIsKilled == TRUE)
-					*cp_a = 1; 
-				else *cp_a = 0; 
-			}
-			else *cp_a = 0;
-			cp_a++;
+		if (wMsgType == DEF_OBJECTNULLACTION) {
+			if (m_pClientList[sOwnerH]->m_bIsKilled == TRUE)
+				*cp_a = 1; 
+			else *cp_a = 0; 
+		}
+		else *cp_a = 0;
+		cp_a++;
 
-			wp  = (WORD *)cp_s;
-			*wp = sOwnerH + 30000;
-			cp_s += 2;
+		wp  = (WORD *)cp_s;
+		*wp = sOwnerH + 30000;
+		cp_s += 2;
 
-			*cp_s = m_pClientList[sOwnerH]->m_cDir;
-			cp_s++;
+		*cp_s = m_pClientList[sOwnerH]->m_cDir;
+		cp_s++;
 
-			*cp_s = (unsigned char)sV1;
-			cp_s++;
-			*cp_s = (unsigned char)sV2;
-			cp_s++;
-
-
-			sp  = (short *)cp_s;
-			sX  = m_pClientList[sOwnerH]->m_sX;
-			*sp = sX;
-			cp_s += 2;
-			sp  = (short *)cp_s;
-			sY  = m_pClientList[sOwnerH]->m_sY;
-			*sp = sY;
-			cp_s += 2;
+		*cp_s = (unsigned char)sV1;
+		cp_s++;
+		*cp_s = (unsigned char)sV2;
+		cp_s++;
 
 
-			wp  = (WORD *)cp_sv;
-			*wp = sOwnerH + 30000;
-			cp_sv += 2;
+		sp  = (short *)cp_s;
+		sX  = m_pClientList[sOwnerH]->m_sX;
+		*sp = sX;
+		cp_s += 2;
+		sp  = (short *)cp_s;
+		sY  = m_pClientList[sOwnerH]->m_sY;
+		*sp = sY;
+		cp_s += 2;
 
-			*cp_sv = m_pClientList[sOwnerH]->m_cDir;
-			cp_sv++;
-			*cp_sv = sV1 - sX;
-			cp_sv++;
-			*cp_sv = sV2 - sY;
-			cp_sv++;
-			sp  = (short *)cp_sv;
-			*sp = sV3;
-			cp_sv += 2;
 
-			if (cOwnerSend == 2){
-				switch(wMsgType){
+		wp  = (WORD *)cp_sv;
+		*wp = sOwnerH + 30000;
+		cp_sv += 2;
+
+		*cp_sv = m_pClientList[sOwnerH]->m_cDir;
+		cp_sv++;
+		*cp_sv = sV1 - sX;
+		cp_sv++;
+		*cp_sv = sV2 - sY;
+		cp_sv++;
+		sp  = (short *)cp_sv;
+		*sp = sV3;
+		cp_sv += 2;
+
+		if (cOwnerSend == 2){
+			switch(wMsgType){
 					case DEF_OBJECTNULLACTION:
 					case DEF_MSGTYPE_CONFIRM:
 						iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData_All, 43, cKey);
@@ -3227,50 +3212,50 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 						return;
 					default:
 						return;
-				}
+			}
 		}
 
 
-	bFlag = TRUE;
-	iShortCutIndex = 0;
+		bFlag = TRUE;
+		iShortCutIndex = 0;
 
-	while(bFlag){
+		while(bFlag){
 
-		i = m_iClientShortCut[iShortCutIndex];
-		iShortCutIndex++;
-		if (i == 0) bFlag = FALSE;
+			i = m_iClientShortCut[iShortCutIndex];
+			iShortCutIndex++;
+			if (i == 0) bFlag = FALSE;
 
-		if ((bFlag == TRUE) && (m_pClientList[i] != NULL) && (m_pClientList[i]->m_bIsInitComplete == TRUE))
+			if ((bFlag == TRUE) && (m_pClientList[i] != NULL) && (m_pClientList[i]->m_bIsInitComplete == TRUE))
 
-			if ( (m_pClientList[i]->m_cMapIndex == m_pClientList[sOwnerH]->m_cMapIndex) &&
-				(m_pClientList[i]->m_sX >= m_pClientList[sOwnerH]->m_sX - 10 - sRange) &&
-				(m_pClientList[i]->m_sX <= m_pClientList[sOwnerH]->m_sX + 10 + sRange) &&
-				(m_pClientList[i]->m_sY >= m_pClientList[sOwnerH]->m_sY - 8 - sRange) &&
-				(m_pClientList[i]->m_sY <= m_pClientList[sOwnerH]->m_sY + 8 + sRange) ) {
+				if ( (m_pClientList[i]->m_cMapIndex == m_pClientList[sOwnerH]->m_cMapIndex) &&
+					(m_pClientList[i]->m_sX >= m_pClientList[sOwnerH]->m_sX - 10 - sRange) &&
+					(m_pClientList[i]->m_sX <= m_pClientList[sOwnerH]->m_sX + 10 + sRange) &&
+					(m_pClientList[i]->m_sY >= m_pClientList[sOwnerH]->m_sY - 8 - sRange) &&
+					(m_pClientList[i]->m_sY <= m_pClientList[sOwnerH]->m_sY + 8 + sRange) ) {
 
-					if (m_pClientList[i]->m_cSide != m_pClientList[sOwnerH]->m_cSide){
-						if (i != sOwnerH) {
-							iTemp = iTemp3;
+						if (m_pClientList[i]->m_cSide != m_pClientList[sOwnerH]->m_cSide){
+							if (i != sOwnerH) {
+								iTemp = iTemp3;
+							}
+							else {
+								iTemp = m_pClientList[sOwnerH]->m_iStatus;
+							}
 						}
 						else {
-							iTemp = m_pClientList[sOwnerH]->m_cSide;
+							iTemp = m_pClientList[sOwnerH]->m_iStatus;
 						}
-					}
-					else {
-						iTemp = m_pClientList[sOwnerH]->m_cSide;
-					}
 
-					iTemp &= 0x0FFFFFFF;
-					iTemp2 = iGetPlayerABSStatus(sOwnerH, i);
-					iTemp  = (iTemp | (iTemp2 << 28));
-					*ipStatus = iTemp;
+						iTemp &= 0x0FFFFFFF;
+						iTemp2 = iGetPlayerABSStatus(sOwnerH, i);
+						iTemp  = (iTemp | (iTemp2 << 28));
+						*ipStatus = iTemp;
 
-					if ( (m_pClientList[i]->m_sX >= m_pClientList[sOwnerH]->m_sX - 9) &&
-						(m_pClientList[i]->m_sX <= m_pClientList[sOwnerH]->m_sX + 9) &&
-						(m_pClientList[i]->m_sY >= m_pClientList[sOwnerH]->m_sY - 7) &&
-						(m_pClientList[i]->m_sY <= m_pClientList[sOwnerH]->m_sY + 7) ) {
+						if ( (m_pClientList[i]->m_sX >= m_pClientList[sOwnerH]->m_sX - 9) &&
+							(m_pClientList[i]->m_sX <= m_pClientList[sOwnerH]->m_sX + 9) &&
+							(m_pClientList[i]->m_sY >= m_pClientList[sOwnerH]->m_sY - 7) &&
+							(m_pClientList[i]->m_sY <= m_pClientList[sOwnerH]->m_sY + 7) ) {
 
-							switch (wMsgType) {
+								switch (wMsgType) {
 					case DEF_MSGTYPE_CONFIRM:
 					case DEF_MSGTYPE_REJECT:
 					case DEF_OBJECTNULLACTION:
@@ -3315,11 +3300,11 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 							if (i != sOwnerH)
 								iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 9, cKey);
 						break;
-							} //Switch
-						} // If 2
-				} // If 1
-			else {
-				switch (wMsgType) {
+								} //Switch
+							} // If 2
+					} // If 1
+				else {
+					switch (wMsgType) {
 				case DEF_MSGTYPE_CONFIRM:
 				case DEF_MSGTYPE_REJECT:
 				case DEF_OBJECTNULLACTION:
@@ -3364,16 +3349,11 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 						if (i != sOwnerH)
 							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 43, cKey);
 					break;
-				} //Switch
-			} //else
-	} //While finish
-} //Finish Player
+					} //Switch
+				} //else
+		} //While finish
+	} //Finish Player
 	else {
-
-//		if (cOwnerSend == 1) 
-//
-//		else
-//		if (i != sOwnerH)
 
 		if (m_pNpcList[sOwnerH] == NULL) return;
 
@@ -3462,7 +3442,7 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 
 						iTemp = *ipStatus;
 						iTemp = 0x0FFFFFFF & iTemp;
-						iTemp2 = (int)iGetNpcRelationship(sOwnerH, i);
+						iTemp2 = iGetNpcRelationship(sOwnerH, i);
 						iTemp  = (iTemp | (iTemp2 << 28));
 						*ipStatus = iTemp;
 
@@ -3492,8 +3472,7 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 							break;
 
 						default:
-							//Original : iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 9, cKey);
-							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 27, cKey);
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 9, cKey);
 							break;
 
 								} //Switch
@@ -3530,6 +3509,10 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 		}
 	} // else - NPC
 }
+
+
+
+
 
 
 /*
@@ -4002,13 +3985,13 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 */
 int CGame::iComposeMoveMapData(short sX, short sY, int iClientH, char cDir, char * pData)
 {
- register int * ip, ix, iy, iSize, iTileExists, iIndex;
- class CTile * pTileSrc, * pTile;
- unsigned char ucHeader;
- short * sp, * pTotal;
- int     sTemp, sTemp2;
- WORD  * wp;
- char  * cp;
+register int * ip, ix, iy, iSize, iTileExists, iIndex;
+class CTile * pTileSrc, * pTile;
+unsigned char ucHeader;
+short * sp, * pTotal;
+int iTemp, iTemp2;
+WORD  * wp;
+char  * cp;
 
 	if (m_pClientList[iClientH] == NULL) return 0;
 
@@ -4017,299 +4000,317 @@ int CGame::iComposeMoveMapData(short sX, short sY, int iClientH, char cDir, char
 
 	iSize = 2;
 	iTileExists = 0;
+
 	pTileSrc = (class CTile *)(m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_pTile + 
-		                       (sX) + (sY)*m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_sSizeY);
-	
+		(sX) + (sY)*m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_sSizeY);
+
 	iIndex = 0;
+
 	while (1) {
 		ix = _tmp_iMoveLocX[cDir][iIndex];
 		iy = _tmp_iMoveLocY[cDir][iIndex];
 		if ((ix == -1) || (iy == -1)) break;
+
 		iIndex++;
 
 		pTile = (class CTile *)(pTileSrc + ix + iy*m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_sSizeY);
 
-		// @@@ !!! @@@ ÀÌ°÷¿¡ Á¶°ÇÀÌ ÀÔ·ÂµÇ¾ß¸¸ Á¤º¸°¡ Àü´ÞµÈ´Ù!!!
 		if ( (pTile->m_sOwner != NULL) || (pTile->m_sDeadOwner != NULL) || 
-			 (pTile->m_pItem[0] != NULL) || (pTile->m_sDynamicObjectType != NULL) ) {
-			iTileExists++;
-			// À§Ä¡Á¤º¸ ÀÔ·Â 
-			sp = (short *)cp;
-			*sp = ix;
-			cp += 2;
-			sp = (short *)cp;
-			*sp = iy;
-			cp += 2;
-			iSize += 4;
+			(pTile->m_pItem[0] != NULL) || (pTile->m_sDynamicObjectType != NULL) ) {
 
-			// Çì´õ Á¤º¸¸¦ ÀÛ¼ºÇÑ´Ù.
-			ucHeader = 0;
-			if (pTile->m_sOwner != NULL) {
-				// °£È¤ ÇÚµéÀÌ ÀÖ´Âµ¥µµ NULLÀÎ °æ¿ì·Î ¿¡·¯¹ß»ý. ¿øÀÎÆÄ¾ÇÁß. ¿¡·¯ º¸¿Ï ·çÆ¾ »ðÀÔ. 
-				if (pTile->m_cOwnerClass == DEF_OWNERTYPE_PLAYER) { 
-					if (m_pClientList[pTile->m_sOwner] != NULL) ucHeader = ucHeader | 0x01;
-					else pTile->m_sOwner = NULL;
-				}
-				if (pTile->m_cOwnerClass == DEF_OWNERTYPE_NPC) { 
-					if (m_pNpcList[pTile->m_sOwner] != NULL) ucHeader = ucHeader | 0x01;
-					else pTile->m_sOwner = NULL;
-				}
-			}
-			if (pTile->m_sDeadOwner != NULL) {
-				if (pTile->m_cDeadOwnerClass == DEF_OWNERTYPE_PLAYER) { 
-					if (m_pClientList[pTile->m_sDeadOwner] != NULL)	ucHeader = ucHeader | 0x02;
-					else pTile->m_sDeadOwner = NULL;
-				}
-				if (pTile->m_cDeadOwnerClass == DEF_OWNERTYPE_NPC) { 
-					if (m_pNpcList[pTile->m_sDeadOwner] != NULL) ucHeader = ucHeader | 0x02;
-					else pTile->m_sDeadOwner = NULL;
-				}
-			}
-			if (pTile->m_pItem[0] != NULL)				ucHeader = ucHeader | 0x04;
-			if (pTile->m_sDynamicObjectType != NULL)    ucHeader = ucHeader | 0x08;
-			//
-			*cp = ucHeader;
-			cp++;
-			iSize++;
+				iTileExists++;
 
-			if ((ucHeader & 0x01) != 0) {
-				// Ä³¸¯ÅÍ Á¤º¸ »ðÀÔ 
-				switch (pTile->m_cOwnerClass) {
-				case DEF_OWNERTYPE_PLAYER:
-					// Object ID number(Player) : 1~10000
-					sp  = (short *)cp;
-					*sp	= pTile->m_sOwner;
-					cp += 2;
-					iSize += 2;
-					// object type
-					sp  = (short *)cp;
-					*sp	= m_pClientList[pTile->m_sOwner]->m_sType;
-					cp += 2;
-					iSize += 2;
-					// dir
-					*cp = m_pClientList[pTile->m_sOwner]->m_cDir;
+				sp = (short *)cp;
+				*sp = ix;
+				cp += 2;
+				sp = (short *)cp;
+				*sp = iy;
+				cp += 2;
+				iSize += 4;
+
+				ucHeader = 0;
+
+				if (pTile->m_sOwner != NULL) {
+					if (pTile->m_cOwnerClass == DEF_OWNERTYPE_PLAYER) { 
+						if (m_pClientList[pTile->m_sOwner] != NULL) ucHeader = ucHeader | 0x01;
+						else pTile->m_sOwner = NULL;
+					}
+					if (pTile->m_cOwnerClass == DEF_OWNERTYPE_NPC) {
+						if (m_pNpcList[pTile->m_sOwner] != NULL) ucHeader = ucHeader | 0x01;
+						else pTile->m_sOwner = NULL;
+					}
+
+					if (pTile->m_sDeadOwner != NULL) {
+						if (pTile->m_cDeadOwnerClass == DEF_OWNERTYPE_PLAYER) { 
+							if (m_pClientList[pTile->m_sDeadOwner] != NULL)	ucHeader = ucHeader | 0x02;
+							else pTile->m_sDeadOwner = NULL;
+						}
+						if (pTile->m_cDeadOwnerClass == DEF_OWNERTYPE_NPC) { 
+							if (m_pNpcList[pTile->m_sDeadOwner] != NULL) ucHeader = ucHeader | 0x02;
+							else pTile->m_sDeadOwner = NULL;
+						}
+					}
+
+					if (pTile->m_pItem[0] != NULL)				ucHeader = ucHeader | 0x04;
+					if (pTile->m_sDynamicObjectType != NULL)    ucHeader = ucHeader | 0x08;
+
+					*cp = ucHeader;
 					cp++;
 					iSize++;
-					// Appearance1
-					sp  = (short *)cp;
-					*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr1;
-					cp += 2;
-					iSize += 2;
-					// Appearance2
-					sp  = (short *)cp;
-					*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr2;
-					cp += 2;
-					iSize += 2;
-					// Appearance3
-					sp  = (short *)cp;
-					*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr3;
-					cp += 2;
-					iSize += 2;
-					// Appearance4
-					sp  = (short *)cp;
-					*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr4;
-					cp += 2;
-					iSize += 2;
-					// v1.4 
-					ip = (int *)cp;
-					*ip = m_pClientList[pTile->m_sOwner]->m_iApprColor;
-					cp += 4;
-					iSize += 4;
 
-					// Status
-					ip  = (int *)cp;
-					
-					sTemp = m_pClientList[pTile->m_sOwner]->m_iStatus;
-					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-			  		sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
-					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*ip = sTemp;
-					//*sp = DEF_TEST;
-					cp += 4;//Original 2
-					iSize += 4;//Original 2
-					// Name
-					memcpy(cp, m_pClientList[pTile->m_sOwner]->m_cCharName, 10);
-					cp    += 10;
-					iSize += 10;
-					break;
-				
+
+					if ((ucHeader & 0x01) != 0) {
+					switch (pTile->m_cOwnerClass) {
+				case DEF_OWNERTYPE_PLAYER:
+					if(m_pClientList[pTile->m_sOwner]->m_iAdminUserLevel > 2 &&
+						m_pClientList[pTile->m_sOwner]->m_iStatus & 0x10 != 0 ){
+							iTileExists--;
+							cp -= 5;
+							iSize -= 5;
+							continue;
+						}
+						sp  = (short *)cp;
+						*sp	= pTile->m_sOwner;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= m_pClientList[pTile->m_sOwner]->m_sType;
+						cp += 2;
+						iSize += 2;
+
+						*cp = m_pClientList[pTile->m_sOwner]->m_cDir;
+						cp++;
+						iSize++;
+
+						sp  = (short *)cp;
+						*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr1;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr2;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr3;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= m_pClientList[pTile->m_sOwner]->m_sAppr4;
+						cp += 2;
+						iSize += 2;
+
+						ip = (int *)cp;
+						*ip = m_pClientList[pTile->m_sOwner]->m_iApprColor;
+						cp += 4;
+						iSize += 4;
+
+						ip  = (int *)cp;
+
+						if (m_pClientList[iClientH]->m_cSide != m_pClientList[pTile->m_sOwner]->m_cSide){
+							if (iClientH != pTile->m_sOwner) {
+								iTemp = m_pClientList[pTile->m_sOwner]->m_iStatus & 0x0F0FFFF7F;
+							}
+							else {
+								iTemp = m_pClientList[pTile->m_sOwner]->m_iStatus;
+							}
+						}
+						else {
+							iTemp = m_pClientList[pTile->m_sOwner]->m_iStatus;
+						}
+
+						iTemp = 0x0FFFFFFF & iTemp;
+						iTemp2 = iGetPlayerABSStatus(pTile->m_sOwner, iClientH);
+						iTemp  = (iTemp | (iTemp2 << 28));
+						*ip = iTemp;
+						cp += 4;
+						iSize += 4;
+
+						memcpy(cp, m_pClientList[pTile->m_sOwner]->m_cCharName, 10);
+						cp    += 10;
+						iSize += 10;
+						break;
+
 				case DEF_OWNERTYPE_NPC:
-					// Object ID number(NPC) : 10000	~
 					sp  = (short *)cp;
 					*sp	= pTile->m_sOwner + 10000;
 					cp += 2;
 					iSize += 2;
-					// object type
+
 					sp  = (short *)cp;
 					*sp	= m_pNpcList[pTile->m_sOwner]->m_sType;
 					cp += 2;
 					iSize += 2;
-					// dir
+
 					*cp = m_pNpcList[pTile->m_sOwner]->m_cDir;
 					cp++;
 					iSize++;
-					// Appearance2
+
 					sp  = (short *)cp;
 					*sp	= m_pNpcList[pTile->m_sOwner]->m_sAppr2;
 					cp += 2;
 					iSize += 2;
-					// Status
+
 					ip  = (int *)cp;
-					
-					sTemp = m_pNpcList[pTile->m_sOwner]->m_iStatus;
-					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-					sTemp2 = iGetNpcRelationship(pTile->m_sOwner, iClientH);
-					sTemp  = (sTemp | (sTemp2 << 28));
-					*ip = sTemp;
-					//*sp = DEF_TEST;
-					cp += 4;//Original 2
-					iSize += 4;//Original 2
-					// Name
+					iTemp = m_pNpcList[pTile->m_sOwner]->m_iStatus;
+					iTemp = 0x0FFFFFFF & iTemp;
+					iTemp2 = iGetNpcRelationship(pTile->m_sOwner, iClientH);
+					iTemp  = (iTemp | (iTemp2 << 28));
+					*ip = iTemp;
+					cp += 4;
+					iSize += 4;
+
 					memcpy(cp, m_pNpcList[pTile->m_sOwner]->m_cName, 5);
 					cp    += 5;
 					iSize += 5;
-					break;
-				}
-			}
-			
-			if ((ucHeader & 0x02) != 0) {
-				// Á×Àº Ä³¸¯ÅÍ Á¤º¸ »ðÀÔ 
-				switch (pTile->m_cDeadOwnerClass) {
+						}//end switch
+					}//end if
+
+					if ((ucHeader & 0x02) != 0) {
+						switch (pTile->m_cDeadOwnerClass) {
 				case DEF_OWNERTYPE_PLAYER:
-					// Object ID number(Player) : 1~10000
+
 					sp  = (short *)cp;
 					*sp	= pTile->m_sDeadOwner;
 					cp += 2;
 					iSize += 2;
-					// object type
-					sp  = (short *)cp;
+
 					*sp	= m_pClientList[pTile->m_sDeadOwner]->m_sType;
 					cp += 2;
 					iSize += 2;
-					// dir
+
 					*cp = m_pClientList[pTile->m_sDeadOwner]->m_cDir;
 					cp++;
 					iSize++;
-					// Appearance1
+
 					sp  = (short *)cp;
 					*sp	= m_pClientList[pTile->m_sDeadOwner]->m_sAppr1;
 					cp += 2;
 					iSize += 2;
-					// Appearance2
+
 					sp  = (short *)cp;
 					*sp	= m_pClientList[pTile->m_sDeadOwner]->m_sAppr2;
 					cp += 2;
 					iSize += 2;
-					// Appearance3
+
 					sp  = (short *)cp;
 					*sp	= m_pClientList[pTile->m_sDeadOwner]->m_sAppr3;
 					cp += 2;
 					iSize += 2;
-					// Appearance4
+
 					sp  = (short *)cp;
 					*sp	= m_pClientList[pTile->m_sDeadOwner]->m_sAppr4;
 					cp += 2;
 					iSize += 2;
-					// v1.4 ApprColor
+
 					ip = (int *)cp;
 					*ip = m_pClientList[pTile->m_sDeadOwner]->m_iApprColor;
 					cp += 4;
 					iSize += 4;
 
-					// Status
 					ip  = (int *)cp;
-					
-					sTemp = m_pClientList[pTile->m_sDeadOwner]->m_iStatus;
-					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-			  
-					sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sDeadOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sDeadOwner);
-					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*ip = sTemp;
-					////*sp = DEF_TEST;
-					cp += 4;//Original 2
-					iSize += 4;//Original 2
-					// Name
+
+					if (m_pClientList[iClientH]->m_cSide != m_pClientList[pTile->m_sOwner]->m_cSide){
+						if (iClientH != pTile->m_sDeadOwner) {
+							iTemp = m_pClientList[pTile->m_sDeadOwner]->m_iStatus & 0x0F0FFFF7F;
+						}
+						else {
+							iTemp = m_pClientList[pTile->m_sDeadOwner]->m_iStatus;
+						}
+					}
+					else {
+						iTemp = m_pClientList[pTile->m_sDeadOwner]->m_iStatus;
+					}
+
+					iTemp = 0x0FFFFFFF & iTemp;
+
+					iTemp2 = iGetPlayerABSStatus(pTile->m_sDeadOwner, iClientH);
+					iTemp  = (iTemp | (iTemp2 << 28));
+					*ip = iTemp;
+					cp += 4;
+					iSize += 4;
+
 					memcpy(cp, m_pClientList[pTile->m_sDeadOwner]->m_cCharName, 10);
 					cp    += 10;
 					iSize += 10;
 					break;
-				
+
 				case DEF_OWNERTYPE_NPC:
-					// Object ID number(NPC) : 10000~
 					sp  = (short *)cp;
 					*sp	= pTile->m_sDeadOwner + 10000;
 					cp += 2;
 					iSize += 2;
-					// object type
+
 					sp  = (short *)cp;
 					*sp	= m_pNpcList[pTile->m_sDeadOwner]->m_sType;
 					cp += 2;
 					iSize += 2;
-					// dir
+
 					*cp = m_pNpcList[pTile->m_sDeadOwner]->m_cDir;
 					cp++;
 					iSize++;
-					// Appearance2
+
 					sp  = (short *)cp;
 					*sp	= m_pNpcList[pTile->m_sDeadOwner]->m_sAppr2;
 					cp += 2;
 					iSize += 2;
-					// Status
+
 					ip  = (int *)cp;
-					
-					sTemp = m_pNpcList[pTile->m_sDeadOwner]->m_iStatus;
-					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-					sTemp2 = iGetNpcRelationship(pTile->m_sDeadOwner, iClientH);
-					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*ip = sTemp;
-					////*sp = DEF_TEST;
-					cp += 4;//Original 2
-					iSize += 4;//Original 2
-					// Name
+
+					iTemp = m_pNpcList[pTile->m_sDeadOwner]->m_iStatus;
+					iTemp = 0x0FFFFFFF & iTemp;
+					iTemp2 = iGetNpcRelationship(pTile->m_sDeadOwner, iClientH);
+					iTemp  = (iTemp | (iTemp2 << 28));
+					*ip = iTemp;
+
+					cp += 4;
+					iSize += 4;
+
 					memcpy(cp, m_pNpcList[pTile->m_sDeadOwner]->m_cName, 5);
 					cp    += 5;
 					iSize += 5;
 					break;
+						}//End Switch
+					}//end if
+
+					if (pTile->m_pItem[0] != NULL) {
+						sp  = (short *)cp;
+						*sp	= pTile->m_pItem[0]->m_sSprite;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= pTile->m_pItem[0]->m_sSpriteFrame;
+						cp += 2;
+						iSize += 2;
+
+						*cp = pTile->m_pItem[0]->m_cItemColor;
+						cp++;
+						iSize++;
+					}
+
+					if (pTile->m_sDynamicObjectType != NULL) {
+
+						wp  = (WORD *)cp;
+						*wp = pTile->m_wDynamicObjectID;
+						cp += 2;
+						iSize += 2;
+
+						sp  = (short *)cp;
+						*sp	= pTile->m_sDynamicObjectType;
+						cp += 2;
+						iSize += 2;
+					}
 				}
 			}
-
-			if (pTile->m_pItem[0] != NULL) {
-				// ¾ÆÀÌÅÛ Á¤º¸ »ðÀÔ 
-				// ½ºÇÁ¶óÀÌÆ® 
-				sp  = (short *)cp;
-				*sp	= pTile->m_pItem[0]->m_sSprite;
-				cp += 2;
-				iSize += 2;
-				// ½ºÇÁ¶óÀÌÆ® ÇÁ·¹ÀÓ 
-				sp  = (short *)cp;
-				*sp	= pTile->m_pItem[0]->m_sSpriteFrame;
-				cp += 2;
-				iSize += 2;
-				// ¾ÆÀÌÅÛ »ö Ãß°¡µÊ v1.4 
-				*cp = pTile->m_pItem[0]->m_cItemColor;
-				cp++;
-				iSize++;
-			}
-
-			if (pTile->m_sDynamicObjectType != NULL) {
-				// µ¿Àû °´Ã¼ Á¾·ù ÇÒ´ç 
-				wp  = (WORD *)cp;
-				*wp = pTile->m_wDynamicObjectID;
-				cp += 2;
-				iSize += 2;
-							
-				sp  = (short *)cp;
-				*sp	= pTile->m_sDynamicObjectType;
-				cp += 2;
-				iSize += 2;
-			}
-		}
-
-	}
-
-	*pTotal = iTileExists;
-	return iSize;
+		} // end While(1)
+				*pTotal = iTileExists;
+				return iSize;
 }
+
 
 
 
@@ -4510,6 +4511,10 @@ void CGame::CheckClientResponseTime()
 					if ( (m_pClientList[i]->m_iHP > 0) && (m_pClientList[i]->m_iHungerStatus < 30) ) {
 						// ¹è°íÇÄÀ» ´À³¢´Â »óÅÂÀÌ´Ù. Å¬¶óÀÌ¾ðÆ®¿¡°Ô Åëº¸ÇÑ´Ù. 
 						SendNotifyMsg(NULL, i, DEF_NOTIFY_HUNGER, m_pClientList[i]->m_iHungerStatus, NULL, NULL, NULL);
+					}
+					// GM Hunger Fix - Hypnotoad
+					if ((m_pClientList[i]->m_iAdminUserLevel >= 1) && (m_pClientList[i]->m_iHungerStatus <= 99)) {
+						m_pClientList[i]->m_iHungerStatus = 100;
 					}
 				}
 				
@@ -4969,8 +4974,14 @@ BOOL CGame::bSendMsgToLS(DWORD dwMsg, int iClientH, BOOL bFlag)
 		cp = (char *)(G_cData50000 + DEF_INDEX2_MSGTYPE + 2);
 
 		memcpy(cAccountName, m_cServerName, 10);
-		memcpy(cAddress, m_cGameServerAddr, strlen(m_cGameServerAddr));
-
+		if (m_iGameServerMode == 1)
+		{
+			memcpy(cAddress, m_cGameServerAddrExternal, strlen(m_cGameServerAddrExternal));
+		}
+		if (m_iGameServerMode == 2)
+		{
+			memcpy(cAddress, m_cGameServerAddr, strlen(m_cGameServerAddr));
+		}
 		memcpy(cp, cAccountName, 10);
 		cp += 10;
 
@@ -5376,12 +5387,20 @@ void CGame::InitPlayerData(int iClientH, char * pData, DWORD dwSize)
 	}
 
 	// ÇÃ·¹ÀÌ¾îÀÇ ¼Ò¼Ó¿¡ µû¶ó Side¸¦ °áÁ¤ÇÑ´Ù. ¿©ÇàÀÚ¶ó¸é 0À» À¯ÁöÇÏ°í AresdenÀÌ¸é 1, ElvineÀÌ¸é 2¸¦ ÇÒ´çÇÑ´Ù.
-	if (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) 
+
+	if (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) 
+		m_pClientList[iClientH]->m_cSide = 1;
+
+	if (memcmp(m_pClientList[iClientH]->m_cLocation, "elv", 3) == 0) 
+		m_pClientList[iClientH]->m_cSide = 2;
+
+/* 2.03 Code - Fixed by KLKS
+if (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) 
 		m_pClientList[iClientH]->m_cSide = 1;
 
 	if (memcmp(m_pClientList[iClientH]->m_cLocation, "elvine", 6) == 0) 
 		m_pClientList[iClientH]->m_cSide = 2;
-
+*/
 	// ´ÙÀ½ ·¹º§ÀÇ °æÇèÄ¡¸¦ ±¸ÇÑ´Ù.
 	m_pClientList[iClientH]->m_iNextLevelExp = m_iLevelExpTable[m_pClientList[iClientH]->m_iLevel + 1]; //iGetLevelExp(m_pClientList[iClientH]->m_iLevel + 1);
 
@@ -5470,7 +5489,7 @@ BOOL CGame::bReadProgramConfigFile(char * cFn)
 	FILE * pFile;
 	HANDLE hFile;
 	DWORD  dwFileSize;
-	char * cp, * token, cReadMode, cTxt[120];
+	char * cp, * token, cReadMode, cTxt[120], cGSMode[16] = "";
 	char seps[] = "= \t\n";
 	class CStrTok * pStrTok;
 
@@ -5593,6 +5612,70 @@ BOOL CGame::bReadProgramConfigFile(char * cFn)
 					PutLogList(cTxt);
 					cReadMode = 0;
 					break;
+
+				case 8:
+					ZeroMemory(m_cGameServerAddrInternal, sizeof(m_cGameServerAddrInternal));
+					if (strlen(token) > 15) {
+						// ÁÖ¼Ò°¡ 15¹ÙÀÌÆ® ÀÌ»ó. ¿À·ù´Ù. 
+						wsprintf(cTxt, "(!!!) Internal (LAN) Game server address(%s) must within 15 chars!", token);
+						PutLogList(cTxt);
+						return FALSE;
+					}
+					strcpy(m_cGameServerAddrInternal, token);
+					wsprintf(cTxt, "(*) Internal (LAN) Game server address : %s", m_cGameServerAddrInternal);
+					PutLogList(cTxt);
+					cReadMode = 0;
+					break;
+
+
+				case 9:
+					ZeroMemory(m_cGameServerAddrExternal, sizeof(m_cGameServerAddrExternal));
+					if (strlen(token) > 15) {
+						// ÁÖ¼Ò°¡ 15¹ÙÀÌÆ® ÀÌ»ó. ¿À·ù´Ù. 
+						wsprintf(cTxt, "(!!!) External (Internet) Game server address(%s) must within 15 chars!", token);
+						PutLogList(cTxt);
+						return FALSE;
+					}
+					strcpy(m_cGameServerAddrExternal, token);
+					wsprintf(cTxt, "(*) External (Internet) Game server address : %s", m_cGameServerAddrExternal);
+					PutLogList(cTxt);
+					cReadMode = 0;
+					break;
+
+				case 10:
+					ZeroMemory(m_cGameServerAddr, sizeof(m_cGameServerAddr));
+					if (strlen(token) > 15) {
+						// ÁÖ¼Ò°¡ 15¹ÙÀÌÆ® ÀÌ»ó. ¿À·ù´Ù. 
+						wsprintf(cTxt, "(!!!) Game server address(%s) must within 15 chars!", token);
+						PutLogList(cTxt);
+						return FALSE;
+					}
+					strcpy(m_cGameServerAddr, token);
+					wsprintf(cTxt, "(*) Game server address : %s", m_cGameServerAddr);
+					PutLogList(cTxt);
+					cReadMode = 0;
+					break;
+				case 11:
+					if ((memcmp(token, "lan", 3) == 0) || (memcmp(token, "LAN", 3) == 0))
+					{
+						m_iGameServerMode = 1;
+						memcpy(cGSMode, "LAN", 3);
+					}
+					if ((memcmp(token, "internet", 3) == 0) || (memcmp(token, "INTERNET", 3) == 0))
+					{
+						m_iGameServerMode = 2;
+						memcpy(cGSMode, "INTERNET", 8);
+					}
+					if (m_iGameServerMode == 0)
+					{
+						wsprintf(cTxt, "(!!!) Game server mode(%s) must be either LAN/lan/INTERNET/internet", token);
+						PutLogList(cTxt);
+						return FALSE;
+					}
+					wsprintf(cTxt, "(*) Game server mode : %s", cGSMode);
+					PutLogList(cTxt);
+					cReadMode = 0;
+					break;
 				}
 			}
 			else {
@@ -5603,6 +5686,11 @@ BOOL CGame::bReadProgramConfigFile(char * cFn)
 				if (memcmp(token, "game-server-map", 15) == 0)			cReadMode = 5;
 				if (memcmp(token, "gate-server-address", 19) == 0)		cReadMode = 6;
 				if (memcmp(token, "gate-server-port", 16) == 0)			cReadMode = 7;
+				if (memcmp(token, "game-server-internal-address", 28) == 0)			cReadMode = 8;
+				if (memcmp(token, "game-server-external-address", 28) == 0)			cReadMode = 9;
+				if (memcmp(token, "game-server-address", 19) == 0)		cReadMode = 10;
+				if (memcmp(token, "game-server-mode", 16) == 0)			cReadMode = 11;
+
 			}
 
 			token = pStrTok->pGet();
@@ -5613,6 +5701,12 @@ BOOL CGame::bReadProgramConfigFile(char * cFn)
 		delete cp;
 	}
 	if (pFile != NULL) fclose(pFile);
+
+	if (m_iGameServerMode == 0) {
+		wsprintf(cTxt, "(!!!) Game server mode cannot be empty. It must be either LAN/lan/INTERNET/internet", token);
+		PutLogList(cTxt);
+		return FALSE;	
+	}
 
 	return TRUE;
 }
@@ -6844,13 +6938,24 @@ BOOL CGame::_bDecodePlayerDatafileContents(int iClientH, char * pData, DWORD dwS
 				}
 				break;
 				//
+
+			case 29:
+				// ÇÃ·¹ÀÌ¾î ¼Ò¼ÓÀÇ ¸¶À»À» ÃÊ±âÈ­ÇÑ´Ù.
+				ZeroMemory(m_pClientList[iClientH]->m_cLocation, sizeof(m_pClientList[iClientH]->m_cLocation));
+				strcpy(m_pClientList[iClientH]->m_cLocation, token);
+				if (memcmp(m_pClientList[iClientH]->m_cLocation+3,"hunter",6) == 0)
+					m_pClientList[iClientH]->m_bIsPlayerCivil = TRUE;
+				cReadModeA = 0;
+				break;
+
+/* 2.03 Code - Fixed by KLKS
 			case 29:
 				// ÇÃ·¹ÀÌ¾î ¼Ò¼ÓÀÇ ¸¶À»À» ÃÊ±âÈ­ÇÑ´Ù.
 				ZeroMemory(m_pClientList[iClientH]->m_cLocation, sizeof(m_pClientList[iClientH]->m_cLocation));
 				strcpy(m_pClientList[iClientH]->m_cLocation, token);
 				cReadModeA = 0;
 				break;
-
+*/
 			case 30:
 				// m_iMP
 				if (_bGetIsStringIsNumber(token) == FALSE) {
@@ -9394,7 +9499,77 @@ void CGame::ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize)
 		// ÀüÃ¼ Ã¤ÆÃ ¸Þ½ÃÁö¸¦ »ç¿ëÇÒ ¼ö ¾ø´Â °æ¿ì¶ó¸é 
 		if (m_pClientList[iClientH]->m_iTimeLeft_ShutUp > 0) cSendMode = NULL;
 		break;
-	
+
+	case '^':
+		*cp = 32;
+
+		if ((strlen(cp) < 90) && (m_pClientList[iClientH]->m_iAdminUserLevel > 0)) {
+			ZeroMemory(cTemp, sizeof(cTemp));
+			cp2 = (char *)cTemp;
+			*cp2 = GSM_CHATMSG;
+			cp2++;
+
+			*cp2 = 10; // Global chat ??
+			cp2++;
+
+			ip = (int *)cp2;
+			*ip = 0;
+			cp2 += 4;
+
+			memcpy(cp2, m_pClientList[iClientH]->m_cCharName, 10);
+			cp2 += 10;
+
+			wp  = (WORD *)cp2;
+			*wp = (WORD)strlen(cp);
+			cp2 += 2;
+			strcpy(cp2, cp);
+			cp2 += strlen(cp);
+
+			bStockMsgToGateServer(cTemp, strlen(cp) + 18);
+		}
+
+		if (strlen(cp) < 90 && m_pClientList[iClientH]->m_iGuildRank != -1){
+			ZeroMemory(cTemp, sizeof(cTemp));
+			cp2 = (char *)cTemp;
+
+			*cp2 = GSM_CHATMSG;
+			cp2++;
+
+			*cp2 = 1;
+			cp2++;
+
+			ip = (int *)cp2;
+
+			*ip = m_pClientList[iClientH]->m_iGuildGUID;
+			cp2 += 4;
+
+			memcpy(cp2, m_pClientList[iClientH]->m_cCharName, 10);
+			cp2 += 10;
+
+			wp  = (WORD *)cp2;
+			*wp = (WORD)strlen(cp);
+			cp2 += 2;
+			strcpy(cp2, cp);
+			cp2 += strlen(cp);
+
+			bStockMsgToGateServer(cTemp, strlen(cp) + 18);
+		}
+
+		if ( (m_pClientList[iClientH]->m_iTimeLeft_ShutUp == 0) && (m_pClientList[iClientH]->m_iLevel > 10) && 
+			(m_pClientList[iClientH]->m_iSP > 5) && m_pClientList[iClientH]->m_iGuildRank != -1) {
+				if (m_pClientList[iClientH]->m_iTimeLeft_FirmStaminar == 0) {
+					m_pClientList[iClientH]->m_iSP -= 3;
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SP, NULL, NULL, NULL, NULL);
+				}
+				cSendMode = 1;
+			}
+		else cSendMode = NULL;
+
+		if (m_pClientList[iClientH]->m_iTimeLeft_ShutUp > 0) cSendMode = NULL;
+		if (m_pClientList[iClientH]->m_iHP < 0) cSendMode = NULL;
+		if (m_pClientList[iClientH]->m_iAdminUserLevel > 0) cSendMode = 10;
+		break;
+
 	case '!':
 		// ÀüÃ¼ »ç¿ëÀÚ¿¡°Ô Àü´ÞµÇ´Â ¸Þ½ÃÁöÀÌ´Ù.
 		// °°Àº ±æµå¿¡°Ô º¸³»´Â ¸Þ½ÃÁö 
@@ -13524,6 +13699,13 @@ void CGame::ClientCommonHandler(int iClientH, char * pData)
 	
 	
 	switch (wCommand) {
+// 2.06 - by KLKS
+	case DEF_COMMONTYPE_REQ_CHANGEPLAYMODE:
+		DbgWnd->AddEventMsg("RECV -> DEF_MSGFROM_CLIENT -> MSGID_COMMAND_COMMON -> MSGID_REQUEST_CIVILRIGHT");
+		RequestChangePlayMode(iClientH);
+		break;
+//
+
 	case DEF_COMMONTYPE_SETGUILDTELEPORTLOC:
 		DbgWnd->AddEventMsg("RECV -> DEF_MSGFROM_CLIENT -> MSGID_COMMAND_COMMON -> DEF_COMMONTYPE_SETGUILDTELEPORTLOC");
 		RequestSetGuildTeleportLocHandler(iClientH, iV1, iV2, m_pClientList[iClientH]->m_iGuildGUID, pString);
@@ -14122,8 +14304,8 @@ BOOL CGame::_bAddClientItemList(int iClientH, class CItem * pItem, int * pDelReq
 BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 {
  char  cEquipPos;
- short sTemp, sSpeed;
- int   iTemp;
+ short sSpeed;
+ int   iTemp, sTemp;
 	
 	if (m_pClientList[iClientH] == NULL) return FALSE;
 	if ((sItemIndex < 0) || (sItemIndex >= DEF_MAXITEMS)) return FALSE;
@@ -14287,7 +14469,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 		
 		// ¹«±â ¼Óµµ¸¦ ³ªÅ¸³»´Â StatusÀÇ ºñÆ®¸¦ ¼³Á¤ÇÑ´Ù.
 		sTemp = m_pClientList[iClientH]->m_iStatus;
-		sTemp = sTemp & 0xFFF0;
+		sTemp = sTemp & 0xFFFFFFF0;
 		sSpeed = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cSpeed);
 		// Str¿¡ µû¶ó ¹«±â ¼Óµµ¸¦ ÁÙÀÎ´Ù. 
 		sSpeed -= (m_pClientList[iClientH]->m_iStr / 13);
@@ -14323,7 +14505,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 
 		// ¹«±â ¼Óµµ¸¦ ³ªÅ¸³»´Â StatusÀÇ ºñÆ®¸¦ ¼³Á¤ÇÑ´Ù.
 		sTemp = m_pClientList[iClientH]->m_iStatus;
-		sTemp = sTemp & 0xFFF0;
+		sTemp = sTemp & 0xFFFFFFF0;
 		sSpeed = (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_cSpeed);
 		// Str¿¡ µû¶ó ¹«±â ¼Óµµ¸¦ ÁÙÀÎ´Ù. 
 		sSpeed -= (m_pClientList[iClientH]->m_iStr / 13);
@@ -15689,6 +15871,15 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 
 	// !!! sV1, sV2, sV3´Â DWORDÇüÀÓÀ» ¸í½ÉÇÏ¶ó.
 	switch (wMsgType) {
+
+// 2.06 - by KLKS
+	case DEF_NOTIFY_CHANGEPLAYMODE:
+		memcpy(cp,pString,10);
+		cp += 10;
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData,16);
+		break;
+//
+
 	case DEF_NOTIFY_TCLOC:
 		wp  = (WORD *)cp;
 		*wp = (WORD)sV1;
@@ -17336,7 +17527,7 @@ void CGame::ReleaseItemHandler(int iClientH, short sItemIndex, BOOL bNotice)
 
 		// V1.3 ¹«±â¼Óµµ Àç°è»ê <- ¸Ç¼ÕÀÌ´Ï±ñ 0
 		sTemp = m_pClientList[iClientH]->m_iStatus;
-		sTemp = sTemp & 0xFFF0;
+		sTemp = sTemp & 0xFFFFFFF0;
 		m_pClientList[iClientH]->m_iStatus = sTemp;
 		break;
 
@@ -18445,7 +18636,14 @@ void CGame::SendMsgToGateServer(DWORD dwMsg, int iClientH, char * pData)
 		cp = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
 
 		memcpy(cAccountName, m_cServerName, 10);
-		memcpy(cAddress, m_cGameServerAddr, strlen(m_cGameServerAddr));
+		if (m_iGameServerMode == 1)
+		{
+			memcpy(cAddress, m_cGameServerAddrInternal, strlen(m_cGameServerAddrInternal));
+		}
+		if (m_iGameServerMode == 2)
+		{
+			memcpy(cAddress, m_cGameServerAddr, strlen(m_cGameServerAddr));
+		}
 
 		memcpy(cp, cAccountName, 10);
 		cp += 10;
@@ -20463,8 +20661,8 @@ RTH_NEXTSTEP:;
 	*ip = m_pClientList[iClientH]->m_iApprColor;
 	cp += 4;
 	
-	sp  = (short *)cp;
-	*sp = m_pClientList[iClientH]->m_iStatus;
+	ip  = (int *)cp;
+	*ip = m_pClientList[iClientH]->m_iStatus;
 	cp += 4;//Original 2
 	
 	// (!) 플레이어가 위치하는 맵이름을 기록한다.
@@ -20513,7 +20711,10 @@ RTH_NEXTSTEP:;
 	ip = (int *)cp;
 	*ip = m_pClientList[iClientH]->m_iHP;
 	cp += 4;
-		  
+	//Unknown variable
+	*cp = 0;
+	cp++;
+
 	// 맵의 정보를 추가한다. 
 	iSize = iComposeInitMapData(m_pClientList[iClientH]->m_sX - 10, m_pClientList[iClientH]->m_sY - 7, iClientH, cp );
 	// 메시지 전송 
@@ -23021,6 +23222,7 @@ BOOL CGame::bCheckLevelUp(int iClientH)
 {
  BOOL bStr, bVit, bDex, bInt, bMag, bChr;
  char cLoopCnt;
+ int bobdole;
 
 	if (m_pClientList[iClientH] == NULL) return FALSE;
 	// ÃÖ´ë ·¹º§ Á¦ÇÑ 
@@ -23035,12 +23237,12 @@ BOOL CGame::bCheckLevelUp(int iClientH)
 		if (m_pClientList[iClientH]->m_iExp >= m_pClientList[iClientH]->m_iNextLevelExp) {
 			// ·¹º§ÀÌ ¿Ã¶ú´Ù.
 			m_pClientList[iClientH]->m_iLevel++;
+			m_pClientList[iClientH]->m_iLU_Pool += 3;
 			// ·¹º§ÀÌ ¿À¸¥°Í¿¡ ´ëÇÑ Æ¯¼ºÄ¡ Æ÷ÀÎÆ®¸¦ Áõ°¡½ÃÄÑ¾ß ÇÑ´Ù. 
 //			if ( (m_pClientList[iClientH]->m_cLU_Str + m_pClientList[iClientH]->m_cLU_Vit + m_pClientList[iClientH]->m_cLU_Dex + 
 //	  		      m_pClientList[iClientH]->m_cLU_Int + m_pClientList[iClientH]->m_cLU_Mag + m_pClientList[iClientH]->m_cLU_Char) <= DEF_TOTALLEVELUPPOINT) {
 				// ·¹º§ ¾÷ ¼¼ÆÃÀÌ 3º¸´Ù °°°Å³ª ÀÛ¾Æ¾ß À¯È¿ÇÏ´Ù. 
 
-//					  m_pClientList[iClientH]->m_iLU_Pool += 3;
 /*
 				if (m_pClientList[iClientH]->m_iStr < DEF_CHARPOINTLIMIT) {
 					m_pClientList[iClientH]->m_iStr  += m_pClientList[iClientH]->m_cLU_Str;
@@ -23087,12 +23289,12 @@ BOOL CGame::bCheckLevelUp(int iClientH)
 			CalcTotalItemEffect(iClientH, -1, FALSE);
 
 			//v1.4 ´ÙÀ½ ·¹º§ 
-			//wsprintf(G_cTxt, "(!) Level up: ·¹º§(%d) °æÇèÄ¡(%d) ´ÙÀ½·¹º§°æÇèÄ¡(%d)", m_pClientList[iClientH]->m_iLevel, m_pClientList[iClientH]->m_iExp, m_pClientList[iClientH]->m_iNextLevelExp);
-			//PutLogFileList(G_cTxt);
+			wsprintf(G_cTxt, "(!) Level up: ·¹º§(%d) °æÇèÄ¡(%d) ´ÙÀ½·¹º§°æÇèÄ¡(%d)", m_pClientList[iClientH]->m_iLevel, m_pClientList[iClientH]->m_iExp, m_pClientList[iClientH]->m_iNextLevelExp);
+			PutLogFileList(G_cTxt);
 		}
-		else return TRUE;
+		else { int bobdole; return TRUE; }
 	}
-
+	bobdole = 3;
 	return FALSE;
 }
 // 2003-04-14 ÁöÁ¸ Æ÷ÀÎÆ®¸¦ ·¹º§ ¼öÁ¤¿¡ ¾µ¼ö ÀÖ´Ù...
@@ -23184,7 +23386,7 @@ void CGame::StateChangeHandler(int iClientH, char * pData, DWORD dwMsgSize)
 	if(cStr < 0 || cVit < 0 || cDex < 0 || cInt < 0 || cMag < 0 || cChar < 0
 		|| cStr + cVit + cDex + cInt + cMag + cChar != 3)
 	{
-//		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_STATECHANGE_FAILED, NULL, NULL, NULL, NULL);
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_STATECHANGE_FAILED, NULL, NULL, NULL, NULL);
 		return;
 	}
 
@@ -23234,7 +23436,7 @@ void CGame::StateChangeHandler(int iClientH, char * pData, DWORD dwMsgSize)
 	if (m_pClientList[iClientH]->m_iLU_Pool < 3) m_pClientList[iClientH]->m_iLU_Pool = 3;
 
 	// ¿À·ù°¡ ¾øÀ¸¸é °ªÀ» ÇÒ´çÇÑ´Ù.
-	m_pClientList[iClientH]->m_iLU_Pool += 3;
+	//m_pClientList[iClientH]->m_iLU_Pool += 3;
 	
 	m_pClientList[iClientH]->m_iGizonItemUpgradeLeft--;
 
@@ -23343,7 +23545,7 @@ void CGame::LevelUpSettingsHandler(int iClientH, char * pData, DWORD dwMsgSize)
 
 	if (m_pClientList[iClientH] == NULL) return;
 	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
-	if (m_pClientList[iClientH]->m_iLU_Pool <= 3) 
+	if (m_pClientList[iClientH]->m_iLU_Pool <= 0) 
 	{
 		//ÇØÄ¿ÀÎ°¡??
 		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SETTING_FAILED, NULL, NULL, NULL, NULL);
@@ -23369,14 +23571,14 @@ void CGame::LevelUpSettingsHandler(int iClientH, char * pData, DWORD dwMsgSize)
 	cChar = *cp;
 	cp++;
 
-	if(m_pClientList[iClientH]->m_iLU_Pool < 3) {
-		m_pClientList[iClientH]->m_iLU_Pool = 3;
-	}
+//	if(m_pClientList[iClientH]->m_iLU_Pool < 3) {
+//		m_pClientList[iClientH]->m_iLU_Pool = 3;
+//	}
 
 
-	if ( (cStr + cVit + cDex + cInt + cMag + cChar) > m_pClientList[iClientH]->m_iLU_Pool - 3) {
+	if ( (cStr + cVit + cDex + cInt + cMag + cChar) > m_pClientList[iClientH]->m_iLU_Pool) { // -3
 		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SETTING_FAILED, NULL, NULL, NULL, NULL);
-		return;
+			return;
 	}
 
 	// Level-Up Setting°ª¿¡ ¿À·ù°¡ ÀÖ´ÂÁö °Ë»çÇÑ´Ù.
@@ -23404,6 +23606,8 @@ void CGame::LevelUpSettingsHandler(int iClientH, char * pData, DWORD dwMsgSize)
 	//(·¹º§ Æ¯¼º°ª + ·¹º§¾÷ Æ÷ÀÎÆ® > ·¹º§¾÷ Æ¯¼º°ª Á¤»óÄ¡)¸é ºñÁ¤»óÀÌ´Ù.. Ã³¸® ºÒ°¡.. ·¹º§¾÷ Æ÷ÀÎÆ®¸¦ Á¤»óÄ¡·Î ¸¶Ãß°í Ã³¸® ºÒ°¡..
 	if (iTotalSetting + m_pClientList[iClientH]->m_iLU_Pool -3 > ((m_pClientList[iClientH]->m_iLevel-1)*3 + 70))
 	{
+		int bobdole;
+		bobdole = 3;
 		m_pClientList[iClientH]->m_iLU_Pool = /*m_cLU_Str ÃÊ±â°ª*/3 + (m_pClientList[iClientH]->m_iLevel-1)*3 + 70 - iTotalSetting;
 
 		//iTotalSetting°ªÀÌ Àß¸øµÈ °æ¿ì´Ù...
@@ -23682,24 +23886,24 @@ void CGame::RequestCivilRightHandler(int iClientH, char *pData)
 	if (m_pClientList[iClientH] == NULL) return;
 	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
 
-	// ÀÌ¹Ì ÇÑ ¸¶À»ÀÇ ¼Ò¼ÓÀÌ ÀÖ´Ù¸é ½Ã¹Î±ÇÀ» °¡Áú ¼ö ¾ø´Ù. 
+	// ?횑쨔횑 횉횗 쨍쨋?쨩?횉 쩌횘쩌횙?횑 ?횜쨈횢쨍챕 쩍횄쨔횓짹횉?쨩 째징횁첬 쩌철 쩐첩쨈횢. 
 	if (memcmp(m_pClientList[iClientH]->m_cLocation, "NONE", 4) != 0) wResult = 0;
 	else wResult = 1;
 
-	// ·¹º§ÀÌ 5 ÀÌÇÏ¶óµµ ½Ã¹Î±ÇÀ» ¾òÀ» ¼ö ¾ø´Ù. 
+	// 쨌쨔쨘짠?횑 5 ?횑횉횕쨋처쨉쨉 쩍횄쨔횓짹횉?쨩 쩐챵?쨩 쩌철 쩐첩쨈횢. 
 	if (m_pClientList[iClientH]->m_iLevel < 5) wResult = 0;
 	
 	if (wResult == 1) {
-		// ÇöÀç ¸ÊÀÇ ÀÌ¸§À» ÇÒ´çÇÑ´Ù.
+		// 횉철?챌 쨍횎?횉 ?횑쨍짠?쨩 횉횘쨈챌횉횗쨈횢.
 		ZeroMemory(m_pClientList[iClientH]->m_cLocation, sizeof(m_pClientList[iClientH]->m_cLocation));
 		strcpy(m_pClientList[iClientH]->m_cLocation, m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cLocationName);
 	}
 
-	// Side ÇÒ´ç
-	if (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden", 7) == 0) 
+	// Side 횉횘쨈챌
+	if (memcmp(m_pClientList[iClientH]->m_cLocation, "are", 3) == 0) 
 		m_pClientList[iClientH]->m_cSide = 1;
 
-	if (memcmp(m_pClientList[iClientH]->m_cLocation, "elvine", 6) == 0) 
+	if (memcmp(m_pClientList[iClientH]->m_cLocation, "elv", 3) == 0) 
 		m_pClientList[iClientH]->m_cSide = 2;
 
 	dwp  = (DWORD *)(cData + DEF_INDEX4_MSGID);
@@ -23707,26 +23911,27 @@ void CGame::RequestCivilRightHandler(int iClientH, char *pData)
 	wp   = (WORD *)(cData + DEF_INDEX2_MSGTYPE);
 	*wp  = wResult;
 
-	// v1.41 ¸Ê ÀÌ¸§ ¾Ë·ÁÁÜ 
+	// v1.41 쨍횎 ?횑쨍짠 쩐횏쨌횁횁횥 
 	cp = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
 	memcpy(cp, m_pClientList[iClientH]->m_cLocation, 10);
 	cp += 10;
 
-	// ÀÀ´ä ¸Þ½ÃÁö¸¦ Å¬¶óÀÌ¾ðÆ®¿¡°Ô Àü¼Û
+	// ??쨈채 쨍횧쩍횄횁철쨍짝 횇짭쨋처?횑쩐챨횈짰쩔징째횚 ?체쩌횤
 	iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 16);
 	switch (iRet) {
 	case DEF_XSOCKEVENT_QUENEFULL:
 	case DEF_XSOCKEVENT_SOCKETERROR:
 	case DEF_XSOCKEVENT_CRITICALERROR:
 	case DEF_XSOCKEVENT_SOCKETCLOSED:
-		// ¸Þ½ÃÁö¸¦ º¸³¾¶§ ¿¡·¯°¡ ¹ß»ýÇß´Ù¸é Á¦°ÅÇÑ´Ù.
+		// 쨍횧쩍횄횁철쨍짝 쨘쨍쨀쩐쨋짠 쩔징쨌짱째징 쨔횩쨩첵횉횩쨈횢쨍챕 횁짝째횇횉횗쨈횢.
 		DeleteClient(iClientH, TRUE, TRUE);
 		return;
 	}
 
-	// Æ¯¼ºÀÌ ¹Ù²î¹Ç·Î ¿Ü¾çÀ» »õ·Î º¸³½´Ù. 
+	// 횈짱쩌쨘?횑 쨔횢짼챤쨔횉쨌횓 쩔횥쩐챌?쨩 쨩천쨌횓 쨘쨍쨀쩍쨈횢. 
 	SendEventToNearClient_TypeA(iClientH, DEF_OWNERTYPE_PLAYER, MSGID_EVENT_MOTION, DEF_OBJECTNULLACTION, NULL, NULL, NULL);
 }
+
 
 
 void CGame::RequestRetrieveItemHandler(int iClientH, char *pData)
@@ -24938,9 +25143,9 @@ void CGame::MobGenerator()
 		
 		/*
 		iResultNum = 0;
-		// v1.432 월드 서버의 총 사용자 수에 비례하여 최대 오브젝트 수를 결정한다. 1000명 이상이면 100%  최소 50%
+		// v1.432 ?붾뱶 ?쒕쾭??珥??ъ슜???섏뿉 鍮꾨??섏뿬 理쒕? ?ㅻ툕?앺듃 ?섎? 寃곗젙?쒕떎. 1000紐??댁긽?대㈃ 100%  理쒖냼 50%
 		if ((m_pMapList[i] != NULL) && (m_pMapList[i]->m_bRandomMobGenerator == TRUE)) {
-			// 사용자 수에 비례하여 랜덤 몹 갯수 보정.
+			// ?ъ슜???섏뿉 鍮꾨??섏뿬 ?쒕뜡 紐?媛?닔 蹂댁젙.
 			if (m_iTotalGameServerClients >= 1000) {
 				iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
 			}
@@ -24952,7 +25157,7 @@ void CGame::MobGenerator()
 				iResultNum = (int)dV1;
 			}
 
-			// v1.432 숫자 보정
+			// v1.432 ?レ옄 蹂댁젙
 			iMin = (m_pMapList[i]->m_iMaximumObject - 30) - ((m_pMapList[i]->m_iMaximumObject - 30)/3);
 			if (iResultNum > (m_pMapList[i]->m_iMaximumObject - 30)) iResultNum = (m_pMapList[i]->m_iMaximumObject - 30);
 			if (iResultNum < iMin) iResultNum = iMin;
@@ -24962,7 +25167,7 @@ void CGame::MobGenerator()
 		//if ( (m_pMapList[i] != NULL) && (m_pMapList[i]->m_bRandomMobGenerator == TRUE) && 
 		//	 ((m_pMapList[i]->m_iMaximumObject - 30) > m_pMapList[i]->m_iTotalActiveObject) ) {
 
-		// 크루세이드 모드일때는 평소의 30% 수준으로 몬스터가 생성된다.
+		// ?щ（?몄씠??紐⑤뱶?쇰븣???됱냼??30% ?섏??쇰줈 紐ъ뒪?곌? ?앹꽦?쒕떎.
 		if (m_pMapList[i] != NULL) {
 			//if (m_bIsCrusadeMode == TRUE) 
 			//	 iResultNum = (m_pMapList[i]->m_iMaximumObject - 30) / 3;
@@ -24971,14 +25176,14 @@ void CGame::MobGenerator()
 		}
 				
 		if ( (m_pMapList[i] != NULL) && (m_pMapList[i]->m_bRandomMobGenerator == TRUE) && (iResultNum > m_pMapList[i]->m_iTotalActiveObject) ) {
-			// i번째 맵에 몹을 생성할 조건이 만족되었다.
+			// i踰덉㎏ 留듭뿉 紐뱀쓣 ?앹꽦??議곌굔??留뚯”?섏뿀??
 			
-			// Crusade : 전면전 모드일때 미들랜드 몹 생산 중단.
+			// Crusade : ?꾨㈃??紐⑤뱶?쇰븣 誘몃뱾?쒕뱶 紐??앹궛 以묐떒.
 			if ((m_iMiddlelandMapIndex != -1) && (m_iMiddlelandMapIndex == i) && (m_bIsCrusadeMode == TRUE)) break;
 			
 			iNamingValue = m_pMapList[i]->iGetEmptyNamingValue();
 			if (iNamingValue != -1) {
-				// Master Mob을 생성한다.
+				// Master Mob???앹꽦?쒕떎.
 				ZeroMemory(cName_Master, sizeof(cName_Master));
 				wsprintf(cName_Master, "XX%d", iNamingValue);
 				cName_Master[0] = '_';
@@ -24988,7 +25193,7 @@ void CGame::MobGenerator()
 			
 				bFirmBerserk = FALSE;
 				iResult = iDice(1,100);
-				// 몹 제네레이터의 레벨 
+				// 紐??쒕꽕?덉씠?곗쓽 ?덈꺼 
 				switch (m_pMapList[i]->m_cRandomMobGeneratorLevel) {
 				case 1:
 					if ((iResult >= 1) && (iResult < 40)) {
@@ -25012,7 +25217,7 @@ void CGame::MobGenerator()
 					iMapLevel = 1;
 					break;
 
-				case 3:     // v1.4334 몹제너레이터 변경
+				case 3:     // v1.4334 紐뱀젣?덈젅?댄꽣 蹂寃?
 					if ((iResult >= 1) && (iResult < 25)) {
 						switch ( iDice(1,2) ) {
 						case 1: iResult = 3; break;
@@ -25217,7 +25422,7 @@ void CGame::MobGenerator()
 						}
 					}
 
-					// Demon은 Berserk 상태가 되지 않는다.
+					// Demon? Berserk ?곹깭媛 ?섏? ?딅뒗??
 					if ((iDice(1,3) == 1) && (iResult != 16)) bFirmBerserk = TRUE;
 					
 					iMapLevel = 4;
@@ -25246,7 +25451,7 @@ void CGame::MobGenerator()
 						}
 					}
 
-					// Demon은 Berserk 상태가 되지 않는다.
+					// Demon? Berserk ?곹깭媛 ?섏? ?딅뒗??
 					if ((iDice(1,3) == 1) && (iResult != 16)) bFirmBerserk = TRUE;
 
 					iMapLevel = 5;
@@ -25313,19 +25518,179 @@ void CGame::MobGenerator()
 					}
 					iMapLevel = 2;
 					break;
+	
+				case 13: // toh1
+					if ((iResult >= 1) && (iResult < 25)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 14; break;//Hellbound
+						}
+					}
+					if ((iResult >= 25) && (iResult < 50)) {
+					switch ( iDice(1,1) ) {
+						case 1:	iResult = 9; break; // Cyclops
+						}
+					}
+					else if ((iResult >= 50) && (iResult < 75)) {
+					switch ( iDice(1,1) ) {
+						case 1:	iResult = 27; break; // Dark-Elf
+						}
+					}
+					else if ((iResult >= 75) && (iResult < 100)) {
+					switch ( iDice(1,2) ) {
+						case 1:iResult = 26; break; // Beholder
+						case 2:iResult = 13; break; // Ogre
+						}						
+					}
+					break;
+					
+
+				case 14: // toh2
+					if ((iResult >= 1) && (iResult < 40)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 27; break; // Dark-Elf
+						}
+					}
+					else if ((iResult >= 40) && (iResult < 60)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 15; break; // Liche
+						}
+					}
+					else if ((iResult >= 60) && (iResult < 80)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 13; break; // Orge
+						}
+					}
+					else if ((iResult >= 80) && (iResult < 90)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 31; break; // Gagoyle
+						}
+					}
+					else if ((iResult >= 90) && (iResult < 100)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 16; break; // Demon
+						}
+					}
+					break;
+
+				case 15: // toh3
+					if ((iResult >= 1) && (iResult < 40)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 27; break; // Dark-Elf
+						}
+					}
+					else if ((iResult >= 40) && (iResult < 80)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 26; break; // Beholder
+						}
+					}
+					else if ((iResult >= 80) && (iResult < 90)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 31; break; // Gagoyle
+						}
+					}
+					else if ((iResult >= 90) && (iResult < 100)) {
+					switch ( iDice(1,1) ) {
+						case 1: iResult = 16; break; // Hellclaw
+						}
+					}
+					break;
+
+				case 16: // huntzone1
+					if ((iResult >= 1) && (iResult < 70)) {
+						switch ( iDice(1,5) ) {
+						case 1:	iResult = 1;  break; // Slime
+						case 2: iResult = 2;  break; // Giant-Ant
+						case 3: iResult = 10; break; // Amphis
+						case 4: iResult = 3;  break; // Orc
+						case 5: iResult = 5;  break; // Skeleton
+						}
+					}
+					else if ((iResult >= 70) && (iResult < 90)) {
+						switch ( iDice(1,2) ) {
+						case 1: iResult = 8;  break; // Stone-Golem
+						case 2: iResult = 11; break; // Clay-Golem
+						}
+					}
+					else if ((iResult >= 90) && (iResult < 100)) {
+						switch ( iDice(1,2) ) {
+						case 1: iResult = 24; break; // Giant-Frog
+						case 2: iResult = 32;  break; // Rudolph
+						}
+					}
+					break;
+
+				case 17: // icebound
+					if ((iResult >= 1) && (iResult < 10)) {
+						switch ( iDice(1,3) ) {
+						case 1:	iResult = 29;  break; // Cat
+						case 2: iResult = 5;   break; // Skeleton
+						case 3: iResult = 8;  break; // Stone-Golem
+						}
+					}
+					else if ((iResult >= 10) && (iResult < 80)) {
+						switch ( iDice(1,4) ) {
+						case 1: iResult = 35;  break; // ice-golem
+						case 2: iResult = 34;  break; // direboar
+						case 3: iResult = 32;  break; // Rudolph
+						case 4: iResult = 27;  break; // Dark-elf
+						}
+					}
+					else if ((iResult >= 80) && (iResult < 100)) {
+						switch ( iDice(1,2) ) {
+						case 1: iResult = 33;  break; // Frost
+						case 2: iResult = 26;  break; // Beholder
+						}
+					}
+					break;
+
+				case 18: // druncncity
+					if ((iResult >= 1) && (iResult < 50)) {
+						iResult = 24; // Giant-Frog
+					}
+					else if ((iResult >= 50) && (iResult < 90)) {
+						switch ( iDice(1,2) ) {
+						case 1: iResult = 41;  break; // giant-cray-fish
+						case 2: iResult = 22;  break; // Stalker
+						}
+					}
+					else if ((iResult >= 90) && (iResult < 100)) {
+						switch ( iDice(1,2) ) {
+						case 1: iResult = 46;  break; // Nizie
+						case 2: iResult = 39;  break; // Claw-Turtle
+						}
+					}
+					break;
+
+				case 19: // maze
+					if ((iResult >= 1) && (iResult < 60)) {
+						iResult = 24; // centuars
+					}
+					else if ((iResult >= 60) && (iResult < 95)) {
+						switch ( iDice(1,2) ) {
+							case 1: iResult = 41;  break; // beholders
+							case 2: iResult = 45;  break; // Minotaurus
+						}
+					}
+					else if ((iResult >= 95) && (iResult < 100)) {
+						switch ( iDice(1,2) ) {
+							case 1: iResult = 16;  break; // demons
+							case 2: iResult = 31;  break; // ggs
+						}
+					}
+					break;
 				}
 
 				pX = NULL;
 				pY = NULL;
 				
-				// Special Event. 여러 맵중 랜덤한 맵이 걸리도록 주사위를 굴려야만 한다.
+				// Special Event. ?щ윭 留듭쨷 ?쒕뜡??留듭씠 嫄몃━?꾨줉 二쇱궗?꾨? 援대젮?쇰쭔 ?쒕떎.
 				bIsSpecialEvent = FALSE;
 				if ((m_bIsSpecialEventTime == TRUE) && (iDice(1,10) == 3)) bIsSpecialEvent = TRUE;
 
 				if (bIsSpecialEvent == TRUE) {
 					switch (m_cSpecialEventType) {
 					case 1:
-						// 몹 이벤트. 현재 맵에서 가장 플레이어가 많은 곳에 뿌린다.
+						// 紐??대깽?? ?꾩옱 留듭뿉??媛???뚮젅?댁뼱媛 留롮? 怨녹뿉 肉뚮┛??
 						if (m_pMapList[i]->m_iMaxPx != 0) {
 							pX = m_pMapList[i]->m_iMaxPx*20 +10;
 							pY = m_pMapList[i]->m_iMaxPy*20 +10;
@@ -25334,7 +25699,7 @@ void CGame::MobGenerator()
 							if (pY < 0) pY = 0;
 
 							if (m_bIsCrusadeMode == TRUE) {
-								// 크루세이드 모드인 경우 적국에 용병을 소환 
+								// ?щ（?몄씠??紐⑤뱶??寃쎌슦 ?곴뎅???⑸퀝???뚰솚 
 								if (strcmp(m_pMapList[i]->m_cName, "aresden") == 0)
 									iResult = 20;
 								else if (strcmp(m_pMapList[i]->m_cName, "elvine") == 0)
@@ -25347,13 +25712,13 @@ void CGame::MobGenerator()
 						break;
 					
 					case 2:
-						// 데몬 혹은 유니콘을 생성 
+						// ?곕が ?뱀? ?좊땲肄섏쓣 ?앹꽦 
 						if (iDice(1,3) == 2) {
-							// 셋중 한번은 데몬이 생성된다.
+							// ?뗭쨷 ?쒕쾲? ?곕が???앹꽦?쒕떎.
 							if ((memcmp(m_pMapList[i]->m_cLocationName, "aresden", 7)   == 0) ||
 								(memcmp(m_pMapList[i]->m_cLocationName, "middled1n", 9) == 0) ||
 								(memcmp(m_pMapList[i]->m_cLocationName, "elvine", 6)    == 0)) {
-									// 마을 내에서는 데몬의 출현 가능성을 더 낮춘다. 
+									// 留덉쓣 ?댁뿉?쒕뒗 ?곕が??異쒗쁽 媛?μ꽦??????텣?? 
 								if (iDice(1,20) == 5) 
 									 iResult = 16;
 								else iResult = 5;
@@ -25362,7 +25727,7 @@ void CGame::MobGenerator()
 						}
 						else iResult = 17;
 						
-						// 특별 이벤트 활성화 프래그 비활성화 
+						// ?밸퀎 ?대깽???쒖꽦???꾨옒洹?鍮꾪솢?깊솕 
 						m_bIsSpecialEventTime = FALSE;
 						break;
 					}
@@ -25371,64 +25736,76 @@ void CGame::MobGenerator()
 				ZeroMemory(cNpcName, sizeof(cNpcName));
 				//Random Monster Spawns
 				switch (iResult) {
-				case 1:  strcpy(cNpcName, "Slime");				iProbSA = 5;  iKindSA = 1; break;
-				case 2:  strcpy(cNpcName, "Giant-Ant");			iProbSA = 10; iKindSA = 2; break;
-				case 3:  strcpy(cNpcName, "Orc");				iProbSA = 15; iKindSA = 1; break;
-				case 4:  strcpy(cNpcName, "Zombie");			iProbSA = 15; iKindSA = 3; break;
-				case 5:  strcpy(cNpcName, "Skeleton");			iProbSA = 35; iKindSA = 8; break;
-				case 6:  strcpy(cNpcName, "Orc-Mage");			iProbSA = 30; iKindSA = 7; break;
-				case 7:  strcpy(cNpcName, "Scorpion");			iProbSA = 15; iKindSA = 3; break;
-				case 8:  strcpy(cNpcName, "Stone-Golem");		iProbSA = 25; iKindSA = 5; break;
-				case 9:  strcpy(cNpcName, "Cyclops");			iProbSA = 35; iKindSA = 8; break;
-				case 10: strcpy(cNpcName, "Amphis");			iProbSA = 20; iKindSA = 3; break;
-				case 11: strcpy(cNpcName, "Clay-Golem");		iProbSA = 20; iKindSA = 5; break;
-				case 12: strcpy(cNpcName, "Orge");				iProbSA = 25; iKindSA = 1; break;
-				case 13: strcpy(cNpcName, "Hellbound");			iProbSA = 25; iKindSA = 8; break;
-				case 14: strcpy(cNpcName, "Liche");				iProbSA = 30; iKindSA = 8; break;
-				case 15: strcpy(cNpcName, "Demon");				iProbSA = 20; iKindSA = 8; break;
-				case 16: strcpy(cNpcName, "Unicorn");			iProbSA = 35; iKindSA = 7; break;
-				case 17: strcpy(cNpcName, "WereWolf");			iProbSA = 25; iKindSA = 1; break;
-				case 18: strcpy(cNpcName, "YB-Aresden");		iProbSA = 15; iKindSA = 1; break;
-				case 19: strcpy(cNpcName, "YB-Elvine");			iProbSA = 15; iKindSA = 1; break;
-				case 20: strcpy(cNpcName, "Troll");				iProbSA = 25; iKindSA = 3; break; 
-				case 21: strcpy(cNpcName, "Stalker");           iProbSA = 15; iKindSA = 1;  break;
-				case 22: strcpy(cNpcName, "Mountain-Giant");	iProbSA = 15; iKindSA = 1;  break;
-				case 23: strcpy(cNpcName, "Giant-Frog");		iProbSA = 15; iKindSA = 6;  break;
-				case 24: strcpy(cNpcName, "Cannibal-Plant");	iProbSA = 15; iKindSA = 5;  break;
-				case 25: strcpy(cNpcName, "Beholder");			iProbSA = 15; iKindSA = 7;  break;
-				case 26: strcpy(cNpcName, "Dark-Elf");			iProbSA = 20; iKindSA = 2;  break;
-				case 27: strcpy(cNpcName, "Rabbit");			iProbSA = 15; iKindSA = 1;  break;
-				case 28: strcpy(cNpcName, "Cat");				iProbSA = 15; iKindSA = 6;  break;
-				case 29: strcpy(cNpcName, "Ettin");				iProbSA = 15; iKindSA = 6;  break;
-				case 30: strcpy(cNpcName, "Gagoyle");			iProbSA = 15; iKindSA = 9;  break;
-				case 31: strcpy(cNpcName, "Rudolph");			iProbSA = 15; iKindSA = 1;  break;
-				case 32: strcpy(cNpcName, "Frost");				iProbSA = 0;  iKindSA = 1;  break;
-				case 33: strcpy(cNpcName, "DireBoar");			iProbSA = 15; iKindSA = 1;  break;
-				case 34: strcpy(cNpcName, "Ice");				iProbSA = 15; iKindSA = 1;  break;
-				case 35: strcpy(cNpcName, "Wyvern");			iProbSA = 15; iKindSA = 9;  break;
-				case 36: strcpy(cNpcName, "Barlog");			iProbSA = 10; iKindSA = 1;  break;
-				case 37: strcpy(cNpcName, "Centaurus");			iProbSA = 15; iKindSA = 10; break;
-				case 38: strcpy(cNpcName, "Claw-Turtle");		iProbSA = 15; iKindSA = 1;  break;
-				case 39: strcpy(cNpcName, "Fire-Wyvern");		iProbSA = 10; iKindSA = 10; break;
-				case 40: strcpy(cNpcName, "Giant-Cray-Fish");	iProbSA = 5;  iKindSA = 1;  break;
-				case 41: strcpy(cNpcName, "Lizard");			iProbSA = 5;  iKindSA = 1;  break;
-				case 42: strcpy(cNpcName, "Giant-Plant");		iProbSA = 100; iKindSA = 1;  break;
-				case 43: strcpy(cNpcName, "Master-Mage-Orc");	iProbSA = 10; iKindSA = 9;  break;
-				case 44: strcpy(cNpcName, "Minotaurus");		iProbSA = 10; iKindSA = 5;  break;
-				case 45: strcpy(cNpcName, "Nizie");				iProbSA = 10; iKindSA = 10; break;
-				case 46: strcpy(cNpcName, "Tentocle");			iProbSA = 10; iKindSA = 10; break;
-				case 47: strcpy(cNpcName, "Abaddon");			iProbSA = 10; iKindSA = 9;  break;
-				default: strcpy(cNpcName, "Orc");				iProbSA = 15; iKindSA = 1; break;
+				case 1:  strcpy(cNpcName, "Slime");       iProbSA = 5;  iKindSA = 1; break;
+				case 2:  strcpy(cNpcName, "Giant-Ant");   iProbSA = 10; iKindSA = 2; break;
+				case 3:  strcpy(cNpcName, "Orc");         iProbSA = 15; iKindSA = 1; break;
+				case 4:  strcpy(cNpcName, "Zombie");      iProbSA = 15; iKindSA = 3; break;
+				case 5:  strcpy(cNpcName, "Skeleton");    iProbSA = 35; iKindSA = 8; break;
+				case 6:  strcpy(cNpcName, "Orc-Mage");    iProbSA = 30; iKindSA = 7; break;
+				case 7:  strcpy(cNpcName, "Scorpion");    iProbSA = 15; iKindSA = 3; break;
+				case 8:  strcpy(cNpcName, "Stone-Golem"); iProbSA = 25; iKindSA = 5; break;
+				case 9:  strcpy(cNpcName, "Cyclops");     iProbSA = 35; iKindSA = 8; break;
+				case 10: strcpy(cNpcName, "Amphis");      iProbSA = 20; iKindSA = 3; break;
+				case 11: strcpy(cNpcName, "Clay-Golem");  iProbSA = 20; iKindSA = 5; break;
+				case 12: strcpy(cNpcName, "Troll");       iProbSA = 25; iKindSA = 3; break; 
+				case 13: strcpy(cNpcName, "Orge");        iProbSA = 25; iKindSA = 1; break;
+				case 14: strcpy(cNpcName, "Hellbound");   iProbSA = 25; iKindSA = 8; break;
+				case 15: strcpy(cNpcName, "Liche");		  iProbSA = 30; iKindSA = 8; break;
+				case 16: strcpy(cNpcName, "Demon");			iProbSA = 20; iKindSA = 8; break;
+				case 17: strcpy(cNpcName, "Unicorn");		iProbSA = 35; iKindSA = 7; break;
+				case 18: strcpy(cNpcName, "WereWolf");		iProbSA = 25; iKindSA = 1; break;
+				case 19: strcpy(cNpcName, "XB-Aresden");	iProbSA = 15; iKindSA = 1; break;
+				case 20: strcpy(cNpcName, "XB-Elvine");		iProbSA = 15; iKindSA = 1; break;
+				case 21: strcpy(cNpcName, "Troll");				iProbSA = 25; iKindSA = 3; break; 
+				case 22: strcpy(cNpcName, "Stalker");           iProbSA = 15; iKindSA = 1;  break;
+				case 23: strcpy(cNpcName, "Mountain-Giant");	iProbSA = 15; iKindSA = 1;  break;
+				case 24: strcpy(cNpcName, "Giant-Frog");		iProbSA = 15; iKindSA = 6;  break;
+				case 25: strcpy(cNpcName, "Cannibal-Plant");	iProbSA = 15; iKindSA = 5;  break;
+				case 26: strcpy(cNpcName, "Beholder");			iProbSA = 15; iKindSA = 7;  break;
+				case 27: strcpy(cNpcName, "Dark-Elf");			iProbSA = 20; iKindSA = 2;  break;
+				case 28: strcpy(cNpcName, "Rabbit");			iProbSA = 15; iKindSA = 1;  break;
+				case 29: strcpy(cNpcName, "Cat");				iProbSA = 15; iKindSA = 6;  break;
+				case 30: strcpy(cNpcName, "Ettin");				iProbSA = 15; iKindSA = 6;  break;
+				case 31: strcpy(cNpcName, "Gagoyle");			iProbSA = 15; iKindSA = 9;  break;
+				case 32: strcpy(cNpcName, "Rudolph");			iProbSA = 15; iKindSA = 1;  break;
+				case 33: strcpy(cNpcName, "Frost");				iProbSA = 0;  iKindSA = 1;  break;
+				case 34: strcpy(cNpcName, "DireBoar");			iProbSA = 15; iKindSA = 1;  break;
+				case 35: strcpy(cNpcName, "Ice");				iProbSA = 15; iKindSA = 1;  break;
+				case 36: strcpy(cNpcName, "Wyvern");			iProbSA = 15; iKindSA = 9;  break;
+				case 37: strcpy(cNpcName, "Barlog");			iProbSA = 10; iKindSA = 1;  break;
+				case 38: strcpy(cNpcName, "Centaurus");			iProbSA = 15; iKindSA = 10; break;
+				case 39: strcpy(cNpcName, "Claw-Turtle");		iProbSA = 15; iKindSA = 1;  break;
+				case 40: strcpy(cNpcName, "Fire-Wyvern");		iProbSA = 10; iKindSA = 10; break;
+				case 41: strcpy(cNpcName, "Giant-Cray-Fish");	iProbSA = 5;  iKindSA = 1;  break;
+				case 42: strcpy(cNpcName, "Lizard");			iProbSA = 5;  iKindSA = 1;  break;
+				case 43: strcpy(cNpcName, "Giant-Plant");		iProbSA = 100; iKindSA = 1;  break;
+				case 44: strcpy(cNpcName, "Master-Mage-Orc");	iProbSA = 10; iKindSA = 9;  break;
+				case 45: strcpy(cNpcName, "Minotaurus");		iProbSA = 10; iKindSA = 5;  break;
+				case 46: strcpy(cNpcName, "Nizie");				iProbSA = 10; iKindSA = 10; break;
+				case 47: strcpy(cNpcName, "Tentocle");			iProbSA = 10; iKindSA = 10; break;
+				case 48: strcpy(cNpcName, "Abaddon");			iProbSA = 10; iKindSA = 9;  break;
+				case 49: strcpy(cNpcName, "Hellclaw");			iProbSA = 10; iKindSA = 9;  break;
+				case 50: strcpy(cNpcName, "XW-Aresden");    iProbSA = 15; iKindSA = 1; break;
+				case 51: strcpy(cNpcName, "XW-Elvine");		iProbSA = 15; iKindSA = 1; break;
+				case 52: strcpy(cNpcName, "XY-Aresden");	iProbSA = 15; iKindSA = 1; break;
+				case 53: strcpy(cNpcName, "XY-Elvine");		iProbSA = 15; iKindSA = 1; break;
+				case 54: strcpy(cNpcName, "YB-Aresden");	iProbSA = 15; iKindSA = 1; break;
+				case 55: strcpy(cNpcName, "YB-Elvine");		iProbSA = 15; iKindSA = 1; break;
+				case 56: strcpy(cNpcName, "YW-Aresden");	iProbSA = 15; iKindSA = 1; break;
+				case 57: strcpy(cNpcName, "YW-Elvine");		iProbSA = 15; iKindSA = 1; break;
+				case 58: strcpy(cNpcName, "YY-Aresden");	iProbSA = 15; iKindSA = 1; break;
+				case 59: strcpy(cNpcName, "YY-Elvine");	    iProbSA = 15; iKindSA = 1; break;
+				default: strcpy(cNpcName, "Orc");			iProbSA = 15; iKindSA = 1; break;
 				}
 
-				// v1.411 몬스터의 특수 특성치를 입력한다. 
+				// v1.411 紐ъ뒪?곗쓽 ?뱀닔 ?뱀꽦移섎? ?낅젰?쒕떎. 
 				cSA = 0;
 				if (iDice(1,100) <= iProbSA) {
 					cSA = _cGetSpecialAbility(iKindSA);
 				}
 								
 				if ((bMaster = bCreateNewNpc(cNpcName, cName_Master, m_pMapList[i]->m_cName, (rand() % 3), cSA, DEF_MOVETYPE_RANDOM, &pX, &pY, cWaypoint, NULL, NULL, -1, FALSE, FALSE, bFirmBerserk, TRUE)) == FALSE) {
-					// 실패했으므로 예약된 NameValue를 해제시킨다.
+					// ?ㅽ뙣?덉쑝誘濡??덉빟??NameValue瑜??댁젣?쒗궓??
 					m_pMapList[i]->SetNamingValueEmpty(iNamingValue);
 				}
 				else {
@@ -25436,7 +25813,7 @@ void CGame::MobGenerator()
 				}
 			}	
 			
-			// 처음 생성된 몹의 종류에 따른 생성 갯수를 계산한다.
+			// 泥섏쓬 ?앹꽦??紐뱀쓽 醫낅쪟???곕Ⅸ ?앹꽦 媛?닔瑜?怨꾩궛?쒕떎.
 			switch (iResult) {
 			case 1:	 iTotalMob = iDice(1,5)-1; break;
 			case 2:	 iTotalMob = iDice(1,5)-1; break;
@@ -25450,50 +25827,62 @@ void CGame::MobGenerator()
 			case 10: iTotalMob = iDice(1,5)-1; break;
 			case 11: iTotalMob = iDice(1,3)-1; break;
 			case 12: iTotalMob = iDice(1,5)-1; break;
-			case 13: iTotalMob = iDice(1,3)-1; break;
+			case 13: iTotalMob = iDice(1,2)-1; break; // Orge
 			case 14: iTotalMob = iDice(1,3)-1; break;
 			case 15: iTotalMob = iDice(1,3)-1; break;
-			case 16: iTotalMob = iDice(1,2)-1; break;
+			case 16: iTotalMob = iDice(1,2)-1; break; // Demon
 			case 17: iTotalMob = iDice(1,2)-1; break;
-			case 18: iTotalMob = iDice(1,5)-1; break;
-			case 19: iTotalMob = iDice(1,5)-1; break;
-			case 20: iTotalMob = iDice(1,5)-1; break;
-			case 21: iTotalMob = iDice(1,5)-1; break;
-			case 22: iTotalMob = iDice(1,5)-1; break;
-			case 23: iTotalMob = iDice(1,5)-1; break;
-			case 24: iTotalMob = iDice(1,5)-1; break;
-			case 25: iTotalMob = iDice(1,5)-1; break;
-			case 26: iTotalMob = iDice(1,5)-1; break;
-			case 27: iTotalMob = iDice(1,5)-1; break;
-			case 28: iTotalMob = iDice(1,5)-1; break;
-			case 29: iTotalMob = iDice(1,5)-1; break;
-			case 30: iTotalMob = iDice(1,5)-1; break;
-			case 31: iTotalMob = iDice(1,5)-1; break;
-			case 32: iTotalMob = iDice(1,5)-1; break;
-			case 33: iTotalMob = iDice(1,5)-1; break;
-			case 34: iTotalMob = iDice(1,5)-1; break;
-			case 35: iTotalMob = iDice(1,5)-1; break;
-			case 36: iTotalMob = iDice(1,5)-1; break;
-			case 37: iTotalMob = iDice(1,5)-1; break;
-			case 38: iTotalMob = iDice(1,5)-1; break;
-			case 39: iTotalMob = iDice(1,5)-1; break;
-			case 40: iTotalMob = iDice(1,5)-1; break;
-			case 41: iTotalMob = iDice(1,5)-1; break;
-			case 42: iTotalMob = iDice(1,5)-1; break;
-			case 43: iTotalMob = iDice(1,5)-1; break;
-			case 44: iTotalMob = iDice(1,5)-1; break; 
-			case 45: iTotalMob = iDice(1,5)-1; break;
-			case 46: iTotalMob = iDice(1,5)-1; break;
-			case 47: iTotalMob = iDice(1,5)-1; break;
+			case 18: iTotalMob = iDice(1,3)-1; break;
+			case 19: iTotalMob = iDice(1,3)-1; break;
+			case 20: iTotalMob = iDice(1,3)-1; break;
+			case 21: iTotalMob = iDice(1,3)-1; break;
+			case 22: iTotalMob = iDice(1,3)-1; break;
+			case 23: iTotalMob = iDice(1,3)-1; break;
+			case 24: iTotalMob = iDice(1,3)-1; break;
+			case 25: iTotalMob = iDice(1,3)-1; break;
+			case 26: iTotalMob = iDice(1,2)-1; break; // Beholder
+			case 27: iTotalMob = iDice(1,3)-1; break;
+			case 28: iTotalMob = iDice(1,3)-1; break;
+			case 29: iTotalMob = iDice(1,3)-1; break;
+			case 30: iTotalMob = iDice(1,3)-1; break;
+			case 31: iTotalMob = iDice(1,2)-1; break; // Gagoyle
+			case 32: iTotalMob = iDice(1,3)-1; break;
+			case 33: iTotalMob = iDice(1,3)-1; break;
+			case 34: iTotalMob = iDice(1,3)-1; break;
+			case 35: iTotalMob = iDice(1,3)-1; break;
+			case 36: iTotalMob = iDice(1,1)-1; break; // Wyvern
+			case 37: iTotalMob = iDice(1,3)-1; break;
+			case 38: iTotalMob = iDice(1,3)-1; break;
+			case 39: iTotalMob = iDice(1,3)-1; break;
+			case 40: iTotalMob = iDice(1,1)-1; break; // Fire-Wyvern
+			case 41: iTotalMob = iDice(1,3)-1; break;
+			case 42: iTotalMob = iDice(1,3)-1; break;
+			case 43: iTotalMob = iDice(1,3)-1; break;
+			case 44: iTotalMob = iDice(1,3)-1; break; 
+			case 45: iTotalMob = iDice(1,3)-1; break;
+			case 46: iTotalMob = iDice(1,3)-1; break;
+			case 47: iTotalMob = iDice(1,3)-1; break;
+			case 48: iTotalMob = iDice(1,1)-1; break; // Abaddon
+			case 49: iTotalMob = iDice(1,1)-1; break; // Hellclaw
+			case 50: iTotalMob = iDice(1,1)-1; break; 
+			case 51: iTotalMob = iDice(1,3)-1; break;
+			case 52: iTotalMob = iDice(1,3)-1; break;
+			case 53: iTotalMob = iDice(1,3)-1; break;
+			case 54: iTotalMob = iDice(1,3)-1; break; 
+			case 55: iTotalMob = iDice(1,3)-1; break;
+			case 56: iTotalMob = iDice(1,3)-1; break;
+			case 57: iTotalMob = iDice(1,3)-1; break;
+			case 58: iTotalMob = iDice(1,1)-1; break;
+			case 59: iTotalMob = iDice(1,1)-1; break;
 			default: iTotalMob = 0; break;
 			}
-			// 마스터를 생성할 수 없었다면 슬레이브도 만들지 않는다. 
+			// 留덉뒪?곕? ?앹꽦?????놁뿀?ㅻ㈃ ?щ젅?대툕??留뚮뱾吏 ?딅뒗?? 
 			if (bMaster == FALSE) iTotalMob = 0;
 
-			// 1.4 몹이 뭉쳐 나오는 것을 막기 위해서 30% 확률로 마스터만 생성한다.
+			// 1.4 紐뱀씠 萸됱퀜 ?섏삤??寃껋쓣 留됯린 ?꾪빐??30% ?뺣쪧濡?留덉뒪?곕쭔 ?앹꽦?쒕떎.
 			//if ((iTotalMob >= 2) && (iDice(1,2) == 1)) iTotalMob = 0;
 			
-			// v1.432 몬스터의 종류에 따라 무리를 지을 확률이 다르다.
+			// v1.432 紐ъ뒪?곗쓽 醫낅쪟???곕씪 臾대━瑜?吏???뺣쪧???ㅻⅤ??
 			if (iTotalMob >= 2) {
 				switch (iResult) {
 				case 1:  // Slime 
@@ -25507,7 +25896,7 @@ void CGame::MobGenerator()
 				case 11: // Clay-Golem
 				case 12: // Troll
 				case 13: // Orge
-					if (iDice(1,5) != 1) iTotalMob = 0;  // 75% 확률로 혼자 발생.
+					if (iDice(1,5) != 1) iTotalMob = 0;  // 75% ?뺣쪧濡??쇱옄 諛쒖깮.
 					break;
 
 				case 9:  // Cyclops
@@ -25546,24 +25935,25 @@ void CGame::MobGenerator()
 				case 45:
 				case 46:
 				case 47:
-					if (iDice(1,5) == 1) iTotalMob = 0;  // 75% 확률로 무리를 짓는다.
+				case 48:
+				case 49:
+					if (iDice(1,5) == 1) iTotalMob = 0;  // 75% ?뺣쪧濡?臾대━瑜?吏볥뒗??
 					break;
 				}
 			}
 			
-			// 만약 정기정으로 몹을 대량 추가해야 할 시점이라면 슬레이브 갯수를 늘린다. Special Event 1번 
+			// 留뚯빟 ?뺢린?뺤쑝濡?紐뱀쓣 ???異붽??댁빞 ???쒖젏?대씪硫??щ젅?대툕 媛?닔瑜??섎┛?? Special Event 1踰?
 			if (bIsSpecialEvent == TRUE) {
 				switch (m_cSpecialEventType) {
 				case 1:
-					// 몹 이벤트
-					if ((iResult != 15) && (iResult != 16)) iTotalMob = 30;
+					// 紐??대깽??					if ((iResult != 15) && (iResult != 16)) iTotalMob = 30;
 					break;
 				
 				case 2:
-					// 데몬 출몰 
+					// ?곕が 異쒕ぐ 
 					if ( (memcmp(m_pMapList[i]->m_cLocationName, "aresden", 7) == 0) ||
 						 (memcmp(m_pMapList[i]->m_cLocationName, "elvine",  6) == 0) ) {
-						// 만약 마을이라면 슬래이브 데몬은 없다.
+						// 留뚯빟 留덉쓣?대씪硫??щ옒?대툕 ?곕が? ?녿떎.
 						iTotalMob = 0;
 					}
 					break;
@@ -25574,24 +25964,24 @@ void CGame::MobGenerator()
 			for (j = 0; j < iTotalMob; j++) {
 				iNamingValue = m_pMapList[i]->iGetEmptyNamingValue();
 				if (iNamingValue != -1) {
-					// Slave Mob들을 생성한다.
+					// Slave Mob?ㅼ쓣 ?앹꽦?쒕떎.
 					ZeroMemory(cName_Slave, sizeof(cName_Slave));
 					wsprintf(cName_Slave, "XX%d", iNamingValue);
 					cName_Slave[0] = '_';
 					cName_Slave[1] = i + 65;
 			
-					// v1.411 몬스터의 특수 특성치를 입력한다. 
+					// v1.411 紐ъ뒪?곗쓽 ?뱀닔 ?뱀꽦移섎? ?낅젰?쒕떎. 
 					cSA = 0;
 					if (iDice(1,100) <= iProbSA) {
 						cSA = _cGetSpecialAbility(iKindSA);
 					}
 
 					if (bCreateNewNpc(cNpcName, cName_Slave, m_pMapList[i]->m_cName, (rand() % 3), cSA, DEF_MOVETYPE_RANDOM, &pX, &pY, cWaypoint, NULL, NULL, -1, FALSE, FALSE, bFirmBerserk) == FALSE) {
-						// 실패했으므로 예약된 NameValue를 해제시킨다.
+						// ?ㅽ뙣?덉쑝誘濡??덉빟??NameValue瑜??댁젣?쒗궓??
 						m_pMapList[i]->SetNamingValueEmpty(iNamingValue);
 					}
 					else {
-						// Slave모드로 전환.
+						// Slave紐⑤뱶濡??꾪솚.
 						bSetNpcFollowMode(cName_Slave, cName_Master, DEF_OWNERTYPE_NPC);
 					}
 				}
@@ -25604,10 +25994,10 @@ void CGame::MobGenerator()
 			for (j = 1; j < DEF_MAXSPOTMOBGENERATOR; j++)
 			if ( (iDice(1,3) == 2) && (m_pMapList[i]->m_stSpotMobGenerator[j].bDefined == TRUE) &&
 				 (m_pMapList[i]->m_stSpotMobGenerator[j].iMaxMobs > m_pMapList[i]->m_stSpotMobGenerator[j].iCurMobs) ) {
-				// 데이터가 정의되어 있고 몹을 만들 기회가 됐다.
+				// ?곗씠?곌? ?뺤쓽?섏뼱 ?덇퀬 紐뱀쓣 留뚮뱾 湲고쉶媛 ?먮떎.
 				iNamingValue = m_pMapList[i]->iGetEmptyNamingValue();
 				if (iNamingValue != -1) {
-					// 몹을 생성한다.
+					// 紐뱀쓣 ?앹꽦?쒕떎.
 					
 					ZeroMemory(cNpcName, sizeof(cNpcName));
 					switch (m_pMapList[i]->m_stSpotMobGenerator[j].iMobType) {
@@ -25723,7 +26113,7 @@ void CGame::MobGenerator()
 						break;
 					}
 
-					// Spot Mob Generator도 FirmBersek된 몬스터를 생성한다.
+					// Spot Mob Generator??FirmBersek??紐ъ뒪?곕? ?앹꽦?쒕떎.
 					bFirmBerserk = FALSE;
 					if ((m_pMapList[i]->m_cRandomMobGeneratorLevel >= 9) && (iDice(1,3) == 1)) bFirmBerserk = TRUE;
 					
@@ -25732,7 +26122,7 @@ void CGame::MobGenerator()
 					cName_Master[0] = '_';
 					cName_Master[1] = i + 65;
 			
-					// v1.411 몬스터의 특수 특성치를 입력한다. 더미인 경우는 특수 특성치 입력 안함.
+					// v1.411 紐ъ뒪?곗쓽 ?뱀닔 ?뱀꽦移섎? ?낅젰?쒕떎. ?붾???寃쎌슦???뱀닔 ?뱀꽦移??낅젰 ?덊븿.
 					cSA = 0;
 					if ((m_pMapList[i]->m_stSpotMobGenerator[j].iMobType != 34) && (iDice(1,100) <= iProbSA)) {
 						cSA = _cGetSpecialAbility(iKindSA);
@@ -25743,7 +26133,7 @@ void CGame::MobGenerator()
 						// RANDOMAREA
 						if (bCreateNewNpc(cNpcName, cName_Master, m_pMapList[i]->m_cName, (rand() % 3), cSA, DEF_MOVETYPE_RANDOMAREA, &pX, &pY, cWaypoint, &m_pMapList[i]->m_stSpotMobGenerator[j].rcRect, j, -1, FALSE, FALSE, bFirmBerserk) == FALSE) {
 							//PutLogList("SpotMobGenerator(RANDOMAREA) Fail! Cannot locate mob.");	
-							// 실패했으므로 예약된 NameValue를 해제시킨다.
+							// ?ㅽ뙣?덉쑝誘濡??덉빟??NameValue瑜??댁젣?쒗궓??
 							m_pMapList[i]->SetNamingValueEmpty(iNamingValue);
 						}
 						else {
@@ -25757,7 +26147,7 @@ void CGame::MobGenerator()
 						// RANDOMWAYPOINT
 						if (bCreateNewNpc(cNpcName, cName_Master, m_pMapList[i]->m_cName, (rand() % 3), cSA, DEF_MOVETYPE_RANDOMWAYPOINT, NULL, NULL, m_pMapList[i]->m_stSpotMobGenerator[j].cWaypoint, NULL, j, -1, FALSE, FALSE, bFirmBerserk) == FALSE) {
 							//PutLogList("SpotMobGenerator(RANDOMWAYPOINT) Fail! Cannot locate mob.");	
-							// 실패했으므로 예약된 NameValue를 해제시킨다.
+							// ?ㅽ뙣?덉쑝誘濡??덉빟??NameValue瑜??댁젣?쒗궓??
 							m_pMapList[i]->SetNamingValueEmpty(iNamingValue);	
 						}
 						else {
@@ -25773,6 +26163,8 @@ void CGame::MobGenerator()
 		// spot mob generator ^
  	}
 }
+
+
 
 
 
@@ -26381,7 +26773,7 @@ void CGame::RequestFullObjectData(int iClientH, char *pData)
 		// sStatusÀÇ »óÀ§ 4ºñÆ®°¡ FOE °ü°è¸¦ ³ªÅ¸³½´Ù. 
 		sTemp = m_pClientList[wObjectID]->m_iStatus;
 		sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
-		sTemp2 = (short)iGetPlayerABSStatus(wObjectID, iClientH); //(short)iGetPlayerRelationship(iClientH, wObjectID);
+		sTemp2 = iGetPlayerABSStatus(wObjectID, iClientH); //(short)iGetPlayerRelationship(iClientH, wObjectID);
 		sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
 		
 		*ip = sTemp;
@@ -26442,7 +26834,7 @@ void CGame::RequestFullObjectData(int iClientH, char *pData)
 		else *cp = 0;
 		cp++;
 
-		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 25); // v1.4
+		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 27); // v1.4 //Original : 25
 	}
 
 	switch (iRet) {
@@ -31743,8 +32135,8 @@ void CGame::CalcExpStock(int iClientH)
 		bAddItem(iClientH, pItem, NULL);
 	}
 	if (bIsLevelUp == TRUE) {
-		m_pClientList[iClientH]->m_iLU_Pool += DEF_TOTALLEVELUPPOINT;
-		wsprintf(G_cTxt, "(*) Level Up: Char(%s) Level (%d) DEF_TOTALLEVELUPPOINT (%d) m_pClientList[iClientH]->m_iLU_Pool (%d)", m_pClientList[iClientH]->m_cCharName, m_pClientList[iClientH]->m_iLevel, DEF_TOTALLEVELUPPOINT, m_pClientList[iClientH]->m_iLU_Pool);		
+		//m_pClientList[iClientH]->m_iLU_Pool += DEF_TOTALLEVELUPPOINT;
+		wsprintf(G_cTxt, "(*) Level Up: Char(%s) Level (%d) m_pClientList[iClientH]->m_iLU_Pool (%d)", m_pClientList[iClientH]->m_cCharName, m_pClientList[iClientH]->m_iLevel, m_pClientList[iClientH]->m_iLU_Pool);		
 		PutLogList(G_cTxt);
 	}
 }
@@ -33101,30 +33493,63 @@ int CGame::iGetPlayerRelationship(int iClientH, int iOpponentH)
 
 	return iRet;
 }
+int CGame::iGetPlayerABSStatus(int iWhatH, int iRecvH)
+{
+	int iRet;
+
+	if (m_pClientList[iWhatH] == NULL) return 0;
+	if (m_pClientList[iRecvH] == NULL) return 0;
+
+	iRet = 0;
+
+	if (m_pMapList[m_pClientList[iRecvH]->m_cMapIndex]->m_bIsFightZone == TRUE &&
+		m_pClientList[iWhatH]->m_iGuildRank != -1 && m_pClientList[iRecvH]->m_iGuildRank != -1 &&
+		memcmp(m_pClientList[iWhatH]->m_cGuildName,m_pClientList[iRecvH]->m_cGuildName,20) != 0) {
+			iRet = 8;
+		}
 
 
+		if (m_pClientList[iWhatH]->m_iPKCount != 0) {
+			iRet = 8;
+		}
+
+
+		if (m_pClientList[iWhatH]->m_cSide != 0) {
+			iRet = iRet | 4;
+		}
+
+
+		if (m_pClientList[iWhatH]->m_cSide == 1) {
+			iRet = iRet | 2;
+		}
+
+		if (m_pClientList[iWhatH]->m_bIsPlayerCivil == TRUE)
+			iRet = iRet | 1;
+
+		return iRet;
+}
+/*
 int CGame::iGetPlayerABSStatus(int iWhatH, int iRecvH)
 {
 	// Àý´ëÀûÀÎ Ä³¸¯ÅÍÀÇ ¼Ò¼ÓÀ» ¾ò´Â´Ù. 
-	/*
-		0: ¹«¼Ò¼Ó 
 
-		1: ¾Æ·¹½ºµ§ ¼Ò¼Ó
-		2: ¾Æ·¹½ºµ§ ¹üÁËÀÚ
-		3: ¾Æ·¹½ºµ§ °°Àº ±æµå¿ø
-		4: ¾Æ·¹½ºµ§ ´Ù¸¥ ±æµå¿ø
-		5: ¾Æ·¹½ºµ§ °°Àº ±æµå¸¶½ºÅÍ  
-		6: ¾Æ·¹½ºµ§ ´Ù¸¥ ±æµå¸¶½ºÅÍ
-
-		8:  ¿¤¹ÙÀÎ ¼Ò¼Ó
-		9:  ¿¤¹ÙÀÎ ¹üÁËÀÚ
-		10: ¿¤¹ÙÀÎ °°Àº ±æµå¿ø
-		11: ¿¤¹ÙÀÎ ´Ù¸¥ ±æµå¿ø
-		12: ¿¤¹ÙÀÎ °°Àº ±æµå¸¶½ºÅÍ  
-		13: ¿¤¹ÙÀÎ ´Ù¸¥ ±æµå¸¶½ºÅÍ
-
-		15: ¹«¼Ò¼Ó ¹üÁËÀÚ 
-	*/
+//		0: ¹«¼Ò¼Ó 
+//
+//		1: ¾Æ·¹½ºµ§ ¼Ò¼Ó
+//		2: ¾Æ·¹½ºµ§ ¹üÁËÀÚ
+//		3: ¾Æ·¹½ºµ§ °°Àº ±æµå¿ø
+//		4: ¾Æ·¹½ºµ§ ´Ù¸¥ ±æµå¿ø
+//		5: ¾Æ·¹½ºµ§ °°Àº ±æµå¸¶½ºÅÍ  
+//		6: ¾Æ·¹½ºµ§ ´Ù¸¥ ±æµå¸¶½ºÅÍ
+//
+//		8:  ¿¤¹ÙÀÎ ¼Ò¼Ó
+//		9:  ¿¤¹ÙÀÎ ¹üÁËÀÚ
+//		10: ¿¤¹ÙÀÎ °°Àº ±æµå¿ø
+//		11: ¿¤¹ÙÀÎ ´Ù¸¥ ±æµå¿ø
+//		12: ¿¤¹ÙÀÎ °°Àº ±æµå¸¶½ºÅÍ  
+//		13: ¿¤¹ÙÀÎ ´Ù¸¥ ±æµå¸¶½ºÅÍ
+//
+//		15: ¹«¼Ò¼Ó ¹üÁËÀÚ 
 
 	if (m_pClientList[iWhatH] == NULL) return 0;
 	if (m_pClientList[iRecvH] == NULL) return 0;
@@ -33222,7 +33647,7 @@ int CGame::iGetPlayerABSStatus(int iWhatH, int iRecvH)
 
 	return 0;
 }
-
+*/
 int CGame::iGetNpcRelationship(int iWhatH, int iRecvH) 
 { 
 	int iRet; 
@@ -39636,42 +40061,41 @@ void CGame::AdminOrder_DisconnectAll(int iClientH, char *pData, DWORD dwMsgSize)
 
 void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType)
 {
-	class CItem * pItem;
-	char  cColor, cItemName[21];
-	BOOL  bIsGold;
-	int   iGenLevel, iResult, iDiceResult;
-	DWORD dwType, dwValue;
-	double dTmp1, dTmp2, dTmp3;
+ class CItem * pItem;
+ char  cColor, cItemName[21];
+ BOOL  bIsGold;
+ int   iGenLevel, iResult, iDiceResult;
+ DWORD dwType, dwValue;
+ double dTmp1, dTmp2, dTmp3;
 
 	if (m_pNpcList[iNpcH] == NULL) return;
 	if ((cAttackerType != DEF_OWNERTYPE_PLAYER) || (m_pNpcList[iNpcH]->m_bIsSummoned == TRUE)) return;
-
+	
 	ZeroMemory(cItemName, sizeof(cItemName));
 	bIsGold = FALSE;
-
+	
 	switch (m_pNpcList[iNpcH]->m_sType) {
 	case 21: // Guard
 	case 34: // Dummy
 		return;
 	}
-
-	//6500
-	if (iDice(1,10000) >= 1) {
-		// 35% È®·ü·Î ¾ÆÀÌÅÛ ³ª¿Â´Ù. (35/100)
+    	// 6500 default; the lower the greater the Weapon/Armor/Wand Drop
+	if (iDice(1,10000) >= 6500) {
+		// 35% Drop 60% of that is gold
+		// 35% Chance of drop (35/100)
 		if (iDice(1,10000) <= 6000) {
-			// 35% Áß 60%´Â Gold´Ù.
 			// Gold: (35/100) * (60/100) = 21%
 			strcpy(cItemName, "Gold");
-			// ¾ÆÀÌÅÛÀ» ¸¸µé°í 
+			// If a non-existing item is created then delete the item
 			pItem = new class CItem;
 			if (_bInitItemAttr(pItem, cItemName) == FALSE) {
 				delete pItem;
 				return;	
 			}
-			// NPC »ç¸Á½Ã Gold ¹ß»ý·®
+			// NPC 사망시 Gold 발생량
 			pItem->m_dwCount = (DWORD)(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 2)); //(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 3) + m_pNpcList[iNpcH]->m_iExpDice);
 
-			//v1.42 Gold Áõ°¡ 
+			// v1.42 Gold 
 			if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH]->m_iAddGold != NULL)) {
 				dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddGold;
 				dTmp2 = (double)pItem->m_dwCount;
@@ -39680,11 +40104,11 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 			}
 		}
 		else {
-			//9000
-			// 35% Áß 40%´Â ¹°¾à È¤Àº Èñ±Í ¾ÆÀÌÅÛÀÌ´Ù. 
-			if (iDice(1,10000) <= 1) {
-				// 40%Áß 93%´Â ¹°¾àÀÌ´Ù.
-				// ¹°¾à·ù: (35/100) * (40/100) * (90/100) = 12.6%
+			// 9000 default; the lower the greater the Weapon/Armor/Wand Drop
+			// 35% Drop 40% of that is an Item 
+			if (iDice(1,10000) <= 9000) {
+				// 40% Drop 90% of that is a standard drop
+				// Standard Drop Calculation: (35/100) * (40/100) * (90/100) = 12.6%
 				iResult = iDice(1,10000);
 				if ((iResult >= 1) && (iResult <= 4999))          dwValue = 1;
 				else if ((iResult >= 5000) && (iResult <= 7499))  dwValue = 2;
@@ -39694,34 +40118,31 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 				else if ((iResult >= 9688) && (iResult <= 9843))  dwValue = 6;
 				else if ((iResult >= 9844) && (iResult <= 9921))  dwValue = 7;
 				else if ((iResult >= 9922) && (iResult <= 10000)) dwValue = 8;
-
-				switch (dwValue) { 
-			case 1: 
-				switch (iDice(1,2)) { 
-			case 1: strcpy(cItemName, "GreenPotion");   break; 
-			case 2: strcpy(cItemName, "RedPotion"); break; 
-				} 
-				break; 
-			case 2: strcpy(cItemName, "BigRedPotion"); break; 
-			case 3: strcpy(cItemName, "BluePotion"); break; 
-			case 4: strcpy(cItemName, "BigGreenPotion"); break; 
-			case 5: strcpy(cItemName, "BigRedPotion"); break; 
-			case 6: strcpy(cItemName, "BigBluePotion"); break; 
-			case 7: strcpy(cItemName, "PowerGreenPotion"); break; 
-			case 8: 
-				switch (iDice(1,9)) { 
-			case 1: strcpy(cItemName, "StoneOfMerien"); break; 
-			case 2: strcpy(cItemName, "StoneOfXelima"); break; 
-			case 3: strcpy(cItemName, "ZemstoneofSacrifice"); break; 
-			case 4: strcpy(cItemName, "SuperHPotion"); break;
-			case 5: strcpy(cItemName, "SuperMPotion"); break;
-			case 6: strcpy(cItemName, "SuperSPotion"); break;
-			case 7: 
-			case 8: 
-			case 9: strcpy(cItemName, "SuperGreenPotion"); break;
+							
+            switch (dwValue) { 
+            case 1: 
+               switch (iDice(1,2)) { 
+               case 1: strcpy(cItemName, "GreenPotion");   break; 
+			   case 2: strcpy(cItemName, "RedPotion"); break; 
+               } 
+               break; 
+            case 2: strcpy(cItemName, "BigRedPotion"); break; 
+            case 3: strcpy(cItemName, "BluePotion"); break; 
+            case 4: strcpy(cItemName, "BigGreenPotion"); break; 
+            case 5: strcpy(cItemName, "BigRedPotion"); break; 
+            case 6: strcpy(cItemName, "BigBluePotion"); break; 
+            case 7: strcpy(cItemName, "PowerGreenPotion"); break; 
+            case 8: 
+				switch (iDice(1,6)) { 
+                  case 1: strcpy(cItemName, "StoneOfMerien"); break; 
+                  case 2: strcpy(cItemName, "StoneOfXelima"); break; 
+                  case 3: strcpy(cItemName, "ZemstoneofSacrifice"); break; 
+                  case 4: 
+                  case 5: 
+                  case 6: strcpy(cItemName, "SuperGreenPotion"); break;
+					}
 				}
-				}
-				// ¾ÆÀÌÅÛ »ý¼º, ÃÊ±âÈ­
+				// If a non-existing item is created then delete the item
 				pItem = new class CItem;
 				if (_bInitItemAttr(pItem, cItemName) == FALSE) {
 					delete pItem;
@@ -39729,624 +40150,759 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 				}
 			}
 			else {
-				//  Èñ±Í ¾ÆÀÌÅÛÀÌ´Ù. (35/100) * (40/100) * (10/100) = 1.4%
-				// Á×Àº ¸ó½ºÅÍ¿¡ µû¸¥ ·¹º§À» °è»ê.
+				// Valuable Drop Calculation: (35/100) * (40/100) * (10/100) = 1.4%
+				// Define iGenLevel using Npc.cfg#
 				switch (m_pNpcList[iNpcH]->m_sType) {
+				
 				case 10: // Slime
-				case 16: // Giant-Ant
-				case 22: // Amphis 
-					iGenLevel = 1;	
-					break;
-
-				case 14: // Orc
-				case 18: // Zombie
-				case 17: // Scorpion
-				case 11: // Skeleton
-				case 57: // Giant-Frog
-					iGenLevel = 2;	
-					break;		
-
-				case 23: // Clay-Golem
-				case 12: // Stone-Golem
-				case 65: // Ice
-					iGenLevel = 3;	
-					break;		
-
-				case 27: // Hellhound
-				case 61: // Rudolph
-					iGenLevel = 4;
-					break;		
-
-				case 13: // Cyclops
-				case 28: // Troll
-				case 60: // Cannibal-Plant	
-				case 62: // DireBoar
-					iGenLevel = 5;
-					break;
-
-				case 29: // Orge
-				case 33: // WereWolf
-				case 48: // Stalker
-				case 53: // Beholder
-				case 54: // DarkElf
-					iGenLevel = 6;
-					break;
-
-				case 30: // Liche
-					iGenLevel = 7;
-					break;
-
-				case 31: // Demon
-				case 32: // Unicorn
-				case 49: // Hellclaw
-				case 66: // Wyvern
-				case 73: // Fire-Wyvern
-					iGenLevel = 8;
+					iGenLevel = 1;
 					break;
 
 				case 55: // Rabbit
 				case 56: //	Cat
+					iGenLevel = 2;
+					break;
+				
+				case 16: // Giant-Ant
+					iGenLevel = 3;
+					break;
+
+				case 22: // Amphis
+					iGenLevel = 4;
+					break; 
+
+				case 14: // Orc, Orc-Mage
+					iGenLevel = 5;
+					break;
+
+				case 18: // Zombie
+					iGenLevel = 6;
+					break;
+
+				case 17: // Scorpion
+					iGenLevel = 7;
+					break;
+				
+				case 11: // Skeleton
+					iGenLevel = 8;
+					break; 
+				
+				case 23: // Clay-Golem
 					iGenLevel = 9;
 					break;
 
-				case 58: // MountainGiant
+				case 12: // Stone-Golem
 					iGenLevel = 10;
 					break;
-
-				case 59: // Ettin
+				
+				case 27: // Hellbound
 					iGenLevel = 11;
 					break;
 
-				case 63: // Frost
-				case 71: // Centaurus
+				case 13: // Cyclops
 					iGenLevel = 12;
 					break;
 
-				case 70: // Barlog
+				case 28: // Troll
 					iGenLevel = 13;
 					break;
 
-				case 72: // Claw-Turtle
+				case 53: // Beholder
 					iGenLevel = 14;
 					break;
 
-				case 74: // Giant-Cray-Fish
+				case 60: // Cannibal-Plant
 					iGenLevel = 15;
 					break;
-
-				case 75: // Lizard
+					
+				case 29: // Orge
 					iGenLevel = 16;
 					break;
 
-				case 76: // Giant-Plant
+				case 58: // MountainGiant
 					iGenLevel = 17;
 					break;
-
-				case 77: // Master-Mage-Orc
+				
+				case 30: // Liche
 					iGenLevel = 18;
 					break;
 
-				case 78: // Minotaurus
+				case 48: // Stalker
 					iGenLevel = 19;
 					break;
 
-				case 79: // Nizie
+				case 33: // WereWolf
 					iGenLevel = 20;
 					break;
 
-				case 80: // Tentocle
+				case 54: // Dark-Elf
 					iGenLevel = 21;
+					break;
+				
+				case 59: // Ettin
+					iGenLevel = 22;
+					break;
+
+				case 31: // Demon
+					iGenLevel = 23;
+					break;
+
+				case 32: // Unicorn
+					iGenLevel = 24;
 					break;
 
 				case 52: // Gagoyle
-					iGenLevel = 22;
+					iGenLevel = 25;
+					break;
+
+				case 49: // Hellclaw
+				case 50: // Tigerworm
+					iGenLevel = 26;
+					break;
+				
+				case 61: // Rudolph
+					iGenLevel = 27;
+					break;
+
+				case 62: // DireBoar
+					iGenLevel = 28;
+					break;
+
+				case 63: // Frost
+					iGenLevel = 29;
+					break;
+
+				case 65: // Ice-Golem
+					iGenLevel = 30;
 					break;
 				}	
-
+				
 				if (iGenLevel == 0) return;
-
-				// ¸ÕÀú ¸¸µé ¾ÆÀÌÅÛÀ» °áÁ¤: 
-				// ¹«±â·ù È¤Àº ¹æ¾î±¸
+				
+				// Weapon Drop: 
+				// 1.4% chance Valuable Drop 60% that it is a Weapon
 				if (iDice(1,10000) <= 6000) {
-					// ¸¸µé¾îÁö´Â ¾ÆÀÌÅÛÀÇ 60%´Â ¹«±â·ù
-					// v2.03 ¸¶¹ý»ç¿ë ¹«±â´Â ³ª¿ÀÁö ¾Ê´Â´Ù.
 					if (iDice(1,10000) <= 8000) {
-						// ¹«±â Áß 70%´Â Àü»ç¿ë ¹«±â.
-						switch (iGenLevel) { 
-				  case 1: // Slime, Giant-Ant, Amphis
-					  switch (iDice(1,3)) { 
-				  case 1: strcpy(cItemName, "Dagger"); break; 
-				  case 2: strcpy(cItemName, "ShortSword"); break; 
-				  case 3: strcpy(cItemName, "LightAxe"); break; 
-					  } 
-					  break; 
-
-				  case 2: // Orc, Zombie, Scorpion, Giant-Frog, Skeleton
-					  switch (iDice(1,6)) { 
-				  case 1: strcpy(cItemName, "MainGauche"); break; 
-				  case 2: strcpy(cItemName, "Gradius"); break; 
-				  case 3: strcpy(cItemName, "SexonAxe"); break; 
-				  case 4: strcpy(cItemName, "Tomahoc"); break; 
-				  case 5: strcpy(cItemName, "Sabre"); break; 
-				  case 6: strcpy(cItemName, "Esterk"); break; 
-					  } 
-					  break; 
-
-				  case 3: // Clay-Golem and Stone-Golem
-					  switch (iDice(1,4)) { 
-				  case 1: strcpy(cItemName, "LongSword"); break; 
-				  case 2: strcpy(cItemName, "DoubleAxe"); break; 
-				  case 3: strcpy(cItemName, "Sabre"); break; 
-				  case 4: strcpy(cItemName, "Esterk"); break; 
-					  } 
-					  break; 
-
-				  case 4: // Helhound, Rudolph
-					  switch (iDice(1,6)) { 
-				  case 1: strcpy(cItemName, "Sabre"); break; 
-				  case 2: strcpy(cItemName, "Scimitar"); break; 
-				  case 3: strcpy(cItemName, "Falchion"); break; 
-				  case 4: strcpy(cItemName, "Esterk"); break; 
-				  case 5: strcpy(cItemName, "Rapier"); break; 
-				  case 6: strcpy(cItemName, "WarAxe"); break;
-					  } 
-					  break; 
-
-				  case 5: // Cyclops, Troll, Cannibal-Plant
-					  switch (iDice(1,3)) { 
-				  case 1: strcpy(cItemName, "Esterk"); break; 
-				  case 2: strcpy(cItemName, "Rapier"); break; 
-				  case 3: strcpy(cItemName, "WarAxe"); break; 
-					  } 
-					  break; 
-
-				  case 6: // Ogre, WereWolf, Beholder, Stalker, DarkElf
-					  switch (iDice(1,5)) { 
-				  case 1: strcpy(cItemName, "GreatSword"); break; 
-				  case 2: strcpy(cItemName, "Flameberge"); break; 
-				  case 3: strcpy(cItemName, "Claymore"); break; 
-				  case 4: strcpy(cItemName, "Esterk"); break; 
-				  case 5: strcpy(cItemName, "Rapier"); break; 
-					  } 
-					  break; 
-
-				  case 7: // Liche
-					  switch (iDice(1,4)) { 
-				  case 1: strcpy(cItemName, "GreatSword"); break; 
-				  case 2: strcpy(cItemName, "Flameberge"); break; 
-				  case 3: strcpy(cItemName, "Esterk"); break; 
-				  case 4: strcpy(cItemName, "Rapier"); break; 
-					  } 
-					  break; 
-
-				  case 8: // Demon, Unicorn, Hellclaw
-					  switch (iDice(1,7)) { 
-				  case 1: strcpy(cItemName, "GreatSword"); break; 
-				  case 2: strcpy(cItemName, "Flameberge"); break; 
-				  case 3: strcpy(cItemName, "BattleAxe"); break; 
-				  case 4: strcpy(cItemName, "Esterk"); break; 
-				  case 5: strcpy(cItemName, "Rapier"); break; 
-				  case 7: strcpy(cItemName, "GiantSword"); break;
-					  } 
-					  break; 
-
-				  case 9: //Rabbits and Cats
-					  switch (iDice(1,1)) {
-				  case 1: strcpy(cItemName, "Dagger"); break;
-					  }
-					  break;
-
-				  case 10: // Mountain-Giant
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "Esterk"); break;
-				  case 2: strcpy(cItemName, "Rapier"); break;
-				  case 3: strcpy(cItemName, "Hammer"); break; 
-				  case 4: strcpy(cItemName, "GreatSword"); break;
-				  case 5: strcpy(cItemName, "LongSword"); break;
-					  }
-					  break;
-
-				  case 11: // Ettin
-					  switch (iDice(1,6)) {
-				  case 1: strcpy(cItemName, "GreatSword"); break;
-				  case 2: strcpy(cItemName, "Flameberge"); break;
-				  case 3: strcpy(cItemName, "Hammer"); break;
-				  case 4: strcpy(cItemName, "BattleHammer"); break;
-				  case 5: strcpy(cItemName, "Esterk"); break;
-				  case 6: strcpy(cItemName, "Rapier"); break;
-					  } 
-					  break;
-
-				  case 12: // Centaurus, Frost
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "GreatSword+1"); break;
-				  case 2: strcpy(cItemName, "Flameberge+1"); break;
-				  case 3: strcpy(cItemName, "Estrek+1"); break;
-				  case 4: strcpy(cItemName, "Rapier+1"); break;
-				  case 5: strcpy(cItemName, "WarAxe+1"); break;
-					  }
-					  break;
-
-				  case 13: // Barlog
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "Falchion"); break;
-				  case 2: strcpy(cItemName, "DoubleAxe"); break;
-				  case 3: strcpy(cItemName, "GreatSword"); break;
-				  case 4: strcpy(cItemName, "Claymore"); break;
-				  case 5: strcpy(cItemName, "WarAxe"); break;
-					  }
-					  break;
-
-				  case 14: // Claw-Turtle
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "GreatSword+1"); break;
-				  case 2: strcpy(cItemName, "Flameberge+1"); break;
-				  case 3: strcpy(cItemName, "Estrek+1"); break;
-				  case 4: strcpy(cItemName, "Rapier+1"); break;
-				  case 5: strcpy(cItemName, "WarAxe+1"); break;
-					  }
-					  break;
-
-				  case 15: // Giant-Cray-Fish
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "GreatSword+1"); break;
-				  case 2: strcpy(cItemName, "Flameberge+1"); break;
-				  case 3: strcpy(cItemName, "Estrek+1"); break;
-				  case 4: strcpy(cItemName, "Rapier+1"); break;
-				  case 5: strcpy(cItemName, "WarAxe+1"); break;
-					  }
-					  break;
-
-				  case 16: // Lizard
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "GreatSword+1"); break;
-				  case 2: strcpy(cItemName, "Flameberge+1"); break;
-				  case 3: strcpy(cItemName, "Estrek+1"); break;
-				  case 4: strcpy(cItemName, "Rapier+1"); break;
-				  case 5: strcpy(cItemName, "WarAxe+1"); break;
-					  }
-					  break;
-
-				  case 17: // Giant-Plant
-					  switch (iDice(1,4)) {
-				  case 1: strcpy(cItemName, "GreatSword"); break;
-				  case 2: strcpy(cItemName, "Estrek"); break;
-				  case 3: strcpy(cItemName, "Rapier"); break;
-				  case 4: strcpy(cItemName, "WarAxe"); break;
-					  }
-					  break;
-
-				  case 18: // Master-Mage-Orc
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "GreatSword+1"); break;
-				  case 2: strcpy(cItemName, "Flameberge+1"); break;
-				  case 3: strcpy(cItemName, "Estrek+1"); break;
-				  case 4: strcpy(cItemName, "Rapier+1"); break;
-				  case 5: strcpy(cItemName, "WarAxe+1"); break;
-					  }
-					  break;
-
-				  case 19: // Minotaurus
-					  switch (iDice(1,5)) {
-				  case 1: strcpy(cItemName, "GreatSword+1"); break;
-				  case 2: strcpy(cItemName, "Flameberge+1"); break;
-				  case 3: strcpy(cItemName, "Estrek+1"); break;
-				  case 4: strcpy(cItemName, "Rapier+1"); break;
-				  case 5: strcpy(cItemName, "WarAxe+1"); break;
-					  }
-					  break;
-
-				  case 20: // Nizie
-					  switch (iDice(1,4)) {
-				  case 1: strcpy(cItemName, "GiantSword+1"); break;
-				  case 2: strcpy(cItemName, "Flameberge+1"); break;
-				  case 3: strcpy(cItemName, "Hammer+1"); break;
-				  case 4: strcpy(cItemName, "BattleAxe+1"); break;
-					  }
-					  break;
-
-				  case 21: // Tentocle
-					  switch (iDice(1,6)) {
-				  case 1: strcpy(cItemName, "Flameberge"); break;
-				  case 2: strcpy(cItemName, "Hammer"); break;
-				  case 3: strcpy(cItemName, "BattleAxe"); break;
-				  case 4: strcpy(cItemName, "Esterk"); break;
-				  case 5: strcpy(cItemName, "Rapier"); break;
-				  case 6: strcpy(cItemName, "WarAxe"); break;
-					  }
-					  break;
-
-				  case 22: // Gagoyle
-					  switch (iDice(1,6)) {
-				  case 1: strcpy(cItemName, "Flameberge"); break;
-				  case 2: strcpy(cItemName, "GiantSword"); break;
-				  case 3: strcpy(cItemName, "BattleAxe"); break;
-					  }
-					  break;
-						}
+						// 70% the Weapon is Melee
+                  switch (iGenLevel) { 
+               
+				case 1: // Slime
+					switch (iDice(1,3)) { 
+						case 1: strcpy(cItemName, "Dagger"); break; 
+						case 2: strcpy(cItemName, "ShortSword"); break; 
+						case 3: strcpy(cItemName, "LightAxe"); break; 
+					} 
+					break; 
+                      
+				case 2: // Rabbit, Cat
+				case 3: // Giant-Ant
+					switch (iDice(1,2)) {
+						case 1: strcpy(cItemName, "Dagger"); break;
+						case 2: strcpy(cItemName, "ShortSword"); break;
 					}
-					else {
-						// ¹«±âÁß 30%´Â ¸¶¹ý °ø°Ý ¹«±â 
+					break;
+
+				case 4: // Amphis
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "Dagger"); break;
+						case 2: strcpy(cItemName, "ShortSword"); break;
+						case 3: strcpy(cItemName, "LightAxe"); break;
+						case 4: strcpy(cItemName, "Tomahoc"); break;
+					}
+					break;
+
+				case 5: // Orc, Orc-Mage
+					switch (iDice(1,7)) {
+						case 1: strcpy(cItemName, "ShortSword"); break;
+						case 2:	strcpy(cItemName, "MainGauche"); break;
+						case 3: strcpy(cItemName, "Gradius"); break;
+						case 4: strcpy(cItemName, "Tomahoc"); break;
+						case 5: strcpy(cItemName, "SexonAxe"); break;
+						case 6: strcpy(cItemName, "Esterk"); break;
+						case 7: strcpy(cItemName, "Sabre"); break;
+					}
+					break;
+
+				case 6: // Zombie
+					switch (iDice(1,5)) {
+						case 1: strcpy(cItemName, "Gradius"); break;
+						case 2: strcpy(cItemName, "SexonAxe"); break;
+						case 3: strcpy(cItemName, "Esterk"); break;
+						case 4: strcpy(cItemName, "Sabre"); break;
+						case 5: strcpy(cItemName, "Tomahoc"); break;
+					}
+					break;
+
+				case 7: // Scorpion
+					switch (iDice(1,7)) {
+						case 1: strcpy(cItemName, "MainGauche"); break;
+						case 2: strcpy(cItemName, "Gradius"); break;
+						case 3: strcpy(cItemName, "LightAxe"); break;
+						case 4: strcpy(cItemName, "Tomahoc"); break;
+						case 5: strcpy(cItemName, "SexonAxe"); break;
+						case 6: strcpy(cItemName, "Esterk"); break;
+						case 7: strcpy(cItemName, "Sabre"); break;
+					}
+					break;
+
+				case 8: // Skeleton
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "Tomahoc"); break;
+						case 2: strcpy(cItemName, "Esterk"); break;
+						case 3: strcpy(cItemName, "LongSword"); break;
+						case 4: strcpy(cItemName, "Falchion"); break;
+					}
+					break;
+
+				case 9: // Clay-Golem
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "Esterk"); break;
+						case 2: strcpy(cItemName, "LongSword"); break;
+						case 3: strcpy(cItemName, "Sabre"); break;
+						case 4: strcpy(cItemName, "DoubleAxe"); break;
+					}
+					break;
+
+				case 10: // Stone-Golem
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "Esterk"); break;
+						case 2: strcpy(cItemName, "LongSword"); break;
+						case 3: strcpy(cItemName, "DoubleAxe"); break;
+					}
+					break;
+
+				case 11: // Hellbound
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "Scimitar"); break;
+						case 2: strcpy(cItemName, "Sabre"); break;
+						case 3: strcpy(cItemName, "Falchion"); break;
+						case 4: strcpy(cItemName, "Esterk"); break;
+					}
+					break;
+
+				case 12: // Cyclops
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "GreatSword"); break;
+						case 2: strcpy(cItemName, "WarAxe"); break;
+						case 3: strcpy(cItemName, "Rapier"); break;
+						case 4: strcpy(cItemName, "Esterk"); break;
+					}
+					break;
+	
+				case 13: // Troll
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "WarAxe"); break;
+						case 2: strcpy(cItemName, "Esterk"); break;
+						case 3: strcpy(cItemName, "Rapier"); break;
+					}
+					break;
+
+				case 14: // Beholder
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "WarAxe"); break;
+						case 2: strcpy(cItemName, "Esterk"); break;
+						case 3: strcpy(cItemName, "Flameberge"); break;
+					}
+					break;
+
+				case 15: // Cannibal-Plant
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "WarAxe"); break;
+						case 2: strcpy(cItemName, "Esterk"); break;
+						case 3: strcpy(cItemName, "Rapier"); break;
+					}
+					break;
+
+				case 16: // Orge
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "Claymore"); break;
+						case 2: strcpy(cItemName, "GreatSword"); break;
+						case 3: strcpy(cItemName, "Flameberge"); break;
+					}
+					break;
+
+				case 17: // Mountain-Giant
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "Rapier"); break;
+						case 2: strcpy(cItemName, "Hammer"); break;
+						case 3: strcpy(cItemName, "BattleHammer"); break;
+					}
+					break;
+
+				case 18: // Liche
+					switch (iDice(1,2)) {
+						case 1: strcpy(cItemName, "GreatSword"); break;
+						case 2: strcpy(cItemName, "Flameberge"); break;
+					}
+					break;
+
+				case 19: // Stalker
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "Claymore"); break;
+						case 2: strcpy(cItemName, "GreatSword"); break;
+						case 3: strcpy(cItemName, "Flameberge"); break;
+					}
+					break;
+
+				case 20: // WereWolf
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "Claymore"); break;
+						case 2: strcpy(cItemName, "WarAxe"); break;
+						case 3: strcpy(cItemName, "GreatSword"); break;
+						case 4: strcpy(cItemName, "Flameberge"); break;
+					}
+					break;
+
+				case 21: // Dark-Elf
+					switch (iDice(1,3)) {
+						case 1: strcpy(cItemName, "Rapier"); break;
+						case 2: strcpy(cItemName, "GreatSword"); break;
+						case 3: strcpy(cItemName, "Flameberge"); break;
+					}
+					break;
+
+				case 22: // Ettin
+					switch (iDice(1,2)) {
+						case 1: strcpy(cItemName, "Hammer"); break;
+						case 2: strcpy(cItemName, "BattleHammer"); break;
+					}
+					break;
+
+				case 23: // Demon
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "Flameberge"); break;
+						case 2: strcpy(cItemName, "Flameberge+1"); break;
+						case 3: strcpy(cItemName, "BattleAxe"); break;
+						case 4: strcpy(cItemName, "GiantSword"); break;
+					}
+					break;
+
+				case 24: // Unicorn
+					switch (iDice(1,5)) {
+						case 1: strcpy(cItemName, "Flameberge"); break;
+						case 2: strcpy(cItemName, "Flameberge+1"); break;
+						case 3: strcpy(cItemName, "BattleAxe"); break;
+						case 4: strcpy(cItemName, "GiantSword"); break;
+						case 5: strcpy(cItemName, "BattleAxe+1"); break;
+
+					}
+					break;
+
+				case 25: // Gagoyle
+					switch (iDice(1,4)) {
+						case 1: strcpy(cItemName, "Flameberge"); break;
+						case 2: strcpy(cItemName, "Flameberge+1"); break;
+						case 3: strcpy(cItemName, "BattleAxe"); break;
+						case 4: strcpy(cItemName, "GiantSword"); break;
+					}
+					break;
+
+				case 26: // Hellclaw, Tigerworm
+					switch (iDice(1,5)) {
+						case 1: strcpy(cItemName, "Flameberge"); break;
+						case 2: strcpy(cItemName, "Flameberge+1"); break;
+						case 3: strcpy(cItemName, "BattleAxe"); break;
+						case 4: strcpy(cItemName, "GiantSword"); break;
+						case 5: strcpy(cItemName, "BattleAxe+1"); break;
+					}
+					break;
+
+				case 27: // Rudolph
+					switch (iDice(1,2)) {
+						case 1: strcpy(cItemName, "Sabre"); break;
+						case 2: strcpy(cItemName, "Scimitar"); break;
+					}
+					break;
+
+				case 28: // DireBoar
+					switch (iDice(1,2)) {
+						case 1: strcpy(cItemName, "WarAxe"); break;
+						case 2: strcpy(cItemName, "Rapier"); break;
+					}
+					break;
+
+				case 29: // Frost
+					switch (iDice(1,2)) {
+						case 1: strcpy(cItemName, "Flameberge"); break;
+						case 2: strcpy(cItemName, "Flameberge+1"); break;
+					}
+					break;
+
+				case 30: // Ice-Golem
+					strcpy(cItemName, "Esterk"); break;
+
+			}
+}
+else {
+						// 30% the weapon is a Wand
 						switch (iGenLevel) {
-							iGenLevel = 15;
-							break;
-						case 1:
-						case 9:	break; // NPC not dropping wands
-						case 2: // Orc, Zombie, Scorpion, Giant-Frog, Skeleton
-						case 3:	// Clay-Golem and Stone-Golem
+
+						case 1: // Slime
+						case 2:	// Rabbit, Cat
+						case 3: // Giant-Ant
+						case 4: // Amphis
+						case 8: // Skeleton
+						case 14: // Beholder
+						case 19: // Stalker
+						case 20: // WereWolf
+						case 21: // Dark-Elf
+						case 22: // Ettin
+						case 23: // Demon
+						case 24: // Unicorn
+						case 25: // Gagoyle
+						case 28: // DireBoar
+							break; // NPC that do not drop wand
+						case 5: // Orc, Orc-Mage
+						case 6: // Zombie
+						case 7: // Scorpion
+						case 9: // Clay-Golem
+						case 10: // Stone-Golem
 							strcpy(cItemName, "MagicWand(MS0)"); break;
-						case 4: // Helhound, Rudolph
-						case 5:	// Cyclops, Troll, Cannibal-Plant
-						case 6: // Ogre, Werewolf, Beholder, Stalker, DarkElf
-						case 10: // Mountain-Giant
-						case 11: // Ettin
-						case 13: // Barlog
-						case 14: // Claw-Turtle
-						case 15: // Giant-Cray-Fish
-						case 16: // Lizard
-						case 17: // Giant-Plant
-						case 18: // Master-Mage-Orc
-						case 19: // Minotaurus
-						case 20: // Nizie
-						case 21: // Tentocle
+						case 11: // Hellbound
+						case 12: // Cyclops
+						case 13: // Troll
+						case 15: // Cannibal-Plant
+						case 16: // Orge
+						case 27: // Rudolph
 							strcpy(cItemName, "MagicWand(MS10)"); break;
-						case 7:  // Liche
-						case 8:  // Demon, Unicorn, Hellclaw
-						case 12: // Centaurus, Frost
-						case 22: // Gagoyle
+						case 17: // Mountain-Giant
+						case 18: // Liche
+						case 26: // Hellclaw, Tigerworm
+						case 29: // Frost
 							strcpy(cItemName, "MagicWand(MS20)"); break;
 						}	
-					}
+			}
 
 				}
-				else {
-					// 12.6% chance of a special drop 40% that drop is an Armor/Shield
-					switch (iGenLevel) { 
-			   case 1: // Slime, Giant-Ant, Amphis
-			   case 2: // Orc, Zombie, Scorpion, Giant-Frog, Skeleton
-				   switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "WoodShield"); break; 
-			   case 2: strcpy(cItemName, "TargeShield"); break; 
-				   } 
-				   break; 
+else {
+					// 1.4% chance Valuable Drop 40% that drop is an Armor/Shield
+               switch (iGenLevel) {
+				   
+				case 1: // Slime
+				case 3: // Giant-Ant
+				case 4: // Amphis	
+				case 5: // Orc, Orc-Mage
+				case 6: // Zombie
+				case 7: // Scorpion
+				case 8: // Skeleton
+					switch (iDice(1,2)) { 
+						case 1: strcpy(cItemName, "WoodShield"); break; 
+						case 2: strcpy(cItemName, "TargeShield"); break; 
+						} 
+						break; 
 
-			   case 3: // Clay-Golem, Stone Golem
-				   switch (iDice(1,3)) { 
-			   case 1: strcpy(cItemName, "ChainHose(M)"); break; 
-			   case 2: strcpy(cItemName, "ChainHose(W)"); break; 
-			   case 3: strcpy(cItemName, "TargeShield"); break; 
-				   } 
-				   break; 
+				case 2:	// Rabbit, Cat
+					strcpy(cItemName, "WoodShield"); break;
 
-			   case 4: 
-				   switch (iDice(1,3)) { 
-			   case 1: strcpy(cItemName, "Hauberk(M)"); break; 
-			   case 2: strcpy(cItemName, "Hauberk(W)"); break; 
-			   case 3: strcpy(cItemName, "BlondeShield"); break; 
-				   } 
-				   break; 
-
-			   case 5: // Cyclops, Troll, Cannibal-Plant               
-				   switch (iDice(1,3)) { 
-			   case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
-			   case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
-			   case 3: strcpy(cItemName, "IronShield"); break; 
-				   } 
-				   break; 
-
-			   case 6: // Ogre, Werewolf, Beholder, and Stalker
-				   switch (iDice(1,3)) { 
-			   case 1: 
-				   switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "ChainMail(M)"); break; 
-			   case 2: strcpy(cItemName, "ChainMail(W)"); break; 
-				   } 
-				   break; 
-			   case 2: 
-				   switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "PlateLeggings(M)"); break; 
-			   case 2: strcpy(cItemName, "PlateLeggings(W)"); break; 
-				   } 
-				   break; 
-			   case 3: strcpy(cItemName, "LagiShield"); break; 
-				   } 
-				   break; 
-
-			   case 7: 
-				   switch (iDice(1,6)) { 
-			   case 1: 
-				   switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "ScaleMail(M)"); break; 
-			   case 2: strcpy(cItemName, "ScaleMail(W)"); break; 
-				   } 
-				   break; 
-			   case 2: 
-				   switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "PlateMail(M)"); break; 
-			   case 2: strcpy(cItemName, "PlateMail(W)"); break; 
-				   } 
-				   break; 
-			   case 3: strcpy(cItemName, "KiteShield"); break; 
-			   case 4: strcpy(cItemName, "TowerShield"); break; 
-			   case 5: 
-				   switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "Helm(M)"); break; 
-			   case 2: strcpy(cItemName, "Helm(W)"); break; 
-				   } 
-				   break; 
-			   case 6: switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "FullHelm(M)"); break; 
-			   case 2: strcpy(cItemName, "FullHelm(W)"); break; 
-					   } 
-					   break; 
-				   } 
-				   break; 
-			   case 8:  // Demon, Hellclaw, Unicorn
-				   strcpy(cItemName, "Cape"); break;
-
-			   case 9:  // Cats and Rabbits
-				   strcpy(cItemName, "WoodShield"); break;
-
-			   case 10: // Mountain-Giant
-				   switch (iDice(1,3)) {
-			   case 1: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "ChainHose(M)"); break;
-			   case 2: strcpy(cItemName, "ChainHose(W)"); break;
-					   }
-					   break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "ScaleMail(M)"); break;
-			   case 2: strcpy(cItemName, "ScaleMail(W)"); break;
-					   }
-					   break;
-			   case 3: strcpy(cItemName, "LagiShield"); break; 
-				   }
-				   break;
-
-			   case 11: // Ettin
-				   switch (iDice(1,3)) {
-			   case 1: strcpy(cItemName, "Cape"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "PlateMail(M)"); break;
-			   case 2: strcpy(cItemName, "PlateMail(W)"); break;
-					   }
-					   break;
-			   case 3: strcpy (cItemName, "TowerShield"); break;
-				   }
-				   break;
-
-			   case 12: // Frost
-				   switch (iDice(1,2)) {
-			   case 1: switch (iDice(1,2)) { 
-			   case 1: strcpy(cItemName, "FullHelm(M)"); break; 
-			   case 2: strcpy(cItemName, "FullHelm(W)"); break; 
-					   } 
-					   break;
-			   case 2: switch(iDice(1,2)) {                  
-			   case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
-			   case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
-					   }
-					   break;
-				   }
-				   break;
-
-			   case 13: // Barlog
-				   switch (iDice(1,2)) {
-			   case 1: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "Hauberk(M)"); break;
-			   case 2: strcpy(cItemName, "Hauberk(W)"); break;
-					   }
-					   break;
-			   case 2: strcpy(cItemName, "KiteShield"); break;
-				   }
-				   break;
-
-			   case 14: // Claw-Turtle
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "BlondeShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "Hauberk(M)"); break;
-			   case 2: strcpy(cItemName, "Hauberk(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 15: // Giant-Cray-Fish
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "BlondeShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "ChainHose(M)"); break;
-			   case 2: strcpy(cItemName, "ChainHose(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 16: // Lizard
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "BlondeShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "LeatherArmor(M)"); break;
-			   case 2: strcpy(cItemName, "LeatherArmor(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 17: // Giant-Plant
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "IronShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "Hauberk(M)"); break;
-			   case 2: strcpy(cItemName, "Hauberk(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 18: // Master-Mage-Orc
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "LagiShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "ScaleMail(M)"); break;
-			   case 2: strcpy(cItemName, "ScaleMail(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 19: // Minotaurus
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "KiteShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "Winged-Helm(M)"); break;
-			   case 2: strcpy(cItemName, "Winged-Helm(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 20: // Nizie
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "TowerShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "PlateLeggings(M)"); break;
-			   case 2: strcpy(cItemName, "PlateLeggings(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 21: // Tentocle
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "LagiShield"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "ScaleMail(M)"); break;
-			   case 2: strcpy(cItemName, "ScaleMail(W)"); break;
-					   }
-					   break;
-				   }
-
-			   case 22: // Gagoyle
-				   switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "Cape"); break;
-			   case 2: switch (iDice(1,2)) {
-			   case 1: strcpy(cItemName, "PlateMail(M)"); break;
-			   case 2: strcpy(cItemName, "PlateMail(W)"); break;
-					   }
-					   break;
-				   }
+				case 9: // Clay-Golem
+					switch (iDice(1,4)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
+								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
+								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
+							} 
+							break; 
+						case 3: strcpy(cItemName, "WoodShield"); break;
+						case 4: strcpy(cItemName, "TargeShield"); break;
 					}
-				}
+					break;
+				
+				case 10: // Stone-Golem
+					switch (iDice(1,2)) {
+						case 1:
+							switch (iDice(1,2)) {
+								case 1: strcpy(cItemName, "ChainHose(M)"); break;
+								case 2: strcpy(cItemName, "ChainHose(W)"); break;
+							}
+							break;
+						case 2: strcpy(cItemName, "TargeShield"); break;
+					}
+					break;
 
-				// 0-None 1-ÇÊ»ì±â´ë¹ÌÁöÃß°¡ 2-Áßµ¶È¿°ú 3-Á¤ÀÇÀÇ  
-				// 5-¹ÎÃ¸ÀÇ 6-°¡º­¿î 7-¿¹¸®ÇÑ 8-°­È­µÈ 9-°í´ë¹®¸íÀÇ 10-¸¶¹ý ¼º°øÀÇ
+				case 11: // Hellbound
+					switch (iDice(1,4)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
+								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
+								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
+							} 
+							break; 
+						case 3:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
+								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
+							} 
+							break; 
+						case 4: strcpy(cItemName, "BlondeShield"); break;
+					}
+					break;
 
-				// ¾ÆÀÌÅÛÀ» ¸¸µé°í 
+				case 12: // Cyclops
+					switch (iDice(1,5)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
+								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
+								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
+							} 
+							break; 
+						case 3:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
+								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
+							} 
+							break; 
+						case 4: strcpy(cItemName, "BlondeShield"); break;
+						case 5: strcpy(cItemName, "IronShield"); break;
+					}
+					break;
+
+				case 13: // Troll
+					switch (iDice(1,7)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
+								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
+								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
+							} 
+							break; 
+						case 3:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
+								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
+							} 
+							break; 
+						case 4: strcpy(cItemName, "WoodShield"); break;
+						case 5: strcpy(cItemName, "TargeShield"); break;
+						case 6: strcpy(cItemName, "IronShield"); break;
+						case 7: strcpy(cItemName, "BlondeSheild"); break;
+					}
+					break;
+
+				case 15: // Cannibal-Plant
+					strcpy(cItemName, "TargeShield"); break; 
+
+				case 16: // Orge
+					switch (iDice(1,8)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainMail(M)"); break; 
+								case 2: strcpy(cItemName, "ChainMail(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
+								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
+							} 
+							break; 
+						case 3:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "PlateMail(M)"); break; 
+								case 2: strcpy(cItemName, "PlateMail(W)"); break; 
+							} 
+							break; 
+						case 4:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "PlateLeggings(M)"); break; 
+								case 2: strcpy(cItemName, "PlateLeggings(W)"); break; 
+							} 
+							break; 
+						case 5: strcpy(cItemName, "WoodShield"); break;
+						case 6: strcpy(cItemName, "TargeShield"); break;
+						case 7: strcpy(cItemName, "IronShield"); break;
+						case 8: strcpy(cItemName, "LagiShield"); break;
+					}
+					break;
+
+				case 17: // Mountain-Giant
+					switch (iDice(1,4)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Wings-Helm(M)"); break; 
+								case 2: strcpy(cItemName, "Wings-Helm(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Horned-Helm(M)"); break; 
+								case 2: strcpy(cItemName, "Horned-Helm(W)"); break; 
+							} 
+							break; 
+						case 3: strcpy(cItemName, "Cape"); break;
+						case 4: strcpy(cItemName, "LagiShield"); break;
+					}
+					break;
+					
+				case 20: // WereWolf
+					switch (iDice(1,6)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
+								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
+								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
+							} 
+							break; 
+						case 3:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainMail(M)"); break; 
+								case 2: strcpy(cItemName, "ChainMail(W)"); break; 
+							} 
+							break; 
+						case 4:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
+								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
+							} 
+							break; 
+						case 5: 							
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "PlateMail(M)"); break; 
+								case 2: strcpy(cItemName, "PlateMail(W)"); break; 
+							} 
+							break; 
+						case 6: strcpy(cItemName, "LagiShield"); break;
+					}
+					break;
+
+
+				case 21: // Dark-Elf
+					switch (iDice(1,3)) {	
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "LeatherArmor(M)"); break; 
+								case 2: strcpy(cItemName, "LeatherArmor(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainMail(M)"); break; 
+								case 2: strcpy(cItemName, "ChainMail(W)"); break; 
+							} 
+							break; 
+						case 3: strcpy(cItemName, "TargeShield"); break;
+					}
+					break;
+
+				case 22: // Ettin
+					switch (iDice(1,4)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Wings-Helm(M)"); break; 
+								case 2: strcpy(cItemName, "Wings-Helm(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Horned-Helm(M)"); break; 
+								case 2: strcpy(cItemName, "Horned-Helm(W)"); break; 
+							} 
+							break; 
+						case 3:
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
+								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
+							} 
+							break; 
+
+						case 4: strcpy(cItemName, "Cape"); break;
+					}
+					break;
+				
+				case 23: // Demon
+					switch (iDice(1,3)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "FullHelm(M)"); break; 
+								case 2: strcpy(cItemName, "FullHelm(W)"); break; 
+							} 
+							break;
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Helm(M)"); break; 
+								case 2: strcpy(cItemName, "Helm(W)"); break; 
+							} 
+							break;
+						case 3: strcpy(cItemName, "Cape"); break;
+					}
+					break;
+
+				case 24: // Unicorn
+				case 28: // DireBoar
+				case 29: // Frost
+					switch (iDice(1,1)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "PlateMail(M)"); break; 
+								case 2: strcpy(cItemName, "PlateMail(W)"); break; 
+							} 
+							break;
+					}
+					break;
+
+				case 25: // Gagoyle
+					strcpy(cItemName, "Cape"); break;
+				
+				case 27: // Rudolph
+					switch (iDice(1,2)) {
+						case 1: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "Hauberk(M)"); break; 
+								case 2: strcpy(cItemName, "Hauberk(W)"); break; 
+							} 
+							break; 
+						case 2: 
+							switch (iDice(1,2)) { 
+								case 1: strcpy(cItemName, "ChainHose(M)"); break; 
+								case 2: strcpy(cItemName, "ChainHose(W)"); break; 
+							} 
+							break; 
+					}
+					break;
+		}
+}
+
+				// 0-None 1-필살기대미지추가 2-중독효과 3-정의의  
+				// 5-민첩의 6-가벼운 7-예리한 8-강화된 9-고대문명의 10-마법 성공의
+				
+				// 아이템을 만들고 
 				pItem = new class CItem;
-				// ±âº» Æ¯¼ºÀ¸·Î ¾ÆÀÌÅÛ »ý¼º 
+				// 기본 특성으로 아이템 생성 
 				if (_bInitItemAttr(pItem, cItemName) == FALSE) {
 					delete pItem;
 					return;	
 				}
-
+				
 				if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK) {
-					// °ø°Ý ¹«±â·ù¿¡ ºÙÀ» ¼ö ÀÖ´Â Á¢µÎ»ç¸¦ ¼±ÅÃ 
-					// °¡º­¿î(3%) °­È­µÈ(7%) ÇÊ»ìÀÇ(15%) ¹ÎÃ¸ÀÇ(20%) Á¤ÀÇÀÇ(20%) Áßµ¶ÀÇ(16%) ¿¹¸®ÇÑ(16%) °í´ë¹®¸íÀÇ(3%)
+					// 공격 무기류에 붙을 수 있는 접두사를 선택 
+					// 가벼운(3%) 강화된(7%) 필살의(15%) 민첩의(20%) 정의의(20%) 중독의(16%) 예리한(16%) 고대문명의(3%)
 					iResult = iDice(1,10000);
 					if ((iResult >= 1) && (iResult <= 299)) {
 						dwType = 6; 
@@ -40380,13 +40936,13 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						dwType = 9;
 						cColor = 8;
 					}
-
-					// ¾ÆÀÌÅÛ »ö»ó ÀÔ·Â 
+										
+					// 아이템 색상 입력 
 					pItem->m_cItemColor = cColor;
 
-					// °¡º­¿î, °­È­µÈ, ÇÊ»ìÀÇ, ¹ÎÃ¸ÀÇ, Á¤ÀÇÀÇ, Áßµ¶ÀÇ, ¿¹¸®ÇÑ, °í´ë¹®¸íÀÇ
-					// ¾ÆÀÌÅÛ Main Æ¯¼ºÄ¡ Á¤µµ°ª ÀÔ·Â 
-
+					// 가벼운, 강화된, 필살의, 민첩의, 정의의, 중독의, 예리한, 고대문명의
+					// 아이템 Main 특성치 정도값 입력 
+					
 					iResult = iDice(1, 29348);
 					if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
 					else if ((iResult >= 10000) && (iResult < 16600))  dwValue = 2;  // 6600/29348 = 22.4%
@@ -40402,44 +40958,44 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 					else if ((iResult >= 29103) && (iResult < 29206))  dwValue = 12; // 103/29348 = 0.3%
 					else if ((iResult >= 29206) && (iResult < 29274))  dwValue = 13; // 68/29348 = 0.2%
 
-					// ¹«±âÀÇ Main Æ¯¼ºÄ¡¿¡ µû¶ó ¼öÄ¡ º¸Á¤ 
+					// 무기의 Main 특성치에 따라 수치 보정 
 					switch (dwType) {
-					case 1: // ÇÊ»ì Å¸°Ý ÃÖÀú +5
+					case 1: // 필살 타격 최저 +5
 						if (dwValue <= 5) dwValue = 5;
 						break; 
-					case 2: // Áßµ¶ Å¸°Ý ÃÖÀú +20
+					case 2: // 중독 타격 최저 +20
 						if (dwValue <= 4) dwValue = 4;
 						break; 
-					case 6: // °æ·®È­ ÃÖÀú  +16%
+					case 6: // 경량화 최저  +16%
 						if (dwValue <= 4) dwValue = 4;
 						break; 
-					case 8: // ¼ö¸í ÃÖÀú +14%					
+					case 8: // 수명 최저 +14%					
 						if (dwValue <= 2) dwValue = 2;
 						break; 
 					}
-
-					// ¾ÆÀÌÅÛ Main Æ¯¼ºÄ¡, °ª ÀÔ·Â
+				
+					// 아이템 Main 특성치, 값 입력
 					pItem->m_dwAttribute = NULL;
 					dwType  = dwType << 20;
 					dwValue = dwValue << 16;
 					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 
-					// ¾ÆÀÌÅÛ Sub Æ¯¼ºÄ¡°¡ ÀÔ·ÂµÉ È®·üÀº 40%
+					// 아이템 Sub 특성치가 입력될 확률은 40%
 					if (iDice(1,10000) >= 6000) {
+					
+						// 희귀 아이템 Sub 특성치 효과 종류: 
+						//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
+						//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
+						//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
 
-						// Èñ±Í ¾ÆÀÌÅÛ Sub Æ¯¼ºÄ¡ È¿°ú Á¾·ù: 
-						//Ãß°¡ µ¶¼ºÀúÇ×(1), Ãß°¡ ¸íÁß°ª(2), Ãß°¡ ¹æ¾î°ª(3), HP È¸º¹·® Ãß°¡(4), SP È¸º¹·® Ãß°¡(5)
-						//MP È¸º¹·® Ãß°¡(6), Ãß°¡ ¸¶¹ýÀúÇ×(7), ¹°¸® ´ë¹ÌÁö Èí¼ö(8), ¸¶¹ý ´ë¹ÌÁö Èí¼ö(9)
-						//¿¬Å¸ ´ë¹ÌÁö Ãß°¡(10), ´õ ¸¹Àº °æÇèÄ¡(11), ´õ¸¹Àº Gold(12)
-
-						// ¹«±â·ùÀÌ±â ¶§¹®¿¡ °ø°Ý ¸íÁß Ãß°¡(50%), ¿¬Å¸ Å¸°ÝÄ¡ Áõ°¡(35%), ´õ ¸¹Àº Gold(10%), ´õ ¸¹Àº °æÇèÄ¡(5%)
+						// 무기류이기 때문에 공격 명중 추가(50%), 연타 타격치 증가(35%), 더 많은 Gold(10%), 더 많은 경험치(5%)
 						iResult = iDice(1,10000);
 						if ((iResult >= 1) && (iResult <= 4999))          dwType = 2;
 						else if ((iResult >= 5000) && (iResult <= 8499))  dwType = 10;
 						else if ((iResult >= 8500) && (iResult <= 9499))  dwType = 12;
 						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 11;
-
-						// ¾ÆÀÌÅÛ Sub Æ¯¼ºÄ¡ Á¤µµ°ª ÀÔ·Â 
+											
+						// 아이템 Sub 특성치 정도값 입력 
 						iResult = iDice(1, 29348);
 						if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
 						else if ((iResult >= 10000) && (iResult < 16600))  dwValue = 2;  // 6600/29348 = 22.4%
@@ -40455,115 +41011,115 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						else if ((iResult >= 29103) && (iResult < 29206))  dwValue = 12; // 103/29348 = 0.3%
 						else if ((iResult >= 29206) && (iResult < 29274))  dwValue = 13; // 68/29348 = 0.2%
 
-						// ¹«±âÀÇ Sub Æ¯¼ºÄ¡¿¡ µû¶ó ¼öÄ¡ º¸Á¤ 
+						// 무기의 Sub 특성치에 따라 수치 보정 
 						switch (dwType) {
-						case 2: // °ø°Ý¸íÁß ÃÖÀú +21%
+						case 2: // 공격명중 최저 +21%
 							if (dwValue <= 3) dwValue = 3;
 							break; 
-						case 10: // ¿¬¼Ó Å¸°Ý ÃÖÀú +1 ÃÖ´ë 7
+						case 10: // 연속 타격 최저 +1 최대 7
 							if (dwValue > 7) dwValue = 7; 
 							break; 
-						case 11: // Exp´Â ¹«Á¶°Ç +20%
+						case 11: // Exp는 무조건 +20%
 							dwValue = 2;
 							break; 
-						case 12: // Gold´Â ¹«Á¶°Ç +50%
+						case 12: // Gold는 무조건 +50%
 							dwValue = 5;
 							break; 
 						}
-
-						// ¾ÆÀÌÅÛ Sub Æ¯¼ºÄ¡ ÀÔ·Â
+					
+						// 아이템 Sub 특성치 입력
 						dwType  = dwType << 12;
 						dwValue = dwValue << 8;
-
+					
 						pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 					}
 				}
-
+				
 				else if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ATTACK_MANASAVE) 
-				{ 
-					// ¾ÆÀÌÅÛ Main Æ¯¼ºÄ¡ Á¤µµ°ª ÀÔ·Â 
-					pItem->m_cItemColor = 0; 
-					iResult = iDice(1, 10000); 
-					if ((iResult >= 1) && (iResult < 6500))               dwValue = 3;  // = 35% 
-					else if ((iResult >= 6500) && (iResult < 9300))         dwValue = 4;  // = 25% 
-					else if ((iResult >= 9300) && (iResult < 9900))         dwValue = 5; // = 0.01% 
-					else if ((iResult >= 9900) && (iResult < 9990))         dwValue = 6; // = 0.004% 
-					else if ((iResult >= 9990) && (iResult <= 10000 ))      dwValue = 7; // = 0.002% 
-					pItem->m_dwAttribute = NULL; 
-					dwType = 10; //CAST PROBABILITY 
-					dwType  = dwType << 20; 
-					dwValue = dwValue << 16; 
-					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
-
-					// ¹æ¾î±¸ Sub Æ¯¼ºÄ¡°¡ ÀÔ·ÂµÉ È®·üÀº 40% 
-
-					if (iDice(1,10000) >= 6000) 
-					{ 
-
-						// Èñ±Í ¾ÆÀÌÅÛ Sub Æ¯¼ºÄ¡ È¿°ú Á¾·ù: 
-						//Ãß°¡ µ¶¼ºÀúÇ×(1), Ãß°¡ ¸íÁß°ª(2), Ãß°¡ ¹æ¾î°ª(3), HP È¸º¹·® Ãß°¡(4), SP È¸º¹·® Ãß°¡(5) 
-						//MP È¸º¹·® Ãß°¡(6), Ãß°¡ ¸¶¹ýÀúÇ×(7), ¹°¸® ´ë¹ÌÁö Èí¼ö(8), ¸¶¹ý ´ë¹ÌÁö Èí¼ö(9) 
-						//¿¬Å¸ ´ë¹ÌÁö Ãß°¡(10), ´õ ¸¹Àº °æÇèÄ¡(11), ´õ¸¹Àº Gold(12) 
-
-						// ¹æ¾î±¸ ÀÌ±â ¶§¹®¿¡ 
-						// Ãß°¡µ¶¼ºÀúÇ×(10%)  Ãß°¡¹æ¾î°ª(30%)  SPÈ¸º¹Ãß°¡(15%)  HPÈ¸º¹Ãß°¡(10%) 
-						// MPÈ¸º¹ Ãß°¡(10%) Ãß°¡¸¶¹ýÀúÇ×(15%) ¹°¸®´ë¹ÌÁöÈí¼ö(5%) ¸¶¹ý´ë¹ÌÁöÈí¼ö(5%) 
-
-						iResult = iDice(1,10000); 
-						if      ((iResult >= 1) && (iResult <= 6000))            dwType = 2; //hp 
-						else if ((iResult >= 6001) && (iResult <= 9499))         dwType=10; //consecutive Attack Damage 
-						else if ((iResult >= 9500) && (iResult <= 9899))         dwType=11; //gold 
-						else if ((iResult >= 9900) && (iResult <= 10000))         dwType=12; //exp 
-
-						// ¹æ¾î±¸ Sub Æ¯¼ºÄ¡ Á¤µµ°ª ÀÔ·Â 
-						// ¹æ¾î±¸ÀÇ Sub Æ¯¼ºÄ¡¿¡ µû¶ó ¼öÄ¡ º¸Á¤ 
-						switch (dwType) { 
-				case 2: // °ø°Ý¸íÁß ÃÖÀú +21% //HITTING PROABILITY 
-					iResult = iDice(1, 10000); 
-					if ((iResult >= 1) &&(iResult < 8000))               dwValue = 3;  // = 25% 
-					else if ((iResult >= 8000) && (iResult < 9000))         dwValue = 4;  // = 10% 
-					else if ((iResult >= 9000) && (iResult < 9500))         dwValue = 5;  // = 10% 
-					else if ((iResult >= 9500) && (iResult < 9800))         dwValue = 6;  // = 5% 
-					else if ((iResult >= 9800) && (iResult < 9900))         dwValue = 7;  // = 1% 
-					else if ((iResult >= 9900) && (iResult < 9970))         dwValue = 8;  // = 0.25% 
-					else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 9; // = 0.015% 
-					else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 10; // = 0.01% 
-					else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 11; // = 0.004% 
-					else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 12; // = 0.002% 
-					else if (iResult == 10000)      dwValue = 13; // = 0.002% 
-					break; 
-				case 10: // ¿¬¼Ó Å¸°Ý ÃÖÀú +1 ÃÖ´ë 7 //CONSECUTIVE DAMAGE 
-					if (dwValue > 7) dwValue = 7; 
-					iResult = iDice(1, 10000); 
-					if ((iResult >= 1) &&(iResult < 9500))               dwValue = 1;  // = 1% 
-					else if ((iResult >= 9500) && (iResult < 9970))         dwValue = 2;  // = 0.25% 
-					else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 3; // = 0.015% 
-					else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 4; // = 0.01% 
-					else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 5; // = 0.004% 
-					else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 6; // = 0.002% 
-					else if (iResult == 10000)      dwValue = 7; // = 0.002% 
-					break; 
-				case 11: // Exp´Â ¹«Á¶°Ç +20% //EXPERIENCE 
-					dwValue = 2; 
-					break; 
-				case 12: // Gold´Â ¹«Á¶°Ç +50% //GOLD 
-					dwValue = 5; 
-					break; 
-						} 
-					} 
-					dwType  = dwType << 12; 
-					dwValue = dwValue << 8; 
-					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
-				}
+            { 
+               // 아이템 Main 특성치 정도값 입력 
+               pItem->m_cItemColor = 0; 
+               iResult = iDice(1, 10000); 
+               if ((iResult >= 1) && (iResult < 6500))               dwValue = 3;  // = 35% 
+               else if ((iResult >= 6500) && (iResult < 9300))         dwValue = 4;  // = 25% 
+               else if ((iResult >= 9300) && (iResult < 9900))         dwValue = 5; // = 0.01% 
+               else if ((iResult >= 9900) && (iResult < 9990))         dwValue = 6; // = 0.004% 
+               else if ((iResult >= 9990) && (iResult <= 10000 ))      dwValue = 7; // = 0.002% 
+               pItem->m_dwAttribute = NULL; 
+               dwType = 10; //CAST PROBABILITY 
+               dwType  = dwType << 20; 
+               dwValue = dwValue << 16; 
+               pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
+                
+               // 방어구 Sub 특성치가 입력될 확률은 40% 
+                
+               if (iDice(1,10000) >= 6000) 
+               { 
+                   
+                  // 희귀 아이템 Sub 특성치 효과 종류: 
+                  //추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5) 
+                  //MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9) 
+                  //연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12) 
+                   
+                  // 방어구 이기 때문에 
+                  // 추가독성저항(10%)  추가방어값(30%)  SP회복추가(15%)  HP회복추가(10%) 
+                  // MP회복 추가(10%) 추가마법저항(15%) 물리대미지흡수(5%) 마법대미지흡수(5%) 
+                   
+                  iResult = iDice(1,10000); 
+                  if      ((iResult >= 1) && (iResult <= 6000))            dwType = 2; //hp 
+                  else if ((iResult >= 6001) && (iResult <= 9499))         dwType=10; //consecutive Attack Damage 
+                  else if ((iResult >= 9500) && (iResult <= 9899))         dwType=11; //gold 
+                  else if ((iResult >= 9900) && (iResult <= 10000))         dwType=12; //exp 
+                   
+                  // 방어구 Sub 특성치 정도값 입력 
+                  // 방어구의 Sub 특성치에 따라 수치 보정 
+                  switch (dwType) { 
+                  case 2: // 공격명중 최저 +21% //HITTING PROABILITY 
+                     iResult = iDice(1, 10000); 
+                     if ((iResult >= 1) &&(iResult < 8000))               dwValue = 3;  // = 25% 
+                     else if ((iResult >= 8000) && (iResult < 9000))         dwValue = 4;  // = 10% 
+                     else if ((iResult >= 9000) && (iResult < 9500))         dwValue = 5;  // = 10% 
+                     else if ((iResult >= 9500) && (iResult < 9800))         dwValue = 6;  // = 5% 
+                     else if ((iResult >= 9800) && (iResult < 9900))         dwValue = 7;  // = 1% 
+                     else if ((iResult >= 9900) && (iResult < 9970))         dwValue = 8;  // = 0.25% 
+                     else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 9; // = 0.015% 
+                     else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 10; // = 0.01% 
+                     else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 11; // = 0.004% 
+                     else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 12; // = 0.002% 
+                     else if (iResult == 10000)      dwValue = 13; // = 0.002% 
+                     break; 
+                  case 10: // 연속 타격 최저 +1 최대 7 //CONSECUTIVE DAMAGE 
+                     if (dwValue > 7) dwValue = 7; 
+                     iResult = iDice(1, 10000); 
+                  if ((iResult >= 1) &&(iResult < 9500))               dwValue = 1;  // = 1% 
+                  else if ((iResult >= 9500) && (iResult < 9970))         dwValue = 2;  // = 0.25% 
+                  else if ((iResult >= 9970) && (iResult < 9986))         dwValue = 3; // = 0.015% 
+                  else if ((iResult >= 9986) && (iResult < 9994))         dwValue = 4; // = 0.01% 
+                  else if ((iResult >= 9994) && (iResult < 9998))         dwValue = 5; // = 0.004% 
+                  else if ((iResult >= 9998) && (iResult < 10000))         dwValue = 6; // = 0.002% 
+                  else if (iResult == 10000)      dwValue = 7; // = 0.002% 
+                     break; 
+                  case 11: // Exp는 무조건 +20% //EXPERIENCE 
+                     dwValue = 2; 
+                     break; 
+                  case 12: // Gold는 무조건 +50% //GOLD 
+                     dwValue = 5; 
+                     break; 
+                  } 
+               } 
+               dwType  = dwType << 12; 
+               dwValue = dwValue << 8; 
+               pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue; 
+            }
 				else if (pItem->m_sItemEffectType == DEF_ITEMEFFECTTYPE_DEFENSE) {
-					// ¹æ¾î±¸¿¡ ¸Â´Â Á¢µÎ»ç¿Í Æ¯¼ºÄ¡¸¦ ¼±ÅÃ, ÇÒ´çÇÑ´Ù.
-
-					// °­È­µÈ(60%) °¡º­¿î (40%)
+					// 방어구에 맞는 접두사와 특성치를 선택, 할당한다.
+					
+					// 강화된(60%) 가벼운 (40%)
 					iResult = iDice(1,10000);
 					if ((iResult >= 1) && (iResult <= 5999))          dwType = 8;
 					else if ((iResult >= 6000) && (iResult <= 10000)) dwType = 6;
 
-					// ¾ÆÀÌÅÛ Main Æ¯¼ºÄ¡ Á¤µµ°ª ÀÔ·Â 
+					// 아이템 Main 특성치 정도값 입력 
 					iResult = iDice(1, 29348);
 					if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
 					else if ((iResult >= 10000) && (iResult < 16600))  dwValue = 2;  // 6600/29348 = 22.4%
@@ -40579,33 +41135,33 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 					else if ((iResult >= 29103) && (iResult < 29206))  dwValue = 12; // 103/29348 = 0.3%
 					else if ((iResult >= 29206) && (iResult < 29274))  dwValue = 13; // 68/29348 = 0.2%
 
-					// ¹æ¾î±¸ÀÇ Main Æ¯¼ºÄ¡¿¡ µû¶ó ¼öÄ¡ º¸Á¤ 
+					// 방어구의 Main 특성치에 따라 수치 보정 
 					switch (dwType) {
-					case 6: // °æ·®È­ ÃÖÀú +16%
+					case 6: // 경량화 최저 +16%
 						if (dwValue <= 4) dwValue = 4;
 						break; 
-					case 8: // ¼ö¸í ÃÖÀú +14%
+					case 8: // 수명 최저 +14%
 						if (dwValue <= 2) dwValue = 2;
 						break; 
 					}
-
-					// ¹æ¾î±¸ Main Æ¯¼ºÄ¡, °ª ÀÔ·Â
+				
+					// 방어구 Main 특성치, 값 입력
 					pItem->m_dwAttribute = NULL;
 					dwType  = dwType << 20;
 					dwValue = dwValue << 16;
 					pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 
-					// ¹æ¾î±¸ Sub Æ¯¼ºÄ¡°¡ ÀÔ·ÂµÉ È®·üÀº 40%
+					// 방어구 Sub 특성치가 입력될 확률은 40%
 					if (iDice(1,10000) >= 6000) {
-
-						// Èñ±Í ¾ÆÀÌÅÛ Sub Æ¯¼ºÄ¡ È¿°ú Á¾·ù: 
-						//Ãß°¡ µ¶¼ºÀúÇ×(1), Ãß°¡ ¸íÁß°ª(2), Ãß°¡ ¹æ¾î°ª(3), HP È¸º¹·® Ãß°¡(4), SP È¸º¹·® Ãß°¡(5)
-						//MP È¸º¹·® Ãß°¡(6), Ãß°¡ ¸¶¹ýÀúÇ×(7), ¹°¸® ´ë¹ÌÁö Èí¼ö(8), ¸¶¹ý ´ë¹ÌÁö Èí¼ö(9)
-						//¿¬Å¸ ´ë¹ÌÁö Ãß°¡(10), ´õ ¸¹Àº °æÇèÄ¡(11), ´õ¸¹Àº Gold(12)
-
-						// ¹æ¾î±¸ ÀÌ±â ¶§¹®¿¡ 
-						// Ãß°¡µ¶¼ºÀúÇ×(10%)  Ãß°¡¹æ¾î°ª(30%)  SPÈ¸º¹Ãß°¡(15%)  HPÈ¸º¹Ãß°¡(10%) 
-						// MPÈ¸º¹ Ãß°¡(10%) Ãß°¡¸¶¹ýÀúÇ×(15%) ¹°¸®´ë¹ÌÁöÈí¼ö(5%) ¸¶¹ý´ë¹ÌÁöÈí¼ö(5%)
+						
+						// 희귀 아이템 Sub 특성치 효과 종류: 
+						//추가 독성저항(1), 추가 명중값(2), 추가 방어값(3), HP 회복량 추가(4), SP 회복량 추가(5)
+						//MP 회복량 추가(6), 추가 마법저항(7), 물리 대미지 흡수(8), 마법 대미지 흡수(9)
+						//연타 대미지 추가(10), 더 많은 경험치(11), 더많은 Gold(12)
+						
+						// 방어구 이기 때문에 
+						// 추가독성저항(10%)  추가방어값(30%)  SP회복추가(15%)  HP회복추가(10%) 
+						// MP회복 추가(10%) 추가마법저항(15%) 물리대미지흡수(5%) 마법대미지흡수(5%)
 						iResult = iDice(1,10000);
 						if ((iResult >= 1) && (iResult <= 999))           dwType = 1;
 						else if ((iResult >= 1000) && (iResult <= 3999))  dwType = 3;
@@ -40615,9 +41171,9 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						else if ((iResult >= 7500) && (iResult <= 8999))  dwType = 7;
 						else if ((iResult >= 9000) && (iResult <= 9499))  dwType = 8;
 						else if ((iResult >= 9500) && (iResult <= 10000)) dwType = 9;
-
-						// ¹æ¾î±¸ Sub Æ¯¼ºÄ¡ Á¤µµ°ª ÀÔ·Â 
-
+					
+						// 방어구 Sub 특성치 정도값 입력 
+						
 						iResult = iDice(1, 29348);
 						if ((iResult >= 1) && (iResult < 10000))           dwValue = 1;  // 10000/29348 = 34%
 						else if ((iResult >= 10000) && (iResult < 16600))  dwValue = 2;  // 6600/29348 = 22.4%
@@ -40633,36 +41189,36 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						else if ((iResult >= 29103) && (iResult < 29206))  dwValue = 12; // 103/29348 = 0.3%
 						else if ((iResult >= 29206) && (iResult < 29274))  dwValue = 13; // 68/29348 = 0.2%
 
-						// ¹æ¾î±¸ÀÇ Sub Æ¯¼ºÄ¡¿¡ µû¶ó ¼öÄ¡ º¸Á¤ 
+						// 방어구의 Sub 특성치에 따라 수치 보정 
 						switch (dwType) {
-						case 1: // µ¶¼ºÀúÇ× ÃÖÀú +21%
-						case 3: // ¹°¸®¹æ¾î ÃÖÀú +21%
-						case 7: // ¸¶¹ý ÀúÇ× ÃÖÀú +21%
-						case 8: // ¹°¸®Èí¼ö ÃÖÀú +9%
-						case 9: // ¸¶¹ýÈí¼ö ÃÖÀú +9%
+						case 1: // 독성저항 최저 +21%
+						case 3: // 물리방어 최저 +21%
+						case 7: // 마법 저항 최저 +21%
+						case 8: // 물리흡수 최저 +9%
+						case 9: // 마법흡수 최저 +9%
 							if (dwValue <= 3) dwValue = 3;
 							break; 
 						}
-
-						// ¾ÆÀÌÅÛ Sub Æ¯¼ºÄ¡ ÀÔ·Â
+					
+						// 아이템 Sub 특성치 입력
 						dwType  = dwType << 12;
 						dwValue = dwValue << 8;
-
+					
 						pItem->m_dwAttribute = pItem->m_dwAttribute | dwType | dwValue;
 					}
 				}
-
-				// ¸¶Áö¸·À¸·Î Æ¯¼ºÄ¡¸¦ Æ¯¼ö ¾ÆÀÌÅÛ¿¡ ¸Â°Ô²û º¯°æ 
+				
+				// 마지막으로 특성치를 특수 아이템에 맞게끔 변경 
 				_AdjustRareItemValue(pItem);
 			}
 		}
 
-		// ¾ÆÀÌÅÛ¿¡ °íÀ¯ ÄÚµå ÀÔ·Â 
+		// 아이템에 고유 코드 입력 
 		pItem->m_sTouchEffectType   = DEF_ITET_ID;
 		pItem->m_sTouchEffectValue1 = iDice(1,100000);
 		pItem->m_sTouchEffectValue2 = iDice(1,100000);
 		//pItem->m_sTouchEffectValue3 = timeGetTime();
-		// ¸¶Áö¸· ¼ýÀÚ´Â ¾ÆÀÌÅÛ »ý¼º ¿ù, ÀÏ	
+		// 마지막 숫자는 아이템 생성 월, 일	
 		SYSTEMTIME SysTime;
 		char cTemp[256];
 		GetLocalTime(&SysTime);
@@ -40670,20 +41226,22 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 		wsprintf(cTemp, "%d%2d",  (short)SysTime.wMonth, (short)SysTime.wDay);
 		pItem->m_sTouchEffectValue3 = atoi(cTemp);
 
-		// ¾ÆÀÌÅÛÀ» ¼­ÀÖ´Â À§Ä¡¿¡ ¶³¾î¶ß¸°´Ù. 
+		// 아이템을 서있는 위치에 떨어뜨린다. 
 		m_pMapList[ m_pNpcList[iNpcH]->m_cMapIndex ]->bSetItem(m_pNpcList[iNpcH]->m_sX, 
-			m_pNpcList[iNpcH]->m_sY, 
-			pItem);
-
-		// ´Ù¸¥ Å¬¶óÀÌ¾ðÆ®¿¡°Ô ¾ÆÀÌÅÛÀÌ ¶³¾îÁø °ÍÀ» ¾Ë¸°´Ù. 
+			                                                   m_pNpcList[iNpcH]->m_sY, 
+															   pItem);
+			
+		// 다른 클라이언트에게 아이템이 떨어진 것을 알린다. 
 		SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_ITEMDROP, m_pNpcList[iNpcH]->m_cMapIndex,
-			m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
-			pItem->m_sSprite, pItem->m_sSpriteFrame, pItem->m_cItemColor); //v1.4 color
+			                        m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY,
+			                        pItem->m_sSprite, pItem->m_sSpriteFrame, pItem->m_cItemColor); //v1.4 color
 
-		// ·Î±× ³²±ä´Ù.
+		// 로그 남긴다.
 		_bItemLog(DEF_ITEMLOG_NEWGENDROP, NULL, NULL, pItem);
 	}
 }
+
+
 
 
 
@@ -44966,4 +45524,28 @@ DWORD dwTime;
         } 
      } 
   } 
+}
+void CGame::RequestChangePlayMode(int iClientH)
+{
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if (m_pClientList[iClientH]->m_iPKCount > 0) return;
+	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
+
+	if (memcmp(m_pClientList[iClientH]->m_cMapName,"cityhall",8) != 0) return;
+
+	if (m_pClientList[iClientH]->m_iLevel < 100||
+		m_pClientList[iClientH]->m_bIsPlayerCivil == TRUE) {
+			if (memcmp(m_pClientList[iClientH]->m_cLocation, "aresden",7) == 0 ) strcpy(m_pClientList[iClientH]->m_cLocation,"arehunter");
+			else if (memcmp(m_pClientList[iClientH]->m_cLocation, "elvine",6) == 0 ) strcpy(m_pClientList[iClientH]->m_cLocation,"elvhunter");
+			else if (memcmp(m_pClientList[iClientH]->m_cLocation, "arehunter",9) == 0 ) strcpy(m_pClientList[iClientH]->m_cLocation,"aresden");
+			else if (memcmp(m_pClientList[iClientH]->m_cLocation, "elvhunter",9) == 0 ) strcpy(m_pClientList[iClientH]->m_cLocation,"elvine");
+
+			if (m_pClientList[iClientH]->m_bIsPlayerCivil == TRUE)
+				m_pClientList[iClientH]->m_bIsPlayerCivil = FALSE;
+			else m_pClientList[iClientH]->m_bIsPlayerCivil = TRUE;
+
+			SendNotifyMsg(NULL,iClientH,DEF_NOTIFY_CHANGEPLAYMODE,NULL,NULL,NULL,m_pClientList[iClientH]->m_cLocation);
+			SendEventToNearClient_TypeA(iClientH,DEF_OWNERTYPE_PLAYER,MSGID_EVENT_MOTION,100,NULL,NULL,NULL);
+		}
 }

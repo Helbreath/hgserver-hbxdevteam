@@ -258,8 +258,14 @@ void Initialize()
 	G_mmTimer = _StartTimer(300);
 
 	G_pListenSock = new class XSocket(G_hWnd, DEF_SERVERSOCKETBLOCKLIMIT);
-	G_pListenSock->bListen(G_pGame->m_cGameServerAddr, G_pGame->m_iGameServerPort, WM_USER_ACCEPT);
-
+	if (G_pGame->m_iGameServerMode == 1)
+	{
+		G_pListenSock->bListen(G_pGame->m_cGameServerAddrInternal, G_pGame->m_iGameServerPort, WM_USER_ACCEPT);
+	}
+	if (G_pGame->m_iGameServerMode == 2)
+	{
+		G_pListenSock->bListen(G_pGame->m_cGameServerAddr, G_pGame->m_iGameServerPort, WM_USER_ACCEPT);
+	}
 	pLogFile = NULL;
 	pLogFile = fopen("test.log","wt+");
 }
