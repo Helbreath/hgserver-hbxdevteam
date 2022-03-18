@@ -260,9 +260,11 @@ public:
 	void GlobalStartCrusadeMode();
 	void GSM_SetGuildTeleportLoc(int iGuildGUID, int dX, int dY, char * pMapName);
 	void SyncMiddlelandMapInfo();
+
 	void _GrandMagicLaunchMsgSend(int iType, char cAttackerSide);
 	void GrandMagicResultHandler(char *cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure, int iTotalStrikePoints, char * cData);
 	//void GrandMagicResultHandler(char * cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure);
+
 	void CalcMeteorStrikeEffectHandler(int iMapIndex);
 	void DoMeteorStrikeDamageHandler(int iMapIndex);
 	void GSM_RequestFindCharacter(WORD wReqServerID, WORD wReqClientH, char *pName, char * pFinder); // New 16/05/2001 Changed
@@ -348,11 +350,13 @@ public:
 	void _SendQuestContents(int iClientH);
 	void QuestAcceptedHandler(int iClientH);
 	BOOL _bDecodeQuestConfigFileContents(char * pData, DWORD dwMsgSize);
+	
 	void CancelExchangeItem(int iClientH);
 	BOOL bAddItem(int iClientH, class CItem * pItem, char cMode);
 	void ConfirmExchangeItem(int iClientH);
 	void SetExchangeItem(int iClientH, int iItemIndex, int iAmount);
 	void ExchangeItemHandler(int iClientH, short sItemIndex, int iAmount, short dX, short dY, WORD wObjectID, char * pItemName);
+
 	void _BWM_Command_Shutup(char * pData);
 	void _BWM_Init(int iClientH, char * pData);
 	void CheckUniqueItemEquipment(int iClientH);

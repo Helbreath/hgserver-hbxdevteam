@@ -7076,6 +7076,7 @@ int CGame::_iComposePlayerDataFileContents(int iClientH, char * pData)
 	strcat(pData, "character-location   = ");
 	strcat(pData, m_pClientList[iClientH]->m_cLocation);
 	strcat(pData, "\n");
+
 	/// Â±Ã¦ÂµÃ¥ Â»Ã³Ã…Ã‚ 
 	strcat(pData, "character-guild-name = ");
 	if (m_pClientList[iClientH]->m_iGuildRank != -1) {
@@ -8519,7 +8520,7 @@ void CGame::NpcProcess()
 	}
 }
 
-
+// 05/29/2004 - Hypnotoad - GM chat tweak
 void CGame::ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize)
 {
  register int i, iRet;
@@ -8631,57 +8632,49 @@ void CGame::ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize)
 		break;
 
 	case '^':
+		// Ã€Ã¼ÃƒÂ¼ Â»Ã§Â¿Ã«Ã€ÃšÂ¿Â¡Â°Ã” Ã€Ã¼Â´ÃÂµÃ‡Â´Ã‚ Â¸ÃÂ½ÃƒÃÃ¶Ã€ÃŒÂ´Ã™.
+		// Â¸Â¸Â¾Ã  Â°Ã¼Â¸Â®Â±Ã‡Ã‡Ã‘Ã€ÃŒ Ã€Ã–Â°Ã…Â³Âª Â±Ã¦ÂµÃ¥Â¸Â¶Â½ÂºÃ…ÃÃ€ÃÂ°Ã¦Â¿Ã¬ Ã€Ã¼ÃƒÂ¼Â¼Â­Â¹Ã¶Â¿Â¡ ÂºÂ¸Â³Â»Â´Ã‚ Â¸ÃÂ¼Â¼ÃÃ¶ 
 		*cp = 32;
 
 		if ((strlen(cp) < 90) && (m_pClientList[iClientH]->m_iAdminUserLevel > 0)) {
+			// Â´Ã™Â¸Â¥ Â¼Â­Â¹Ã¶Â¿Â¡ Â±Ã¦ÂµÃ¥ Â¸ÃÂ½ÃƒÃÃ¶ Ã€Ã¼Â¼Ã› 
 			ZeroMemory(cTemp, sizeof(cTemp));
 			cp2 = (char *)cTemp;
 			*cp2 = GSM_CHATMSG;
 			cp2++;
-
-			*cp2 = 10; // Global chat ??
+			*cp2 = 10; // Â°Ã¸ÃÃ¶ Â¸ÃÂ½ÃƒÃÃ¶
 			cp2++;
-
 			ip = (int *)cp2;
-			*ip = 0;
+			*ip = NULL;
 			cp2 += 4;
-
 			memcpy(cp2, m_pClientList[iClientH]->m_cCharName, 10);
 			cp2 += 10;
-
 			wp  = (WORD *)cp2;
 			*wp = (WORD)strlen(cp);
 			cp2 += 2;
 			strcpy(cp2, cp);
 			cp2 += strlen(cp);
-
 			bStockMsgToGateServer(cTemp, strlen(cp) + 18);
 		}
 
-		if (strlen(cp) < 90 && m_pClientList[iClientH]->m_iGuildRank != -1){
+		if ((strlen(cp) < 90) && (m_pClientList[iClientH]->m_iGuildRank != -1)) {
+			// Â´Ã™Â¸Â¥ Â¼Â­Â¹Ã¶Â¿Â¡ Â±Ã¦ÂµÃ¥ Â¸ÃÂ½ÃƒÃÃ¶ Ã€Ã¼Â¼Ã› 
 			ZeroMemory(cTemp, sizeof(cTemp));
 			cp2 = (char *)cTemp;
-
 			*cp2 = GSM_CHATMSG;
 			cp2++;
-
 			*cp2 = 1;
 			cp2++;
-
 			ip = (int *)cp2;
-
 			*ip = m_pClientList[iClientH]->m_iGuildGUID;
 			cp2 += 4;
-
 			memcpy(cp2, m_pClientList[iClientH]->m_cCharName, 10);
 			cp2 += 10;
-
 			wp  = (WORD *)cp2;
 			*wp = (WORD)strlen(cp);
 			cp2 += 2;
 			strcpy(cp2, cp);
 			cp2 += strlen(cp);
-
 			bStockMsgToGateServer(cTemp, strlen(cp) + 18);
 		}
 
@@ -8695,8 +8688,13 @@ void CGame::ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize)
 			}
 		else cSendMode = NULL;
 
+		// Ã€Ã¼ÃƒÂ¼ ÃƒÂ¤Ã†Ãƒ Â¸ÃÂ½ÃƒÃÃ¶Â¸Â¦ Â»Ã§Â¿Ã«Ã‡Ã’ Â¼Ã¶ Â¾Ã¸Â´Ã‚ Â°Ã¦Â¿Ã¬Â¶Ã³Â¸Ã© 
 		if (m_pClientList[iClientH]->m_iTimeLeft_ShutUp > 0) cSendMode = NULL;
+		
+		// v1.4334 Ã€Ã¼ÃƒÂ¼ Â¿ÃœÃ„Â¡Â±Ã¢ Â¸Â·Â±Ã¢
 		if (m_pClientList[iClientH]->m_iHP < 0) cSendMode = NULL;
+
+		// Â¸Â¸Â¾Ã  Â°Ã¼Â¸Â®Â±Ã‡Ã‡Ã‘Ã€ÃŒ Ã€Ã–Â´Ã™Â¸Ã© 
 		if (m_pClientList[iClientH]->m_iAdminUserLevel > 0) cSendMode = 10;
 		break;
 
@@ -9657,6 +9655,165 @@ void CGame::NpcBehavior_Move(int iNpcH)
 	
 	if (m_pNpcList[iNpcH] == NULL) return;
 	if (m_pNpcList[iNpcH]->m_bIsKilled == TRUE) return;
+	// ¼ÒÈ¯¸÷ÀÇ Á¦¾î »óÅÂ°¡ Hold¶ó¸é ÀÌµ¿ÇÏÁö ¾Ê´Â´Ù.
+	if ((m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) && 
+		(m_pNpcList[iNpcH]->m_iSummonControlMode == 1)) return;
+	if (m_pNpcList[iNpcH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] != 0) return;
+	
+	// ÀÌµ¿ÇÒ ¼ö ¾ø´Â NPC´Â ¸®ÅÏ
+	switch (m_pNpcList[iNpcH]->m_cActionLimit) {
+	case 2:
+	case 3:
+	case 5:
+		m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_STOP;
+		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;	
+		return;
+	}
+	
+	// v1.432-2 ¸Ê ¼½ÅÍ Á¤º¸¸¦ °»½ÅÇÑ´Ù. 
+	int iStX, iStY;
+	if (m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex] != NULL) {
+		iStX = m_pNpcList[iNpcH]->m_sX / 20;
+		iStY = m_pNpcList[iNpcH]->m_sY / 20;
+		m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->m_stTempSectorInfo[iStX][iStY].iMonsterActivity++;  
+	}
+
+	// ÅÏ Ä«¿îÆ® Áõ°¡. 
+	m_pNpcList[iNpcH]->m_sBehaviorTurnCount++;
+	if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount > 5) {
+		// ¸ÕÀú ÅÏ Ä«¿îÆ® Å¬¸®¾î.
+		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;	
+		
+		// Á¦ÀÚ¸®¿¡¼­ °è¼Ó ¸Éµ¹°í ÀÖ´ÂÁö ÆÇ´ÜÇÑ´Ù. 
+		absX = abs(m_pNpcList[iNpcH]->m_vX - m_pNpcList[iNpcH]->m_sX);
+		absY = abs(m_pNpcList[iNpcH]->m_vY - m_pNpcList[iNpcH]->m_sY);
+		
+		if ((absX <= 2)	&& (absY <= 2)) {
+			// Á¦ÀÚ¸®¿¡ ¸Éµ¹°í ÀÖ´Ù. ´ÙÀ½ WayPoint·Î ¸ñÀûÁö¸¦ ¹Ù²Û´Ù. 
+			CalcNextWayPointDestination(iNpcH);
+		}
+
+		m_pNpcList[iNpcH]->m_vX = m_pNpcList[iNpcH]->m_sX;
+		m_pNpcList[iNpcH]->m_vY = m_pNpcList[iNpcH]->m_sY;
+	}
+
+	// °ø°İÇÒ ´ë»óÀ» °Ë»öÇÑ´Ù.
+	TargetSearch(iNpcH, &sTarget, &cTargetType);				
+	if (sTarget != NULL) {
+		// °ø°İ¸ñÇ¥ ¹ß°ß. 
+		if (m_pNpcList[iNpcH]->m_dwActionTime < 1000) {
+			// ¾×¼Ç ½ºÇÇµå 1000ms ¹Ì¸¸ÀÇ NPC´Â 33% È®·ü·Î ¸ñÇ¥¸¦ È¹µæÇÑ´Ù.
+			if (iDice(1,3) == 3) {
+				m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
+				m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;		
+				m_pNpcList[iNpcH]->m_iTargetIndex = sTarget;
+				m_pNpcList[iNpcH]->m_cTargetType  = cTargetType;
+				// ¿©±â¼­ Ç¥È¿ µ¿ÀÛ°°Àº°ÍÀ» À§ÇÑ ¸Ş½ÃÁö ¹ß¼Û. 
+				return;
+			}
+		}
+		else {
+			// ¾×¼Ç ½ºÇÇµå 1000ms ÀÌ»óÀÇ NPC´Â ¸ñÇ¥¹°ÀÌ ¹ß°ßµÇ¸é ¹«Á¶°Ç ÇÒ´çÇÑ´Ù.
+			m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
+			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;		
+			m_pNpcList[iNpcH]->m_iTargetIndex = sTarget;
+			m_pNpcList[iNpcH]->m_cTargetType  = cTargetType;
+			// ¿©±â¼­ Ç¥È¿ µ¿ÀÛ°°Àº°ÍÀ» À§ÇÑ ¸Ş½ÃÁö ¹ß¼Û. 
+			return;
+		}
+	}
+	
+	// ¸¶½ºÅÍ ¸÷Àº ÀÌµ¿ ¼Óµµ°¡ ´À¸®´Ù.
+	if ((m_pNpcList[iNpcH]->m_bIsMaster == TRUE) && (iDice(1,3) == 2)) return;
+	
+	if (m_pNpcList[iNpcH]->m_cMoveType == DEF_MOVETYPE_FOLLOW) {
+		// µû¸£´Â °´Ã¼ÀÇ À§Ä¡¿¡ µû¶ó ÀÌµ¿À» °áÁ¤ÇÑ´Ù. 
+		sX = m_pNpcList[iNpcH]->m_sX;
+		sY = m_pNpcList[iNpcH]->m_sY;
+		switch (m_pNpcList[iNpcH]->m_cFollowOwnerType) {
+		case DEF_OWNERTYPE_PLAYER:
+			// µû¶ó´Ù´Ï´ø °³Ã¼°¡ Á×À¸¸é ·£´ıÀÌµ¿À¸·Î ÀüÈ¯.
+			if (m_pClientList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex] == NULL) {
+				m_pNpcList[iNpcH]->m_cMoveType = DEF_MOVETYPE_RANDOM;
+				return;
+			}
+
+			dX = m_pClientList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex]->m_sX;
+			dY = m_pClientList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex]->m_sY;
+			break;
+		case DEF_OWNERTYPE_NPC:
+			// µû¶ó´Ù´Ï´ø °³Ã¼°¡ Á×À¸¸é ·£´ıÀÌµ¿À¸·Î ÀüÈ¯. -> 01-12-19 ÁÖº¯ÀÇ ´Ù¸¥ µ¿±Ş ¸ó½ºÅÍ¸¦ ¸¶½ºÅÍ·Î ¼±ÅÃÇÑ´Ù. Ã£À» ¼ö ¾ø¾ú´Ù¸é ·£´ı ¹«ºê
+			if (m_pNpcList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex] == NULL) {
+				m_pNpcList[iNpcH]->m_cMoveType = DEF_MOVETYPE_RANDOM;
+				m_pNpcList[iNpcH]->m_iFollowOwnerIndex = NULL;
+				//bSerchMaster(iNpcH);
+				return;
+			}
+			
+			dX = m_pNpcList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex]->m_sX;
+			dY = m_pNpcList[m_pNpcList[iNpcH]->m_iFollowOwnerIndex]->m_sY;
+			break;
+		}
+
+		if (abs(sX - dX) >= abs(sY - dY)) 
+			 sDistance = abs(sX - dX);
+		else sDistance = abs(sY - dY);
+
+		if (sDistance >= 3) {
+			// µû¸£´Â ´ë»óÀÌ ÀÓ°èÄ¡ ÀÌ»ó ¶³¾îÁ® ÀÖÀ¸¸é ÀÌµ¿ÇÑ´Ù. 
+			cDir = cGetNextMoveDir(sX, sY, dX, dY, m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
+			if (cDir == 0) {
+				// ÀÌµ¿ÇÒ ¼ö ¾ø´Ù.
+			}
+			else {
+				dX = m_pNpcList[iNpcH]->m_sX + _tmp_cTmpDirX[cDir];
+				dY = m_pNpcList[iNpcH]->m_sY + _tmp_cTmpDirY[cDir];
+				// ¿¹Àü À§Ä¡¿¡¼­ Áö¿î´Ù. 
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(3, iNpcH, DEF_OWNERTYPE_NPC, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY);
+				// »õ À§Ä¡¿¡ Ç¥½ÃÇÑ´Ù. 
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->SetOwner(iNpcH, DEF_OWNERTYPE_NPC, dX, dY);
+				m_pNpcList[iNpcH]->m_sX   = dX;
+				m_pNpcList[iNpcH]->m_sY   = dY;
+				m_pNpcList[iNpcH]->m_cDir = cDir;
+				SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTMOVE, NULL, NULL, NULL);
+			}
+		}
+	}
+	else 
+	{
+		// ´ÙÀ½ ÀÌµ¿ ¹æÇâÀ» ±¸ÇÑ´Ù.
+		cDir = cGetNextMoveDir(m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, 
+			                   m_pNpcList[iNpcH]->m_dX, m_pNpcList[iNpcH]->m_dY, 
+				     	       m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
+						
+		if (cDir == 0) {
+			// ´ÙÀ½ ÀÌµ¿Á¡À» ±¸ÇÑ´Ù. ·£´ı°ªÀ» ÁØ °ÍÀº Á¦ÀÚ¸®¿¡¼­ Àá½Ã ¸Ó¹°±â À§ÇÔ 		
+			if (iDice(1,10) == 3) CalcNextWayPointDestination(iNpcH);
+		}
+		else {
+			dX = m_pNpcList[iNpcH]->m_sX + _tmp_cTmpDirX[cDir];
+			dY = m_pNpcList[iNpcH]->m_sY + _tmp_cTmpDirY[cDir];
+			// ¿¹Àü À§Ä¡¿¡¼­ Áö¿î´Ù. 
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(4, iNpcH, DEF_OWNERTYPE_NPC, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY);
+			// »õ À§Ä¡¿¡ Ç¥½ÃÇÑ´Ù. 
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->SetOwner(iNpcH, DEF_OWNERTYPE_NPC, dX, dY);
+			m_pNpcList[iNpcH]->m_sX   = dX;
+			m_pNpcList[iNpcH]->m_sY   = dY;
+			m_pNpcList[iNpcH]->m_cDir = cDir;
+			SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTMOVE, NULL, NULL, NULL);
+		}
+	}
+}
+
+/*void CGame::NpcBehavior_Move(int iNpcH)
+{
+ char  cDir;
+ short sX, sY, dX, dY, absX, absY;
+ short sTarget, sDistance;
+ char  cTargetType;
+	
+	if (m_pNpcList[iNpcH] == NULL) return;
+	if (m_pNpcList[iNpcH]->m_bIsKilled == TRUE) return;
 	// Â¼Ã’ÃˆÂ¯Â¸Ã·Ã€Ã‡ ÃÂ¦Â¾Ã® Â»Ã³Ã…Ã‚Â°Â¡ HoldÂ¶Ã³Â¸Ã© Ã€ÃŒÂµÂ¿Ã‡ÃÃÃ¶ Â¾ÃŠÂ´Ã‚Â´Ã™.
 	if ((m_pNpcList[iNpcH]->m_bIsSummoned == TRUE) && 
 		(m_pNpcList[iNpcH]->m_iSummonControlMode == 1)) return;
@@ -9790,7 +9947,8 @@ void CGame::NpcBehavior_Move(int iNpcH)
 			SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTMOVE, NULL, NULL, NULL);
 		}
 	}
-}
+}*/
+
 
 void CGame::TargetSearch(int iNpcH, short * pTarget, char * pTargetType)
 {
@@ -9798,7 +9956,7 @@ void CGame::TargetSearch(int iNpcH, short * pTarget, char * pTargetType)
  register short sX, sY, rX, rY, dX, dY;
  short sOwner, sTargetOwner, sDistance, sTempDistance;
  char  cOwnerType, cTargetType, cTargetSide;
- int   iInv;
+ int   iInv, iSearchType;
 
 	sTargetOwner = NULL;
 	cTargetType  = NULL;
@@ -9807,29 +9965,38 @@ void CGame::TargetSearch(int iNpcH, short * pTarget, char * pTargetType)
 	sX = m_pNpcList[iNpcH]->m_sX;
 	sY = m_pNpcList[iNpcH]->m_sY;
 
-	// Ã€ÃÂµÂ¦Â½Âº iNpcHÂ¿Â¡ Ã‡Ã˜Â´Ã§Ã‡ÃÂ´Ã‚ NPCÂ°Â¡ Â°Ã¸Â°ÃÂ´Ã«Â»Ã³Ã€Â» ÃƒÂ£Â´Ã‚Â´Ã™. 
+	// ÀÎµ¦½º iNpcH¿¡ ÇØ´çÇÏ´Â NPC°¡ °ø°İ´ë»óÀ» Ã£´Â´Ù. 
 	rX = m_pNpcList[iNpcH]->m_sX - m_pNpcList[iNpcH]->m_cTargetSearchRange;
 	rY = m_pNpcList[iNpcH]->m_sY - m_pNpcList[iNpcH]->m_cTargetSearchRange;
+
+	iSearchType = NULL; // °ø°İ Á¦ÇÑ ¾øÀ½
+	switch (m_pNpcList[iNpcH]->m_sType) {
+	case 51: iSearchType = 1; break; // °ÇÃà¹°¸¸ °ø°İÇÔ
+	}
 	
 	for (ix = rX; ix < rX + m_pNpcList[iNpcH]->m_cTargetSearchRange*2 + 1; ix++)
 	for (iy = rY; iy < rY + m_pNpcList[iNpcH]->m_cTargetSearchRange*2 + 1; iy++) {
 		
 		m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwner, &cOwnerType, ix, iy);
 		if (sOwner != NULL) {
-			// Â¹Â«Â¾Ã°Â°Â¡ Â¹ÃŸÂ°ÃŸÂµÃ‡Â¾ÃºÂ´Ã™. 
-			if ((sOwner == iNpcH) && (cOwnerType == DEF_OWNERTYPE_NPC)) break; // Ã€ÃšÂ±Ã¢ Ã€ÃšÂ½Ã…Ã€ÃŒÂ¸Ã© Â¹Â«Â½Ãƒ 
-			
-			// Â¸Ã±Ã‡Â¥ Â¼Â³ÃÂ¤
-			// Ã€Â§Ã„Â¡Â¸Â¦ Â±Â¸Ã‡Ã‘Â´Ã™.
+			// ¹«¾ğ°¡ ¹ß°ßµÇ¾ú´Ù. 
+			if ((sOwner == iNpcH) && (cOwnerType == DEF_OWNERTYPE_NPC)) break; // ÀÚ±â ÀÚ½ÅÀÌ¸é ¹«½Ã 
+		
+			// ¸ñÇ¥ ¼³Á¤
+			// À§Ä¡¸¦ ±¸ÇÑ´Ù.
 			iPKCount = 0;
 			switch (cOwnerType) {
 			case DEF_OWNERTYPE_PLAYER:
 				if (m_pClientList[sOwner] == NULL) {
-					// Ã€ÃŸÂ¸Ã¸ÂµÃˆ Ã€ÃÂµÂ¦Â½ÂºÂ¸Â¦ Â°Â¡ÃÃ¸ Â°ÂªÃ€ÃŒÂ´Ã™. Ã…Â¬Â¸Â®Â¾Ã®Ã‡Ã‘Â´Ã™.	
+					// Àß¸øµÈ ÀÎµ¦½º¸¦ °¡Áø °ªÀÌ´Ù. Å¬¸®¾îÇÑ´Ù.	
 					m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(5, sOwner, DEF_OWNERTYPE_PLAYER, ix, iy);
 				}
 				else {
 					if (m_pClientList[sOwner]->m_iAdminUserLevel > 0) goto SKIP_SEARCH;
+					switch (iSearchType) {
+					case 1: goto SKIP_SEARCH; break;
+					case NULL: break;
+					}
 
 					dX = m_pClientList[sOwner]->m_sX;
 					dY = m_pClientList[sOwner]->m_sY;
@@ -9841,10 +10008,30 @@ void CGame::TargetSearch(int iNpcH, short * pTarget, char * pTargetType)
 
 			case DEF_OWNERTYPE_NPC:
 				if (m_pNpcList[sOwner] == NULL) {
-					// Ã€ÃŸÂ¸Ã¸ÂµÃˆ Ã€ÃÂµÂ¦Â½ÂºÂ¸Â¦ Â°Â¡ÃÃ¸ Â°ÂªÃ€ÃŒÂ´Ã™. Ã…Â¬Â¸Â®Â¾Ã®Ã‡Ã‘Â´Ã™.	
+					// Àß¸øµÈ ÀÎµ¦½º¸¦ °¡Áø °ªÀÌ´Ù. Å¬¸®¾îÇÑ´Ù.	
 					m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(6, sOwner, DEF_OWNERTYPE_NPC, ix, iy);
 				}
 				else {
+					// ¸ñÇ¥¹° °Ë»ö Á¦ÇÑ Á¶°ÇÀÌ ÀÖ´Ù¸é °í·ÁÇÑ´Ù.
+					switch (iSearchType) {
+					case 1: // ±¸Á¶¹°¸¸ °ø°İÇÏ´Â ¸ğµå 
+						switch (m_pNpcList[sOwner]->m_sType) {
+						case 36:
+						case 37:
+						case 38:
+						case 39:
+						case 40: // ÀüÀï¿ë °ÇÃà¹°µé
+						case 41: break;
+
+						default:
+							goto SKIP_SEARCH;
+							break;
+						}
+						break;
+					case NULL: 
+						break;
+					}
+					
 					dX = m_pNpcList[sOwner]->m_sX;
 					dY = m_pNpcList[sOwner]->m_sY;
 					cTargetSide = m_pNpcList[sOwner]->m_cSide;
@@ -9852,7 +10039,7 @@ void CGame::TargetSearch(int iNpcH, short * pTarget, char * pTargetType)
 					iInv        = m_pNpcList[sOwner]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ];
 
 					if (m_pNpcList[iNpcH]->m_sType == 21) {
-						// Â¸Â¸Â¾Ã  Â°Ã¦ÂºÃ±Â°Â¡ NPCÂ¸Â¦ Â¸Ã±Ã‡Â¥Â¹Â°Ã€Â» ÃƒÂ£Â´Ã‚ Â°ÃÃ€ÃŒÂ¶Ã³Â¸Ã© NPCÃÃ–Ã€Â§Â¿Â¡ Ã‡ÃƒÂ·Â¹Ã€ÃŒÂ¾Ã®Â°Â¡ Â¸Â¹Ã€ÃŒ Ã€Ã–Â´Ã™Â¸Ã© Â°Ã¸Â°ÃÃ‡ÃÃÃ¶ Â¾ÃŠÂ´Ã‚Â´Ã™. 
+						// ¸¸¾à °æºñ°¡ NPC¸¦ ¸ñÇ¥¹°À» Ã£´Â °ÍÀÌ¶ó¸é NPCÁÖÀ§¿¡ ÇÃ·¹ÀÌ¾î°¡ ¸¹ÀÌ ÀÖ´Ù¸é °ø°İÇÏÁö ¾Ê´Â´Ù. 
 						if (_iCalcPlayerNum(m_pNpcList[sOwner]->m_cMapIndex, dX, dY, 2) != 0) {
 							sOwner     = NULL;
 							cOwnerType = NULL;
@@ -9863,25 +10050,25 @@ void CGame::TargetSearch(int iNpcH, short * pTarget, char * pTargetType)
 			}
 			
 			if (m_pNpcList[iNpcH]->m_cSide < 10) {
-				// NPCÃ€Ã‡ SideÂ°Â¡ 10ÂºÂ¸Â´Ã™ Ã€Ã›Â´Ã™Â´Ã‚ Â°ÃÃ€Âº NPCÂ°Â¡ Ã‡Ã‘ Â¸Â¶Ã€Â»Â¿Â¡ Â¼Ã’Â¼Ã“ÂµÃ‡Â¾ÃºÂ´Ã™Â´Ã‚ Â¶Ã¦.  Ex: Guard ÃˆÂ¤Ã€Âº Â¼Ã’ÃˆÂ¯Â¸Ã·  
+				// NPCÀÇ Side°¡ 10º¸´Ù ÀÛ´Ù´Â °ÍÀº NPC°¡ ÇÑ ¸¶À»¿¡ ¼Ò¼ÓµÇ¾ú´Ù´Â ¶æ.  Ex: Guard È¤Àº ¼ÒÈ¯¸÷  
 				if (cTargetSide == 0) {
-					// Â¸Ã±Ã‡Â¥Â¹Â°Ã€ÃŒ ÃÃŸÂ¸Â³Ã€ÃŒÂ´Ã™. PKÂ°Â¡ Â¾Ã†Â´ÃÂ¶Ã³Â¸Ã© Â°Ã¸Â°ÃÃ‡ÃÃÃ¶ Â¾ÃŠÂ´Ã‚Â´Ã™. 
+					// ¸ñÇ¥¹°ÀÌ Áß¸³ÀÌ´Ù. PK°¡ ¾Æ´Ï¶ó¸é °ø°İÇÏÁö ¾Ê´Â´Ù. 
 					if (iPKCount == 0) goto SKIP_SEARCH;
 				}
 				else {
-					// Â¸Ã±Ã‡Â¥Â¹Â°Ã€ÃŒ Â¸Â¶Ã€Â» Â¼Ã’Â¼Ã“Ã€ÃŒÂ´Ã™. SideÂ°Â¡ Â´Ã™Â¸Â£Â´Ã™Â¸Ã© Â°Ã¸Â°ÃÃ‡Ã‘Â´Ã™. v1.12
+					// ¸ñÇ¥¹°ÀÌ ¸¶À» ¼Ò¼ÓÀÌ´Ù. Side°¡ ´Ù¸£´Ù¸é °ø°İÇÑ´Ù. v1.12
 					if ((iPKCount == 0) && (cTargetSide == m_pNpcList[iNpcH]->m_cSide)) goto SKIP_SEARCH;
-					// ÃÃŸÂ¸Â³Â¸Ã·Ã€Âº Â¸Â¶Ã€Â» Â¼Ã’Â¼Ã“ Â¸Ã±Ã‡Â¥Â¹Â°Ã€Â» Â°Ã¸Â°ÃÃ‡ÃÃÃ¶ Â¾ÃŠÂ´Ã‚Â´Ã™. v1.12
+					// Áß¸³¸÷Àº ¸¶À» ¼Ò¼Ó ¸ñÇ¥¹°À» °ø°İÇÏÁö ¾Ê´Â´Ù. v1.12
 					if (m_pNpcList[iNpcH]->m_cSide == 0) goto SKIP_SEARCH;
 				}
 			}
 			else {
-				// Ã€ÃÂ¹Ã Â¸Ã³Â½ÂºÃ…ÃÂµÃ©Ã€ÃŒÂ´Ã™. Ã€ÃšÂ±Ã¢Â¿Ã SideÂ°Â¡ Â°Â°Ã€Â¸Â¸Ã© Â¹Â«Â½Ãƒ.
+				// ÀÏ¹İ ¸ó½ºÅÍµéÀÌ´Ù. ÀÚ±â¿Í Side°¡ °°À¸¸é ¹«½Ã.
 				if ((cOwnerType == DEF_OWNERTYPE_NPC) && (cTargetSide == 0)) goto SKIP_SEARCH;
 				if (cTargetSide == m_pNpcList[iNpcH]->m_cSide) goto SKIP_SEARCH;
 			}
 
-			// Â¸Â¸Â¾Ã  INVISIBILITYÂ°Â¡ ÂµÃ‡Â¾Ã® Ã€Ã–Â°Ã­ Ã…ÃµÂ¸Ã­ Ã…Â½ÃÃ¶ Â´Ã‰Â·Ã‚Ã€ÃŒ Â¾Ã¸Â´Ã™Â¸Ã© 
+			// ¸¸¾à INVISIBILITY°¡ µÇ¾î ÀÖ°í Åõ¸í Å½Áö ´É·ÂÀÌ ¾ø´Ù¸é 
 			if ((iInv != 0) && (m_pNpcList[iNpcH]->m_cSpecialAbility != 1)) goto SKIP_SEARCH;
 
 			if (abs(sX - dX) >= abs(sY - dY)) 
@@ -10478,7 +10665,7 @@ int CGame::iCalculateAttackEffect(short sTargetH, char cTargetType, short sAttac
 			bRemoveFromDelayEventList(sAttackerH, DEF_OWNERTYPE_PLAYER, DEF_MAGICTYPE_INVISIBILITY);
 			m_pClientList[ sAttackerH ]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] = NULL;
 		}
-
+		
 		// Ã€Ã¼Ã…ÃµÂ¸Ã°ÂµÃ¥Â°Â¡ Â¾Ã†Â´Ã‘ Â»Ã³Ã…Ã‚Â¶Ã³Â¸Ã© Â°Ã¸Â°ÃÃ€Ã‡ Ã€Ã‡Â¹ÃŒÂ°Â¡ Â¾Ã¸Â´Ã™.
 		if ((m_pClientList[sAttackerH]->m_sAppr2 & 0xF000) == 0) return 0;
 
@@ -12426,6 +12613,89 @@ void CGame::NpcBehavior_Flee(int iNpcH)
 	if (m_pNpcList[iNpcH] == NULL) return;
 	if (m_pNpcList[iNpcH]->m_bIsKilled == TRUE) return;
 
+	// ÅÏ Ä«¿îÆ® Áõ°¡. 
+	m_pNpcList[iNpcH]->m_sBehaviorTurnCount++;
+
+	// °ø°İ ÀÎ°øÁö´É¿¡ ´ëÇÑ È¿°ú°è»ê.
+	switch (m_pNpcList[iNpcH]->m_iAttackStrategy) {
+	case DEF_ATTACKAI_EXCHANGEATTACK: // °ø°İ -> ÈÄÅğ -> ... 
+	case DEF_ATTACKAI_TWOBYONEATTACK: // °ø°İ -> °ø°İ -> ÈÄÅğ -> ...
+		if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount >= 2) {
+			// ´Ù½Ã °ø°İ ¸ğµå·Î ÀüÈ¯.
+			m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
+			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
+			return;
+		}
+		break;
+	
+	default:
+		if (iDice(1,2) == 1) NpcRequestAssistance(iNpcH);
+		break;
+	}
+
+	if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount > 10) {
+		// 10¹øÀÇ ÅÏ¸¸ µµ¸ÁÇÑ ÈÄ ´Ù½Ã ÀÌµ¿¸ğµå·Î º¯È¯.
+		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;	
+		m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_MOVE;
+		m_pNpcList[iNpcH]->m_tmp_iError         = 0;
+		if (m_pNpcList[iNpcH]->m_iHP <= 3) {
+			m_pNpcList[iNpcH]->m_iHP += iDice(1, m_pNpcList[iNpcH]->m_iHitDice); // ! ¿¡³ÊÁö ºÎÁ·À¸·Î µµ¸ÁÃÆÀ»¶§ ¼º°øÀûÀ¸·Î µµ¸ÁÃÆÀ¸¹Ç·Î ¿¡³ÊÁö Áõ°¡.
+			if (m_pNpcList[iNpcH]->m_iHP <= 0) m_pNpcList[iNpcH]->m_iHP = 1;
+		}
+		return;
+	}
+
+	// µµ¸ÁÄ¡´Âµ¥ À§ÇùÀÌ µÇ´Â °¡±î¿î ¸ñÇ¥¹°À» °Ë»öÇÑ´Ù.
+	TargetSearch(iNpcH, &sTarget, &cTargetType);				
+	if (sTarget != NULL) {
+		m_pNpcList[iNpcH]->m_iTargetIndex = sTarget;
+		m_pNpcList[iNpcH]->m_cTargetType  = cTargetType;
+	}
+
+	// ¸ñÇ¥¹°°ú ÀÚ½ÅÀÇ À§Ä¡¸¦ ±¸ÇÑ´Ù. ¹İ´ë¹æÇâÀ¸·Î µµ¸ÁÄ¡±â À§ÇÔ.
+	sX = m_pNpcList[iNpcH]->m_sX;
+	sY = m_pNpcList[iNpcH]->m_sY;
+	switch (m_pNpcList[iNpcH]->m_cTargetType) {
+	case DEF_OWNERTYPE_PLAYER:
+		dX = m_pClientList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sX;
+		dY = m_pClientList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sY;
+		break;
+	case DEF_OWNERTYPE_NPC:
+		dX = m_pNpcList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sX;
+		dY = m_pNpcList[m_pNpcList[iNpcH]->m_iTargetIndex]->m_sY;
+		break;
+	}
+	dX = sX - (dX - sX);
+	dY = sY - (dY - sY);
+
+	cDir = cGetNextMoveDir(sX, sY, dX, dY, m_pNpcList[iNpcH]->m_cMapIndex, m_pNpcList[iNpcH]->m_cTurn, &m_pNpcList[iNpcH]->m_tmp_iError);
+	if (cDir == 0) {
+		// ÀÌµ¿ÇÒ ¼ö ¾ø´Ù. 
+	}
+	else {
+		dX = m_pNpcList[iNpcH]->m_sX + _tmp_cTmpDirX[cDir];
+		dY = m_pNpcList[iNpcH]->m_sY + _tmp_cTmpDirY[cDir];
+		// ¿¹Àü À§Ä¡¿¡¼­ Áö¿î´Ù. 
+		m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->ClearOwner(11, iNpcH, DEF_OWNERTYPE_NPC, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY);
+		// »õ À§Ä¡¿¡ Ç¥½ÃÇÑ´Ù. 
+		m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->SetOwner(iNpcH, DEF_OWNERTYPE_NPC, dX, dY);
+		m_pNpcList[iNpcH]->m_sX   = dX;
+		m_pNpcList[iNpcH]->m_sY   = dY;
+		m_pNpcList[iNpcH]->m_cDir = cDir;
+		SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTMOVE, NULL, NULL, NULL);
+	}
+}
+
+/*void CGame::NpcBehavior_Flee(int iNpcH)
+{
+ char cDir;
+ short sX, sY, dX, dY;
+ short sTarget;
+ char  cTargetType;
+
+	if (m_pNpcList[iNpcH] == NULL) return;
+	if (m_pNpcList[iNpcH]->m_bIsKilled == TRUE) return;
+
 	// Ã…Ã Ã„Â«Â¿Ã®Ã†Â® ÃÃµÂ°Â¡. 
 	m_pNpcList[iNpcH]->m_sBehaviorTurnCount++;
 
@@ -12497,7 +12767,7 @@ void CGame::NpcBehavior_Flee(int iNpcH)
 		m_pNpcList[iNpcH]->m_cDir = cDir;
 		SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTMOVE, NULL, NULL, NULL);
 	}
-}
+}*/
 
 
 void CGame::MsgProcess()
@@ -14033,6 +14303,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 				m_pClientList[iClientH]->m_iStatus = iTemp;
 				m_pClientList[iClientH]->m_iComboAttackCount = 0;
 				break;
+
 			case DEF_EQUIPPOS_TWOHAND:
 				// Â¾Ã§Â¼Ã•Ã…Â¸Ã€Ã”Ã€ÃŒÃÃ¶Â¸Â¸ Â»Ã§Â½Ã‡ Â¿Ã€Â¸Â¥Â¼Ã•Â¿Â¡ Ã€Ã¥Ã‚Ã¸ÂµÃˆÂ´Ã™. 
 				sTemp = m_pClientList[iClientH]->m_sAppr2;
@@ -14056,6 +14327,7 @@ BOOL CGame::bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify)
 				m_pClientList[iClientH]->m_iStatus = iTemp;
 				m_pClientList[iClientH]->m_iComboAttackCount = 0;
 				break;
+
 			case DEF_EQUIPPOS_BACK:
 				sTemp = m_pClientList[iClientH]->m_sAppr4;
 				sTemp = sTemp & 0xF0FF;	// Â¸ÃÃ…Ã¤ Ã†Â¯Â¼ÂºÃ„Â¡ ÂºÃ±Ã†Â®Â¸Â¦ Ã…Â¬Â¸Â®Â¾Ã®.
@@ -14535,6 +14807,7 @@ void CGame::ResponseDisbandGuildHandler(char * pData, DWORD dwMsgSize)
 	PutLogList(cTxt);
 }
 
+// 05/29/2004 - Hypnotoad - Purchase Dicount updated to take charisma into consideration
 void CGame::RequestPurchaseItemHandler(int iClientH, char * pItemName, int iNum)
 {
  class CItem * pItem;
@@ -14543,7 +14816,7 @@ void CGame::RequestPurchaseItemHandler(int iClientH, char * pItemName, int iNum)
  DWORD * dwp, dwGoldCount, dwItemCount;
  WORD  * wp, wTempPrice;
  int   i, iRet, iEraseReq, iGoldWeight;
- int   iCost, iDiscountRatio, iDiscountCost;
+	 int   iCost, iDiscountRatio, iDiscountCost;
  double dTmp1, dTmp2, dTmp3;
  
 	if (m_pClientList[iClientH] == NULL) return;
@@ -14646,8 +14919,13 @@ void CGame::RequestPurchaseItemHandler(int iClientH, char * pItemName, int iNum)
 			dwGoldCount = dwGetItemCount(iClientH, "Gold");
 			
 			// CharismaÂ¿Â¡ ÂµÃ»Â¸Â¥ Ã‡Ã’Ã€ÃÂ·Ã¼Ã€Â» Â°Ã¨Â»ÃªÃ‡Ã‘Â´Ã™. 
-			iDiscountRatio = (m_pClientList[iClientH]->m_iCharisma / 4) -1;
-			if (iDiscountRatio == 0) iDiscountRatio = 1;
+			// v2.14 Ã„Â«Â¸Â®Â½ÂºÂ¸Â¶Â°Â¡ 10Ã€ÃÂ°Ã¦Â¿Ã¬ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Â» Ã‡Ã’Ã€Ã Ã‡ÃÃÃ¶ Â¾ÃŠÃ€Â½ 
+			iDiscountRatio = ((m_pClientList[iClientH]->m_iCharisma -10)/ 4) ;
+			
+			// 2.03 Discount Method
+			// CharismaÂ¿Â¡ ÂµÃ»Â¸Â¥ Ã‡Ã’Ã€ÃÂ·Ã¼Ã€Â» Â°Ã¨Â»ÃªÃ‡Ã‘Â´Ã™. 
+			// iDiscountRatio = (m_pClientList[iClientH]->m_iCharisma / 4) -1;
+			// if (iDiscountRatio == 0) iDiscountRatio = 1;
 			
 			dTmp1 = (double)(iDiscountRatio);
 			dTmp2 = dTmp1 / 100.0f;
@@ -18151,7 +18429,7 @@ void CGame::TimeManaPointsUp(int iClientH)
 	}
 }
 
-// 05/22/2004 - Hypnotoad - rebalancing
+// 05/29/2004 - Hypnotoad - fixed infinite sp bug
 void CGame::TimeStaminarPointsUp(int iClientH)
 {
 	register int iMaxSP, iTotal=0;
@@ -18166,6 +18444,14 @@ void CGame::TimeStaminarPointsUp(int iClientH)
 	iMaxSP = (2*m_pClientList[iClientH]->m_iStr) + (2*m_pClientList[iClientH]->m_iLevel);
 	if (m_pClientList[iClientH]->m_iSP < iMaxSP) {
 
+		iTotal = iDice(1, (m_pClientList[iClientH]->m_iVit/3)); // Staminar PointÂ´Ã‚ 10ÃƒÃŠÂ¸Â¶Â´Ã™ 1D(Vit/3)Â¾Â¿ Â¿ÃƒÂ¶Ã³Â°Â£Â´Ã™.
+		if (m_pClientList[iClientH]->m_iAddSP != 0) {
+			dV2 = (double)iTotal;
+			dV3 = (double)m_pClientList[iClientH]->m_iAddSP;
+			dV1 = (dV3 / 100.0f)*dV2;
+			iTotal += (int)dV1;
+		}
+	
 		// v2.03 Â·Â¹ÂºÂ§ 60 Ã€ÃŒÃ‡ÃÂ´Ã‚ ÃÂ¤Â±Ã¢Ã€Ã»Ã€Â¸Â·Ã Â½ÂºÃ…Ã—Â¹ÃŒÂ³ÂªÂ°Â¡ Â¸Â¹Ã€ÃŒ Ã‚Ã¹Â´Ã™.
 		if (m_pClientList[iClientH]->m_iLevel <= 20) {
 			iTotal += 15;
@@ -18173,13 +18459,6 @@ void CGame::TimeStaminarPointsUp(int iClientH)
 			iTotal += 10;
 		}  else if ( m_pClientList[iClientH]->m_iLevel <= 60) { 
 			iTotal += 5;
-		}
-
-		if (m_pClientList[iClientH]->m_iAddSP != 0) {
-			dV2 = (double)iTotal;
-			dV3 = (double)m_pClientList[iClientH]->m_iAddSP;
-			dV1 = (dV3 / 100.0f)*dV2;
-			iTotal += (int)dV1;
 		}
 
 		m_pClientList[iClientH]->m_iSP += iTotal;
@@ -18611,13 +18890,13 @@ int CGame::iClientMotion_Magic_Handler(int iClientH, short sX, short sY, char cD
 	return 1;
 }
 
-// v2.16 2002-5-21 Â°Ã­Â±Â¤Ã‡Ã¶Â¼Ã¶ÃÂ¤ : Ã‡Ã”Â¼Ã¶ Â¸Ã°ÂµÃ ÂºÂ¯Â°Ã¦ÂµÃŠ 
+// v2.16 2002-5-21 °í±¤Çö¼öÁ¤ : ÇÔ¼ö ¸ğµÎ º¯°æµÊ 
 void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 {
-	int i, iItemX,iItemY, iSoM, iSoX, iSomH, iSoxH, iValue; // v2.172
-	DWORD dwTemp, dwSWEType;
-	double dV1, dV2, dV3;
-	short sItemUpgrade = 2;
+ int i, iValue,  iItemX,iItemY, iSoM, iSoX, iSomH, iSoxH, iVaule; // v2.172
+ DWORD dwTemp, dwSWEType;
+ double dV1, dV2, dV3;
+ short sItemUpgrade = 2;
 
 
 	if (m_pClientList[iClientH] == NULL) return;
@@ -18626,233 +18905,243 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 	iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28;
 	if (iValue >= 15 || iValue < 0 ) {
-		// ÃƒÃ–Â´Ã«Ã„Â¡Ã€ÃŒÂ´Ã™. Â´ÃµÃ€ÃŒÂ»Ã³ Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰
-		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 1, NULL, NULL, NULL); // Â´ÃµÃ€ÃŒÂ»Ã³ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥Â°Â¡ ÂºÃ’Â°Â¡Â´Ã‰ Ã‡Ã•Â´ÃÂ´Ã™.
+		// ÃÖ´ëÄ¡ÀÌ´Ù. ´õÀÌ»ó ¾÷±×·¹ÀÌµå ºÒ°¡´É
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 1, NULL, NULL, NULL); // ´õÀÌ»ó ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå°¡ ºÒ°¡´É ÇÕ´Ï´Ù.
 		return;
 	}
 
 	switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cCategory) {
-	case 1: // Â°Ã‹, ÂµÂµÂ³Â¢
-			switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
-				case 703: // Â»Ã³Â¾Ã®Ã€Ã‡ Ã‡ÃƒÂ·Â¥Â¹Ã¶Â±Ã— 
-				case 709: // ÃˆÃ¦Â±Ã¢Â»Ã§Ã€Ã‡ Ã‡ÃƒÂ·Â¥Â¹Ã¶Â±Ã— 
-				case 718:
-				case 727: // ÃˆÃ…Â¿Â©Â±Ã¢Â»Ã§Ã€Ã‡ Ã‡ÃƒÂ·Â¥Â¹Ã¶Â±Ã— 
-				case 736: // Â»ÃµÂ·ÃÂ¿Ã® Â»Ã³Â¾Ã®Ã€Ã‡ Ã€ÃšÃ€ÃŒÂ¾Ã°Ã†Â®Â¼Ã’ÂµÃ¥
-				case 737: // Â»ÃµÂ·ÃÂ¿Ã® ÃˆÃ¦Â±Ã¢Â»Ã§Ã€Ã‡ Ã€ÃšÃ€ÃŒÂ¾Ã°Ã†Â®Â¼Ã’ÂµÃ¥
-				case 745:
-					if (m_pClientList[iClientH]->m_iGizonItemUpgradeLeft <= 0) 
-					{ 
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // Ã‡ÃŠÂ¿Ã¤Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼Ã¶Ã„Â¡Â°Â¡ Â¾Ã¸Â½Ã€Â´ÃÂ´Ã™.
-						return; 
-					}
-					// Â¾Ã†Ã€ÃŒÃ…Ã› Â·Â¹ÂºÂ§Â¾Ã·Ã€ÃŒ Â³Ã´Â¾Ã†ÃÃºÂ¼Ã¶Â·Ã Â¾Ã†Ã€ÃŒÃ…Ã› Â·Â¹ÂºÂ§Â¾Ã·Ã‡ÃÂ±Ã¢Â°Â¡ Â¾Ã®Â·Ã†Â´Ã™.
-					// v2.15 ÃÃ¶ÃÂ¸ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â°Ã¸Â½Ã„ x(x+6)/8 +2 
+	case 1: // °Ë, µµ³¢
+		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
+		case 20 : // Excalibur 
+		case 610: // XelimaAxe
+		case 611: // XelimaBlade
+		case 612: // XelimaRapier
+		case 613: // SwordofMedusa
+		case 614: // SwordofIceElemental
+		case 616: // DemonSlayer
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
+			return; 
 
-					sItemUpgrade = (iValue*(iValue+6)/8) + 2 ;
+		case 703: // »ó¾îÀÇ ÇÃ·¥¹ö±× 
+		case 709: // Èæ±â»çÀÇ ÇÃ·¥¹ö±× 
+		case 727: // ÈÅ¿©±â»çÀÇ ÇÃ·¥¹ö±× 
+		case 736: // »õ·Î¿î »ó¾îÀÇ ÀÚÀÌ¾ğÆ®¼Òµå
+		case 737: // »õ·Î¿î Èæ±â»çÀÇ ÀÚÀÌ¾ğÆ®¼Òµå
+			if (m_pClientList[iClientH]->m_iGizonItemUpgradeLeft <= 0) 
+			{ 
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // ÇÊ¿äÇÑ ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ¼öÄ¡°¡ ¾ø½À´Ï´Ù.
+				return; 
+			}
+			// ¾ÆÀÌÅÛ ·¹º§¾÷ÀÌ ³ô¾ÆÁú¼ö·Ï ¾ÆÀÌÅÛ ·¹º§¾÷ÇÏ±â°¡ ¾î·Æ´Ù.
+			// v2.15 ÁöÁ¸ ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå °ø½Ä x(x+6)/8 +2 
 
-					if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 != m_pClientList[iClientH]->m_sCharIDnum1) ||
-						(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 != m_pClientList[iClientH]->m_sCharIDnum2) ||
-						(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 != m_pClientList[iClientH]->m_sCharIDnum3))
-					{
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã”Â´ÃÂ´Ã™.
-						return; 
-					}
+			sItemUpgrade = (iValue*(iValue+6)/8) + 2 ;
 
-					if (( m_pClientList[iClientH]->m_iGizonItemUpgradeLeft - sItemUpgrade ) < 0) 
-					{ 
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // Ã‡ÃŠÂ¿Ã¤Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼Ã¶Ã„Â¡Â°Â¡ Â¾Ã¸Â½Ã€Â´ÃÂ´Ã™.
-						return; 
-					}
+			if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 != m_pClientList[iClientH]->m_sCharIDnum1) ||
+			(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 != m_pClientList[iClientH]->m_sCharIDnum2) ||
+			(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 != m_pClientList[iClientH]->m_sCharIDnum3))
+			{
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
+				return; 
+			}
 
-					m_pClientList[iClientH]->m_iGizonItemUpgradeLeft -= sItemUpgrade ; 
+			if (( m_pClientList[iClientH]->m_iGizonItemUpgradeLeft - sItemUpgrade ) < 0) 
+			{ 
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // ÇÊ¿äÇÑ ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ¼öÄ¡°¡ ¾ø½À´Ï´Ù.
+				return; 
+			}
 
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMUPGRADELEFT, m_pClientList[iClientH]->m_iGizonItemUpgradeLeft, NULL, NULL, NULL);
+			m_pClientList[iClientH]->m_iGizonItemUpgradeLeft -= sItemUpgrade ; 
 
-					if((iValue == 0) && m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 703) 
-					{
-						iItemX = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x ;
-						iItemY = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y ;
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMUPGRADELEFT, m_pClientList[iClientH]->m_iGizonItemUpgradeLeft, NULL, NULL, NULL);
+			
+			if((iValue == 0) && m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 703) 
+			{
+				iItemX = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x ;
+				iItemY = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y ;
 
-						// Â±Ã¢ÃÂ¸Ã€Ã‡ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Â» Â»Ã¨ÃÂ¦Ã‡Ã‘Â´Ã™.
-						delete m_pClientList[iClientH]->m_pItemList[iItemIndex];
-						m_pClientList[iClientH]->m_pItemList[iItemIndex] = NULL;
+				// ±âÁ¸ÀÇ ¾ÆÀÌÅÛÀ» »èÁ¦ÇÑ´Ù.
+				delete m_pClientList[iClientH]->m_pItemList[iItemIndex];
+				m_pClientList[iClientH]->m_pItemList[iItemIndex] = NULL;
 
-						m_pClientList[iClientH]->m_pItemList[iItemIndex] = new class CItem;
-						m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x = iItemX ;
-						m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y = iItemY ;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex] = new class CItem;
+				m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x = iItemX ;
+				m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y = iItemY ;
 
-						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , "Â»Ã³Â¾Ã®Ã€Ã‡Ã€ÃšÃ€ÃŒÂ¾Ã°Ã†Â®Â¼Ã’ÂµÃ¥") == FALSE) {
-							// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Ã‡ÃÂ°Ã­Ã€Ãš Ã‡ÃÂ´Ã‚ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã› Â¸Â®Â½ÂºÃ†Â®Â»Ã³Â¿Â¡ Â¾Ã¸Â´Ã™. Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥Â°Â¡ ÂºÃ’Â°Â¡Â´Ã‰Ã‡ÃÂ´Ã™.
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-							return;
-						}
+				if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , "»ó¾îÀÇÀÚÀÌ¾ğÆ®¼Òµå") == FALSE) {
+					// ¾÷±×·¹ÀÌµå ÇÏ°íÀÚ ÇÏ´Â ¾ÆÀÌÅÛÀÌ ¾ÆÀÌÅÛ ¸®½ºÆ®»ó¿¡ ¾ø´Ù. ¾÷±×·¹ÀÌµå°¡ ºÒ°¡´ÉÇÏ´Ù.
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+					return;
+				}
+		
+				// ¾ÆÀÌÅÛ¿¡ »ç¿ëÀÚ °íÀ¯ ¹øÈ£¸¦ ÀÔ·ÂÇÑ´Ù. ´Ù¸¥ Ä³¸¯ÅÍ´Â ÀÌ ¾ÆÀÌÅÛÀ» »ç¿ëÇÒ ¼ö°¡ ¾ø´Ù.
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
 
-						// Â¾Ã†Ã€ÃŒÃ…Ã›Â¿Â¡ Â»Ã§Â¿Ã«Ã€Ãš Â°Ã­Ã€Â¯ Â¹Ã¸ÃˆÂ£Â¸Â¦ Ã€Ã”Â·Ã‚Ã‡Ã‘Â´Ã™. Â´Ã™Â¸Â¥ Ã„Â³Â¸Â¯Ã…ÃÂ´Ã‚ Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Â» Â»Ã§Â¿Ã«Ã‡Ã’ Â¼Ã¶Â°Â¡ Â¾Ã¸Â´Ã™.
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
+				iValue += 2;
+				if (iValue > 15) iValue = 15;
+				dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+				dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â
 
-						iValue += 2;
-						if (iValue > 15) iValue = 15;
-						dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-						dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMCANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemType,
+				          m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cName,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSprite,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+				_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
+				break ;
 
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMCANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemType,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cName,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSprite,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
-						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
-						break ;
+			} 
+			else if( (iValue == 0) && ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 709) || (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 727))) 
+			{
 
-					} 
-					else if( (iValue == 0) && ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 709) || (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 727))) 
-					{
+				iItemX = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x ;
+				iItemY = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y ;
 
-						iItemX = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x ;
-						iItemY = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y ;
+				// ±âÁ¸ÀÇ ¾ÆÀÌÅÛÀ» »èÁ¦ÇÑ´Ù.
+				delete m_pClientList[iClientH]->m_pItemList[iItemIndex];
+				m_pClientList[iClientH]->m_pItemList[iItemIndex] = NULL;
 
-						// Â±Ã¢ÃÂ¸Ã€Ã‡ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Â» Â»Ã¨ÃÂ¦Ã‡Ã‘Â´Ã™.
-						delete m_pClientList[iClientH]->m_pItemList[iItemIndex];
-						m_pClientList[iClientH]->m_pItemList[iItemIndex] = NULL;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex] = new class CItem;
+				m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x = iItemX ;
+				m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y = iItemY ;
 
-						m_pClientList[iClientH]->m_pItemList[iItemIndex] = new class CItem;
-						m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x = iItemX ;
-						m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y = iItemY ;
 
-						if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , "ÃˆÃ¦Â±Ã¢Â»Ã§Ã€Ã‡Ã€ÃšÃ€ÃŒÂ¾Ã°Ã†Â®Â¼Ã’ÂµÃ¥") == FALSE) {
-							// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Ã‡ÃÂ°Ã­Ã€Ãš Ã‡ÃÂ´Ã‚ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã› Â¸Â®Â½ÂºÃ†Â®Â»Ã³Â¿Â¡ Â¾Ã¸Â´Ã™. Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥Â°Â¡ ÂºÃ’Â°Â¡Â´Ã‰Ã‡ÃÂ´Ã™.
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-							return;
-						}
+				if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , "Èæ±â»çÀÇÀÚÀÌ¾ğÆ®¼Òµå") == FALSE) {
+					// ¾÷±×·¹ÀÌµå ÇÏ°íÀÚ ÇÏ´Â ¾ÆÀÌÅÛÀÌ ¾ÆÀÌÅÛ ¸®½ºÆ®»ó¿¡ ¾ø´Ù. ¾÷±×·¹ÀÌµå°¡ ºÒ°¡´ÉÇÏ´Ù.
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+					return;
+				}
+				
+	
+				// ¾ÆÀÌÅÛ¿¡ »ç¿ëÀÚ °íÀ¯ ¹øÈ£¸¦ ÀÔ·ÂÇÑ´Ù. ´Ù¸¥ Ä³¸¯ÅÍ´Â ÀÌ ¾ÆÀÌÅÛÀ» »ç¿ëÇÒ ¼ö°¡ ¾ø´Ù.
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
 
-						// Â¾Ã†Ã€ÃŒÃ…Ã›Â¿Â¡ Â»Ã§Â¿Ã«Ã€Ãš Â°Ã­Ã€Â¯ Â¹Ã¸ÃˆÂ£Â¸Â¦ Ã€Ã”Â·Ã‚Ã‡Ã‘Â´Ã™. Â´Ã™Â¸Â¥ Ã„Â³Â¸Â¯Ã…ÃÂ´Ã‚ Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Â» Â»Ã§Â¿Ã«Ã‡Ã’ Â¼Ã¶Â°Â¡ Â¾Ã¸Â´Ã™.
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
+				iValue += 2;
+				if (iValue > 15) iValue = 15;
+				dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+				dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â
 
-						iValue += 2;
-						if (iValue > 15) iValue = 15;
-						dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-						dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚
-
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMCANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemType,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cName,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSprite,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
-
-						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
-						break;
-					} else 
-					{
-						iValue += 2;
-						if (iValue > 15) iValue = 15;
-						dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-						dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-						_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
-					}
-					break;
-
-				default:
-
-					// v2.16 2002-5-21 Â°Ã­Â±Â¤Ã‡Ã¶Â¼Ã¶ÃÂ¤
-					// Â°Ã­Â´Ã«Ã€Ã‡~ ÃÂ¢ÂµÃÂ»Ã§Â°Â¡ ÂºÃ™Â´Ã‚ Â¹Â«Â±Ã¢Â´Ã‚ Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰
-					if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) != NULL) {
-						dwSWEType  = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) >> 20;  
-						if (dwSWEType == 9) {
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã”Â´ÃÂ´Ã™.
-							return;
-						}
-					}
-					// Ã€ÃÂ¹Ã Â¹Â«Â±Ã¢ Â¾Ã†Ã€ÃŒÃ…Ã›
-					// v2.16 2002-5-21 Â°Ã­Â±Â¤Ã‡Ã¶Â¼Ã¶ÃÂ¤
-					iSoX = iSoM = 0;
-					for (i = 0; i < DEF_MAXITEMS; i++)
-						if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
-							switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
-								case 656: iSoX++; iSoxH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ 
-								case 657: iSoM++; iSomH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ 
-							}
-						}
-						// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶Â°Â¡ Ã€Ã–Â´Ã™.
-						if (iSoX > 0) {
-							if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
-								// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â½Ã‡Ã†Ã 
-								SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-								// Â½Ã‡Ã†ÃÃ‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã¸Â¾Ã˜Â´Ã™.
-								iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
-								if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 Â´ÃœÂ°Ã¨Â¿Â¡Â¼Â­ Â½Ã‡Ã†ÃÃ‡ÃÂ¸Ã© Â»Ã§Â¶Ã³ÃÃ¼ 
-								// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ Â¾Ã¸Â¾Ã˜Â´Ã™.
-								ItemDepleteHandler(iClientH, iSoxH, FALSE);	
-								return;
-							}
-
-							if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00000001) != NULL) {
-								// ÃÂ¦Ã€Ã›ÂµÃˆ Â¹Â«Â±Ã¢ Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÃƒÃ–Â´Ã« +10
-								iValue++;
-								if (iValue > 10) 
-									iValue = 10;
-								else {
-									// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸. Â¾Ã†Ã€ÃŒÃ…Ã› Ã†Â¯Â¼Âº Â¹Ã™Â²Ã™Â°Ã­
-									dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-									dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-									m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚	
-									// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ Â¾Ã¸Â¾Ã˜Â´Ã™.
-									ItemDepleteHandler(iClientH, iSoxH, FALSE);
-								}
-							}
-							else {
-								// Ã€ÃÂ¹Ã Â¹Â«Â±Ã¢ Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÃƒÃ–Â´Ã« +7
-								iValue++;
-								if (iValue > 7) 
-									iValue = 7;
-								else {
-									// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸. Â¾Ã†Ã€ÃŒÃ…Ã› Ã†Â¯Â¼Âº Â¹Ã™Â²Ã™Â°Ã­
-									dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-									dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-									m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚	
-									// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ Â¾Ã¸Â¾Ã˜Â´Ã™.
-									ItemDepleteHandler(iClientH, iSoxH, FALSE);
-								}
-							}
-						}
-
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-						break;
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMCANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemType,
+				          m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cName,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSprite,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+				
+				_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
+				break;
+			} else 
+			{
+				iValue += 2;
+				if (iValue > 15) iValue = 15;
+				dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+				dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+				_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
 			}
 			break;
+		
+		default:
 
-	case 3: // ÃˆÂ° 
+			// v2.16 2002-5-21 °í±¤Çö¼öÁ¤
+			// °í´ëÀÇ~ Á¢µÎ»ç°¡ ºÙ´Â ¹«±â´Â ¾÷±×·¹ÀÌµå ºÒ°¡´É
+			if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) != NULL) {
+				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) >> 20;  
+				if (dwSWEType == 9) {
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
+					return;
+				}
+			}
+			// ÀÏ¹İ ¹«±â ¾ÆÀÌÅÛ
+			// v2.16 2002-5-21 °í±¤Çö¼öÁ¤
+			iSoX = iSoM = 0;
+			for (i = 0; i < DEF_MAXITEMS; i++)
+			if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
+				switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
+				case 656: iSoX++; iSoxH = i; break; // ½ºÅæ ¿Àºê Á¦¸®¸¶ 
+				case 657: iSoM++; iSomH = i; break; // ½ºÅæ ¿Àºê ¸Ş¸®¿£ 
+				}
+			}
+			// ½ºÅæ ¿Àºê Á¦¸®¸¶°¡ ÀÖ´Ù.
+			if (iSoX > 0) {
+				if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
+					// ¾÷±×·¹ÀÌµå ½ÇÆĞ 
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+					// ½ÇÆĞÇÑ ¾ÆÀÌÅÛ ¾ø¾Ø´Ù.
+					iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
+					if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 ´Ü°è¿¡¼­ ½ÇÆĞÇÏ¸é »ç¶óÁü 
+					// ½ºÅæ ¿Àºê Á¦¸®¸¶ ¾ø¾Ø´Ù.
+					ItemDepleteHandler(iClientH, iSoxH, FALSE);	
+					return;
+				}
+
+				if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00000001) != NULL) {
+					// Á¦ÀÛµÈ ¹«±â ¾÷±×·¹ÀÌµå ÃÖ´ë +10
+					iValue++;
+					if (iValue > 10) 
+						iValue = 10;
+					else {
+						// ¾÷±×·¹ÀÌµå ¼º°ø. ¾ÆÀÌÅÛ Æ¯¼º ¹Ù²Ù°í
+						dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+						dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â	
+						// ½ºÅæ ¿Àºê Á¦¸®¸¶ ¾ø¾Ø´Ù.
+						ItemDepleteHandler(iClientH, iSoxH, FALSE);
+					}
+				}
+				else {
+					// ÀÏ¹İ ¹«±â ¾÷±×·¹ÀÌµå ÃÖ´ë +7
+					iValue++;
+					if (iValue > 7) 
+						iValue = 7;
+					else {
+						// ¾÷±×·¹ÀÌµå ¼º°ø. ¾ÆÀÌÅÛ Æ¯¼º ¹Ù²Ù°í
+						dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+						dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â	
+						// ½ºÅæ ¿Àºê Á¦¸®¸¶ ¾ø¾Ø´Ù.
+						ItemDepleteHandler(iClientH, iSoxH, FALSE);
+					}
+				}
+			}
+			
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+			break;
+		}
+		break;
+
+	case 3: // È° 
 		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
 		break;
 
-	case 5: // Â¹Ã¦Ã†Ã
-		// Â¸Ã°ÂµÃ Ã€ÃÂ¹Ã Â¾Ã†Ã€ÃŒÃ…Ã›
-		// v2.16 2002-5-21 Â°Ã­Â±Â¤Ã‡Ã¶Â¼Ã¶ÃÂ¤
-		// Â°Â­ÃˆÂ­ÂµÃˆ~ ÃÂ¢ÂµÃÂ»Ã§Â°Â¡ ÂºÃ™Â´Ã‚ Â¹Ã¦Â¾Ã®Â±Â¸Â´Ã‚ Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰
+	case 5: // ¹æÆĞ
+		// ¸ğµÎ ÀÏ¹İ ¾ÆÀÌÅÛ
+		// v2.16 2002-5-21 °í±¤Çö¼öÁ¤
+		// °­È­µÈ~ Á¢µÎ»ç°¡ ºÙ´Â ¹æ¾î±¸´Â ¾÷±×·¹ÀÌµå ºÒ°¡´É
 		if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) != NULL) {
 			dwSWEType  = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) >> 20;  
 			if (dwSWEType == 8) {
-				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã”Â´ÃÂ´Ã™.
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
 				return;
 			}
 		}
 		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
-			case 620: // Â¸ÃÂ¸Â®Â¿Â£-Â½Ã‡ÂµÃ¥
-			case 623: // GM-Â½Ã‡ÂµÃ¥
-				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã”Â´ÃÂ´Ã™.
+			case 620: // ¸Ş¸®¿£-½Çµå
+			case 623: // GM-½Çµå
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
 				return;
 			default: break;
 		}
@@ -18860,309 +19149,309 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 
 		iSoX = iSoM = 0;
 		for (i = 0; i < DEF_MAXITEMS; i++)
-			if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
-				switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
-					case 656: iSoX++; iSoxH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ 
-					case 657: iSoM++; iSomH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ 
+		if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
+			switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
+			case 656: iSoX++; iSoxH = i; break; // ½ºÅæ ¿Àºê Á¦¸®¸¶ 
+			case 657: iSoM++; iSomH = i; break; // ½ºÅæ ¿Àºê ¸Ş¸®¿£ 
+			}
+		}
+		
+		// ½ºÅæ ¿Àºê ¸Ş¸®¿£ÀÌ ÀÖ´Ù.			
+		if (iSoM > 0) {
+			// ¾÷±×·¹ÀÌµå ¼º°ø È®·ü °è»ê.
+			if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSomH,TRUE) == FALSE) {
+				// ¾÷±×·¹ÀÌµå ½ÇÆĞ 
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+				iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
+				if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 ´Ü°è¿¡¼­ ½ÇÆĞÇÏ¸é »ç¶óÁü 
+				// ½ºÅæ ¿Àºê ¸Ş¸®¿£ ¾ø¾Ø´Ù.
+				ItemDepleteHandler(iClientH, iSomH, FALSE);	
+				return;
+			}
+			
+			// ¾÷±×·¹ÀÌµå ¼º°ø!
+			iValue++;
+			if (iValue > 10) 
+				iValue = 10; // ¾÷±×·¹ÀÌµå ÇÑ°è 
+			else {
+				dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+				dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â	
+
+				if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00000001) != NULL) {
+					// Á¦ÀÛ ¹æ¾î±¸ ÀÌ¹Ç·Î ¼ö¸í +20%
+					dV1 = (double)m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
+					dV2 = 0.2f * dV1;
+					dV3 = dV1 + dV2;
+				}
+				else {
+					// ÀÏ¹İ ¹æ¾î±¸ ÀÌ¹Ç·Î ¼ö¸í +15%
+					dV1 = (double)m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
+					dV2 = 0.15f * dV1;
+					dV3 = dV1 + dV2;
+				}
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 = (short)dV3;
+				// ¿¡·¯ ¹æÁö¿ë ÄÚµå 
+				if (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 < 0) 
+					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
+
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1;
+				// ½ºÅæ ¿Àºê ¸Ş¸®¿£ ¾ø¾Ø´Ù.
+				ItemDepleteHandler(iClientH, iSomH, FALSE);	
+			}
+		}
+		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2);
+		break;
+
+	case 6: // ¹æ¾î±¸ 
+		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
+		case 621: // ¸Ş¸®¿£-ÇÃ·¹ÀÌÆ®¸ŞÀÏM
+		case 622: // ¸Ş¸®¿£-ÇÃ·¹ÀÌÆ®¸ŞÀÏW
+
+		case 700: // »ó¾îÀÇ È£¹öÅ©
+		case 701: // »ó¾îÀÇÇ®-Çï¸§ 
+		case 702: // »ó¾îÀÇ·¹±ë½º 
+		case 704: // »ó¾îÀÇ ÇÃ·¹ÀÌÆ® ¸ŞÀÏ 
+		case 706: // Èæ±â»çÀÇ...
+		case 707:
+		case 708:
+		case 710:
+		case 711: // Èæ¸¶¹ı»çÀÇ È£¹öÅ©
+		case 712: // Ã¼ÀÎ¸ŞÀÏ
+		case 713: // ·¹±ë½º 
+		case 724: // Èæ¿©±â»çÀÇ...
+		case 725:
+		case 726:
+		case 728:
+		case 729: // Èæ¿©¸¶¹ı»çÀÇ...
+		case 730:
+		case 731:
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
+			return;
+			
+		default:
+			// ¸ğµÎ ÀÏ¹İ ¾ÆÀÌÅÛ
+			// v2.16 2002-5-21 °í±¤Çö¼öÁ¤
+			// °­È­µÈ~ Á¢µÎ»ç°¡ ºÙ´Â ¹æ¾î±¸´Â ¾÷±×·¹ÀÌµå ºÒ°¡´É
+			if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) != NULL) {
+				dwSWEType  = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) >> 20;  
+				if (dwSWEType == 8) {
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
+					return;
 				}
 			}
-
-			// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£Ã€ÃŒ Ã€Ã–Â´Ã™.			
+			iSoX = iSoM = 0;
+			for (i = 0; i < DEF_MAXITEMS; i++)
+			if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
+				switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
+				case 656: iSoX++; iSoxH = i; break; // ½ºÅæ ¿Àºê Á¦¸®¸¶ 
+				case 657: iSoM++; iSomH = i; break; // ½ºÅæ ¿Àºê ¸Ş¸®¿£ 
+				}
+			}
+			
+			// ½ºÅæ ¿Àºê ¸Ş¸®¿£ÀÌ ÀÖ´Ù.			
 			if (iSoM > 0) {
-				// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸ ÃˆÂ®Â·Ã¼ Â°Ã¨Â»Ãª.
+				// ¾÷±×·¹ÀÌµå ¼º°ø È®·ü °è»ê.
 				if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSomH,TRUE) == FALSE) {
-					// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â½Ã‡Ã†Ã 
+					// ¾÷±×·¹ÀÌµå ½ÇÆĞ 
 					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
 					iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
-					if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 Â´ÃœÂ°Ã¨Â¿Â¡Â¼Â­ Â½Ã‡Ã†ÃÃ‡ÃÂ¸Ã© Â»Ã§Â¶Ã³ÃÃ¼ 
-					// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ Â¾Ã¸Â¾Ã˜Â´Ã™.
+					if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 ´Ü°è¿¡¼­ ½ÇÆĞÇÏ¸é »ç¶óÁü 
+					// ½ºÅæ ¿Àºê ¸Ş¸®¿£ ¾ø¾Ø´Ù.
 					ItemDepleteHandler(iClientH, iSomH, FALSE);	
 					return;
 				}
-
-				// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸!
+					
+				// ¾÷±×·¹ÀÌµå ¼º°ø!
 				iValue++;
 				if (iValue > 10) 
-					iValue = 10; // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Ã‡Ã‘Â°Ã¨ 
+					iValue = 10; // ¾÷±×·¹ÀÌµå ÇÑ°è 
 				else {
 					dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-					dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚	
-
+					dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â	
+						
 					if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00000001) != NULL) {
-						// ÃÂ¦Ã€Ã› Â¹Ã¦Â¾Ã®Â±Â¸ Ã€ÃŒÂ¹Ã‡Â·Ã Â¼Ã¶Â¸Ã­ +20%
+						// Á¦ÀÛ ¹æ¾î±¸ ÀÌ¹Ç·Î ¼ö¸í +20%
 						dV1 = (double)m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
 						dV2 = 0.2f * dV1;
 						dV3 = dV1 + dV2;
 					}
 					else {
-						// Ã€ÃÂ¹Ã Â¹Ã¦Â¾Ã®Â±Â¸ Ã€ÃŒÂ¹Ã‡Â·Ã Â¼Ã¶Â¸Ã­ +15%
+						// ÀÏ¹İ ¹æ¾î±¸ ÀÌ¹Ç·Î ¼ö¸í +15%
 						dV1 = (double)m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
 						dV2 = 0.15f * dV1;
 						dV3 = dV1 + dV2;
 					}
 					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 = (short)dV3;
-					// Â¿Â¡Â·Â¯ Â¹Ã¦ÃÃ¶Â¿Ã« Ã„ÃšÂµÃ¥ 
+					// ¿¡·¯ ¹æÁö¿ë ÄÚµå 
 					if (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 < 0) 
 						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
-
+					
 					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1;
-					// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ Â¾Ã¸Â¾Ã˜Â´Ã™.
+					// ½ºÅæ ¿Àºê ¸Ş¸®¿£ ¾ø¾Ø´Ù.
 					ItemDepleteHandler(iClientH, iSomH, FALSE);	
-				}
+					}
 			}
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2);
 			break;
-
-	case 6: // Â¹Ã¦Â¾Ã®Â±Â¸ 
-		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
-			case 621: // Â¸ÃÂ¸Â®Â¿Â£-Ã‡ÃƒÂ·Â¹Ã€ÃŒÃ†Â®Â¸ÃÃ€ÃM
-			case 622: // Â¸ÃÂ¸Â®Â¿Â£-Ã‡ÃƒÂ·Â¹Ã€ÃŒÃ†Â®Â¸ÃÃ€ÃW
-
-			case 700: // Â»Ã³Â¾Ã®Ã€Ã‡ ÃˆÂ£Â¹Ã¶Ã…Â©
-			case 701: // Â»Ã³Â¾Ã®Ã€Ã‡Ã‡Â®-Ã‡Ã¯Â¸Â§ 
-			case 702: // Â»Ã³Â¾Ã®Ã€Ã‡Â·Â¹Â±Ã«Â½Âº 
-			case 704: // Â»Ã³Â¾Ã®Ã€Ã‡ Ã‡ÃƒÂ·Â¹Ã€ÃŒÃ†Â® Â¸ÃÃ€Ã 
-			case 706: // ÃˆÃ¦Â±Ã¢Â»Ã§Ã€Ã‡...
-			case 707:
-			case 708:
-			case 710:
-			case 711: // ÃˆÃ¦Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡ ÃˆÂ£Â¹Ã¶Ã…Â©
-			case 712: // ÃƒÂ¼Ã€ÃÂ¸ÃÃ€Ã
-			case 713: // Â·Â¹Â±Ã«Â½Âº 
-			case 724: // ÃˆÃ¦Â¿Â©Â±Ã¢Â»Ã§Ã€Ã‡...
-			case 725:
-			case 726:
-			case 728:
-			case 729: // ÃˆÃ¦Â¿Â©Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡...
-			case 730:
-			case 731:
-				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã”Â´ÃÂ´Ã™.
-				return;
-
-			default:
-				// Â¸Ã°ÂµÃ Ã€ÃÂ¹Ã Â¾Ã†Ã€ÃŒÃ…Ã›
-				// v2.16 2002-5-21 Â°Ã­Â±Â¤Ã‡Ã¶Â¼Ã¶ÃÂ¤
-				// Â°Â­ÃˆÂ­ÂµÃˆ~ ÃÂ¢ÂµÃÂ»Ã§Â°Â¡ ÂºÃ™Â´Ã‚ Â¹Ã¦Â¾Ã®Â±Â¸Â´Ã‚ Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰
-				if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) != NULL) {
-					dwSWEType  = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00F00000) >> 20;  
-					if (dwSWEType == 8) {
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã”Â´ÃÂ´Ã™.
-						return;
-					}
-				}
-				iSoX = iSoM = 0;
-				for (i = 0; i < DEF_MAXITEMS; i++)
-					if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
-						switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
-							case 656: iSoX++; iSoxH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ 
-							case 657: iSoM++; iSomH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ 
-						}
-					}
-
-					// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£Ã€ÃŒ Ã€Ã–Â´Ã™.			
-					if (iSoM > 0) {
-						// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸ ÃˆÂ®Â·Ã¼ Â°Ã¨Â»Ãª.
-						if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSomH,TRUE) == FALSE) {
-							// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â½Ã‡Ã†Ã 
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-							iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
-							if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 Â´ÃœÂ°Ã¨Â¿Â¡Â¼Â­ Â½Ã‡Ã†ÃÃ‡ÃÂ¸Ã© Â»Ã§Â¶Ã³ÃÃ¼ 
-							// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ Â¾Ã¸Â¾Ã˜Â´Ã™.
-							ItemDepleteHandler(iClientH, iSomH, FALSE);	
-							return;
-						}
-
-						// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸!
-						iValue++;
-						if (iValue > 10) 
-							iValue = 10; // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Ã‡Ã‘Â°Ã¨ 
-						else {
-							dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-							dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚	
-
-							if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0x00000001) != NULL) {
-								// ÃÂ¦Ã€Ã› Â¹Ã¦Â¾Ã®Â±Â¸ Ã€ÃŒÂ¹Ã‡Â·Ã Â¼Ã¶Â¸Ã­ +20%
-								dV1 = (double)m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
-								dV2 = 0.2f * dV1;
-								dV3 = dV1 + dV2;
-							}
-							else {
-								// Ã€ÃÂ¹Ã Â¹Ã¦Â¾Ã®Â±Â¸ Ã€ÃŒÂ¹Ã‡Â·Ã Â¼Ã¶Â¸Ã­ +15%
-								dV1 = (double)m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
-								dV2 = 0.15f * dV1;
-								dV3 = dV1 + dV2;
-							}
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 = (short)dV3;
-							// Â¿Â¡Â·Â¯ Â¹Ã¦ÃÃ¶Â¿Ã« Ã„ÃšÂµÃ¥ 
-							if (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 < 0) 
-								m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1 = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan;
-
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wMaxLifeSpan = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1;
-							// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ Â¾Ã¸Â¾Ã˜Â´Ã™.
-							ItemDepleteHandler(iClientH, iSomH, FALSE);	
-						}
-					}
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue1, NULL, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2);
-					break;
 		}
 		break;
 
-	case 8: // ÃÃ¶Ã†ÃÃ€ÃŒ 
+	case 8: // ÁöÆÎÀÌ 
 		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
-			case 291: // Â¸Ã…ÃÃ·Â¿Ã¸ÂµÃ¥(LLF)
+		case 291: // ¸ÅÁ÷¿øµå(LLF)
 
-			case 714: // ÃˆÃ¦Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡ ÃÃ¶Ã†ÃÃ€ÃŒ 
-			case 732: // ÃˆÃ¦Â¿Â©Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡ ÃÃ¶Ã†ÃÃ€ÃŒ
-			case 738: // ÃˆÃ¦Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡ Â¸Ã…ÃÃ·Â¿Ã¸ÂµÃ¥
+		case 714: // Èæ¸¶¹ı»çÀÇ ÁöÆÎÀÌ 
+		case 732: // Èæ¿©¸¶¹ı»çÀÇ ÁöÆÎÀÌ
+		case 738: // Èæ¸¶¹ı»çÀÇ ¸ÅÁ÷¿øµå
 
-				if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 != m_pClientList[iClientH]->m_sCharIDnum1) ||
-					(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 != m_pClientList[iClientH]->m_sCharIDnum2) ||
-					(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 != m_pClientList[iClientH]->m_sCharIDnum3))
-				{
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂºÃ’Â°Â¡Â´Ã‰Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã”Â´ÃÂ´Ã™.
-					return; 
-				}
+			if ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 != m_pClientList[iClientH]->m_sCharIDnum1) ||
+			(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 != m_pClientList[iClientH]->m_sCharIDnum2) ||
+			(m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 != m_pClientList[iClientH]->m_sCharIDnum3))
+			{
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 2, NULL, NULL, NULL); // ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ºÒ°¡´ÉÇÑ ¾ÆÀÌÅÛÀÔ´Ï´Ù.
+				return; 
+			}
 
-				if (m_pClientList[iClientH]->m_iGizonItemUpgradeLeft <= 0)
-				{ 
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // Ã‡ÃŠÂ¿Ã¤Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼Ã¶Ã„Â¡Â°Â¡ Â¾Ã¸Â½Ã€Â´ÃÂ´Ã™.
-					return; 
-				}
-				// Â¾Ã†Ã€ÃŒÃ…Ã› Â·Â¹ÂºÂ§Â¾Ã·Ã€ÃŒ Â³Ã´Â¾Ã†ÃÃºÂ¼Ã¶Â·Ã Â¾Ã†Ã€ÃŒÃ…Ã› Â·Â¹ÂºÂ§Â¾Ã·Ã‡ÃÂ±Ã¢Â°Â¡ Â¾Ã®Â·Ã†Â´Ã™.
-				// v2.15 ÃÃ¶ÃÂ¸ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â°Ã¸Â½Ã„ x(x+6)/8 +2 
-				sItemUpgrade = (iValue*(iValue+6)/8) + 2 ;
+			if (m_pClientList[iClientH]->m_iGizonItemUpgradeLeft <= 0)
+			{ 
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // ÇÊ¿äÇÑ ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ¼öÄ¡°¡ ¾ø½À´Ï´Ù.
+				return; 
+			}
+			// ¾ÆÀÌÅÛ ·¹º§¾÷ÀÌ ³ô¾ÆÁú¼ö·Ï ¾ÆÀÌÅÛ ·¹º§¾÷ÇÏ±â°¡ ¾î·Æ´Ù.
+			// v2.15 ÁöÁ¸ ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå °ø½Ä x(x+6)/8 +2 
+			sItemUpgrade = (iValue*(iValue+6)/8) + 2 ;
 
-				if ((m_pClientList[iClientH]->m_iGizonItemUpgradeLeft - sItemUpgrade ) < 0) 
-				{ 
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // Ã‡ÃŠÂ¿Ã¤Ã‡Ã‘ Â¾Ã†Ã€ÃŒÃ…Ã› Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼Ã¶Ã„Â¡Â°Â¡ Â¾Ã¸Â½Ã€Â´ÃÂ´Ã™.
-					return; 
-				}
+			if ((m_pClientList[iClientH]->m_iGizonItemUpgradeLeft - sItemUpgrade ) < 0) 
+			{ 
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL); // ÇÊ¿äÇÑ ¾ÆÀÌÅÛ ¾÷±×·¹ÀÌµå ¼öÄ¡°¡ ¾ø½À´Ï´Ù.
+				return; 
+			}
 
-				m_pClientList[iClientH]->m_iGizonItemUpgradeLeft -= sItemUpgrade; 
-				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMUPGRADELEFT, m_pClientList[iClientH]->m_iGizonItemUpgradeLeft, NULL, NULL, NULL);
+			m_pClientList[iClientH]->m_iGizonItemUpgradeLeft -= sItemUpgrade; 
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMUPGRADELEFT, m_pClientList[iClientH]->m_iGizonItemUpgradeLeft, NULL, NULL, NULL);
 
-				if (iValue == 0 ){
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
-				}
+			if (iValue == 0 ){
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
+			}
 
-				if( (iValue == 4) && ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 714) || (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 732))) 
-				{
-					iItemX = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x ;
-					iItemY = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y ;
+			if( (iValue == 4) && ((m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 714) || (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum == 732))) 
+			{
+				iItemX = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x ;
+				iItemY = m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y ;
 
-					// Â±Ã¢ÃÂ¸Ã€Ã‡ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Â» Â»Ã¨ÃÂ¦Ã‡Ã‘Â´Ã™.
-					delete m_pClientList[iClientH]->m_pItemList[iItemIndex];
-					m_pClientList[iClientH]->m_pItemList[iItemIndex] = NULL;
+				// ±âÁ¸ÀÇ ¾ÆÀÌÅÛÀ» »èÁ¦ÇÑ´Ù.
+				delete m_pClientList[iClientH]->m_pItemList[iItemIndex];
+				m_pClientList[iClientH]->m_pItemList[iItemIndex] = NULL;
 
-					m_pClientList[iClientH]->m_pItemList[iItemIndex] = new class CItem;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex] = new class CItem;
 
-					m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x = iItemX ;
-					m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y = iItemY ;
+				m_pClientList[iClientH]->m_ItemPosList[iItemIndex].x = iItemX ;
+				m_pClientList[iClientH]->m_ItemPosList[iItemIndex].y = iItemY ;
 
-					if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , "ÃˆÃ¦Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡Â¸Ã…ÃÃ·Â¿Ã¸ÂµÃ¥") == FALSE) {
-						// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Ã‡ÃÂ°Ã­Ã€Ãš Ã‡ÃÂ´Ã‚ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã› Â¸Â®Â½ÂºÃ†Â®Â»Ã³Â¿Â¡ Â¾Ã¸Â´Ã™. Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥Â°Â¡ ÂºÃ’Â°Â¡Â´Ã‰Ã‡ÃÂ´Ã™.
-						SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-						return;
-					}
-
-					// Â¾Ã†Ã€ÃŒÃ…Ã›Â¿Â¡ Â»Ã§Â¿Ã«Ã€Ãš Â°Ã­Ã€Â¯ Â¹Ã¸ÃˆÂ£Â¸Â¦ Ã€Ã”Â·Ã‚Ã‡Ã‘Â´Ã™. Â´Ã™Â¸Â¥ Ã„Â³Â¸Â¯Ã…ÃÂ´Ã‚ Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Â» Â»Ã§Â¿Ã«Ã‡Ã’ Â¼Ã¶Â°Â¡ Â¾Ã¸Â´Ã™.
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
-
-					iValue += 2;
-					if (iValue > 15) iValue = 15;
-					dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-					dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚
-
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMCANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemType,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cName,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSprite,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
-						m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
-					_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
-					break;
-
-
-				} else
-				{
-					iValue += 2;
-					if (iValue > 15) iValue = 15; 
-					dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-					dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚
+				if (_bInitItemAttr(m_pClientList[iClientH]->m_pItemList[iItemIndex] , "Èæ¸¶¹ı»çÀÇ¸ÅÁ÷¿øµå") == FALSE) {
+					// ¾÷±×·¹ÀÌµå ÇÏ°íÀÚ ÇÏ´Â ¾ÆÀÌÅÛÀÌ ¾ÆÀÌÅÛ ¸®½ºÆ®»ó¿¡ ¾ø´Ù. ¾÷±×·¹ÀÌµå°¡ ºÒ°¡´ÉÇÏ´Ù.
 					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-					_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
-					break;
+					return;
 				}
+		
+				// ¾ÆÀÌÅÛ¿¡ »ç¿ëÀÚ °íÀ¯ ¹øÈ£¸¦ ÀÔ·ÂÇÑ´Ù. ´Ù¸¥ Ä³¸¯ÅÍ´Â ÀÌ ¾ÆÀÌÅÛÀ» »ç¿ëÇÒ ¼ö°¡ ¾ø´Ù.
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectType = DEF_ITET_UNIQUE_OWNER;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue1 = m_pClientList[iClientH]->m_sCharIDnum1;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue2 = m_pClientList[iClientH]->m_sCharIDnum2;
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sTouchEffectValue3 = m_pClientList[iClientH]->m_sCharIDnum3;
 
-			default:
-				// Ã€ÃÂ¹Ã Â¾Ã†Ã€ÃŒÃ…Ã›
-				// v2.16 2002-5-21 Â°Ã­Â±Â¤Ã‡Ã¶Â¼Ã¶ÃÂ¤
-				iSoX = iSoM = 0;
-				for (i = 0; i < DEF_MAXITEMS; i++)
-					if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
-						switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
-							case 656: iSoX++; iSoxH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ 
-							case 657: iSoM++; iSomH = i; break; // Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â¸ÃÂ¸Â®Â¿Â£ 
-						}
-					}
-					// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶Â°Â¡ Ã€Ã–Â´Ã™.
-					if (iSoX > 0) {
-						// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸ ÃˆÂ®Â·Ã¼ Â°Ã¨Â»Ãª.
-						if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
-							// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â½Ã‡Ã†Ã 
-							SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-							iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
-							if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 Â´ÃœÂ°Ã¨Â¿Â¡Â¼Â­ Â½Ã‡Ã†ÃÃ‡ÃÂ¸Ã© Â»Ã§Â¶Ã³ÃÃ¼ 
-							// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ Â¾Ã¸Â¾Ã˜Â´Ã™.
-							ItemDepleteHandler(iClientH, iSoxH, FALSE);	
-							return;
-						}
+				iValue += 2;
+				if (iValue > 15) iValue = 15;
+				dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+				dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â
 
-						iValue++;
-						if (iValue > 7) 
-							iValue = 7;
-						else {
-							// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ Â¼ÂºÂ°Ã¸. Â¾Ã†Ã€ÃŒÃ…Ã› Ã†Â¯Â¼Âº Â¹Ã™Â²Ã™Â°Ã­
-							dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
-							dwTemp = dwTemp & 0x0FFFFFFF; // ÂºÃ±Ã†Â® Ã…Â¬Â¸Â®Â¾Ã® 
-							m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ÂµÃˆ ÂºÃ±Ã†Â®Â°Âª Ã€Ã”Â·Ã‚	
-							// Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª ÃÂ¦Â¸Â®Â¸Â¶ Â¾Ã¸Â¾Ã˜Â´Ã™.
-							ItemDepleteHandler(iClientH, iSoxH, FALSE);
-						}
-					}
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_GIZONITEMCANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemType,
+				          m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_wCurLifeSpan, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cName,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSprite,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sSpriteFrame,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_cItemColor,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sItemSpecEffectValue2,
+						  m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute ) ;
+				_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
+				break;
 
-					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
 
-					break;
-		}
-		break;
-
-		/*	case 13: // Â·ÃÂºÃª
-		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
-		case 715: // ÃˆÃ¦Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡ Â·ÃÂºÃª 
-		case 733: // ÃˆÃ¦Â¿Â©Â¸Â¶Â¹Ã½Â»Ã§Ã€Ã‡ Â·ÃÂºÃª
-		if (m_pClientList[iClientH]->m_iGizonItemUpgradeLeft <= 0) return;
-		break;
+			} else
+			{
+				iValue += 2;
+				if (iValue > 15) iValue = 15; 
+				dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+				dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+				m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â
+				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+				_bItemLog(DEF_ITEMLOG_UPGRADESUCCESS, iClientH, (int) -1, m_pClientList[iClientH]->m_pItemList[iItemIndex]);
+				break;
+			}
 
 		default:
-		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
-		break;
+			// ÀÏ¹İ ¾ÆÀÌÅÛ
+			// v2.16 2002-5-21 °í±¤Çö¼öÁ¤
+			iSoX = iSoM = 0;
+			for (i = 0; i < DEF_MAXITEMS; i++)
+			if (m_pClientList[iClientH]->m_pItemList[i] != NULL) {
+				switch (m_pClientList[iClientH]->m_pItemList[i]->m_sIDnum) {
+				case 656: iSoX++; iSoxH = i; break; // ½ºÅæ ¿Àºê Á¦¸®¸¶ 
+				case 657: iSoM++; iSomH = i; break; // ½ºÅæ ¿Àºê ¸Ş¸®¿£ 
+				}
+			}
+			// ½ºÅæ ¿Àºê Á¦¸®¸¶°¡ ÀÖ´Ù.
+			if (iSoX > 0) {
+				// ¾÷±×·¹ÀÌµå ¼º°ø È®·ü °è»ê.
+				if (bCheckIsItemUpgradeSuccess(iClientH, iItemIndex, iSoxH) == FALSE) {
+					// ¾÷±×·¹ÀÌµå ½ÇÆĞ 
+					SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+					iValue = (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute & 0xF0000000) >> 28; // v2.172
+					if (iValue >= 1) ItemDepleteHandler(iClientH, iItemIndex, FALSE); // v2.172 +1 -> +2 ´Ü°è¿¡¼­ ½ÇÆĞÇÏ¸é »ç¶óÁü 
+					// ½ºÅæ ¿Àºê Á¦¸®¸¶ ¾ø¾Ø´Ù.
+					ItemDepleteHandler(iClientH, iSoxH, FALSE);	
+					return;
+				}
+				
+				iValue++;
+				if (iValue > 7) 
+					iValue = 7;
+				else {
+					// ¾÷±×·¹ÀÌµå ¼º°ø. ¾ÆÀÌÅÛ Æ¯¼º ¹Ù²Ù°í
+					dwTemp = m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute;
+					dwTemp = dwTemp & 0x0FFFFFFF; // ºñÆ® Å¬¸®¾î 
+					m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute = dwTemp | (iValue << 28); // ¾÷±×·¹ÀÌµåµÈ ºñÆ®°ª ÀÔ·Â	
+					// ½ºÅæ ¿Àºê Á¦¸®¸¶ ¾ø¾Ø´Ù.
+					ItemDepleteHandler(iClientH, iSoxH, FALSE);
+				}
+			}
+			
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+
+			break;
 		}
 		break;
-		*/
+
+/*	case 13: // ·Îºê
+		switch (m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_sIDnum) {
+		case 715: // Èæ¸¶¹ı»çÀÇ ·Îºê 
+		case 733: // Èæ¿©¸¶¹ı»çÀÇ ·Îºê
+			if (m_pClientList[iClientH]->m_iGizonItemUpgradeLeft <= 0) return;
+			break;
+
+		default:
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
+			break;
+		}
+		break;
+*/
 	default:
-		// Â¾Ã·Â±Ã—Â·Â¹Ã€ÃŒÂµÃ¥ ÂµÃˆ Â°Ã Â¾Ã¸Ã€Â½.
+		// ¾÷±×·¹ÀÌµå µÈ °Í ¾øÀ½.
 		SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_ITEMATTRIBUTECHANGE, iItemIndex, m_pClientList[iClientH]->m_pItemList[iItemIndex]->m_dwAttribute, NULL, NULL);
 		break;
 	}
@@ -19223,7 +19512,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 	char   * cp, cData[120], cDir, cOwnerType, cName[11], cItemName[21], cNpcWaypoint[11], cName_Master[11], cNpcName[21], cRemainItemColor;
 	double dV1, dV2, dV3, dV4;
 	int    i, iErr, iRet, ix, iy, iResult, iDiceRes, iNamingValue, iFollowersNum, iEraseReq, iWhetherBonus;
-	int    tX, tY, iManaCost, iMagicAttr;
+	int    tX, tY, iManaCost, iMagicAttr, iDamage;
 	class  CItem * pItem;
 	DWORD * dwp, dwTime = timeGetTime();
 	WORD  * wp, wWeaponType;
@@ -19271,8 +19560,6 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 	if (m_pClientList[iClientH]->m_sItemEquipmentStatus[ DEF_EQUIPPOS_RHAND ] != -1) {
 		wWeaponType = ((m_pClientList[iClientH]->m_sAppr2 & 0x0FF0) >> 4);		
 		if ((wWeaponType >= 34) && (wWeaponType <= 39)) {
-			// ÃƒÂÃƒÂ¶Ãƒâ€ ÃƒÅ½Ã‚Â·ÃƒÂ¹Ã‚Â´Ãƒâ€š Ã‚ÂµÃƒÂ©Ã‚Â°ÃƒÂ­ Ãƒâ‚¬Ãƒâ€“Ã‚Â¾ÃƒÂ®Ã‚ÂµÃ‚Âµ Ã‚Â¸Ã‚Â¶Ã‚Â¹ÃƒÂ½Ãƒâ‚¬Ã‚Â» Ã‚Â»ÃƒÂ§Ã‚Â¿ÃƒÂ«Ãƒâ€¡Ãƒâ€™ Ã‚Â¼ÃƒÂ¶ Ãƒâ‚¬Ãƒâ€“Ã‚Â´Ãƒâ„¢.
-			// v2.16 2002-5-27 Ãƒâ€¡ÃƒËœÃ‚Â¸Ãƒâ€œÃ‚Â·ÃƒÂ¹Ã‚Â·ÃƒÅ½ ÃƒÆ’ÃƒÅ¸Ã‚Â°Ã‚Â¡Ã‚Â·ÃƒÅ½ Ã‚Â³Ã‚Â»Ã‚Â¿ÃƒÂ« Ã‚ÂºÃ‚Â¯Ã‚Â°ÃƒÂ¦ 
 		}
 		else return;
 	}
@@ -19367,7 +19654,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 			// Ã‚Â¾ÃƒË†Ãƒâ‚¬ÃƒÂ¼Ã‚Â¸ÃƒÂ°Ã‚ÂµÃƒÂ¥Ãƒâ‚¬Ãƒâ€¡ Ã‚Â°ÃƒÂ¦Ã‚Â¿ÃƒÂ¬ Ã‚Â¸Ã‚Â¶Ã‚Â³Ã‚Âª Ã‚Â¼Ãƒâ€™Ã‚ÂºÃƒÂ±Ã‚Â·Ã‚Â® 40%ÃƒÂÃƒÂµÃ‚Â°Ã‚Â¡. Ã‚Â´ÃƒÅ“ Ã‚Â»ÃƒÂ§Ãƒâ€¦ÃƒÂµÃƒâ‚¬ÃƒÂ¥Ã‚Â¿Ã‚Â¡Ã‚Â¼Ã‚Â­Ã‚Â´Ãƒâ€š Ãƒâ€¡ÃƒËœÃ‚Â´ÃƒÂ§Ã‚Â¾ÃƒÂ¸Ãƒâ‚¬Ã‚Â½
 			iManaCost += (iManaCost / 2) - (iManaCost / 10);
 		}
-
+		
 		if (m_pClientList[iClientH]->m_iManaSaveRatio > 0) {
 			// Ã‚Â¸Ã‚Â¶Ã‚Â³Ã‚Âª Ãƒâ‚¬ÃƒÂ½Ã‚Â°Ã‚Â¨ Ã‚Â°Ã‚ÂªÃƒâ‚¬ÃƒÅ’ Ã‚Â¾ÃƒÂ§Ã‚Â¼ÃƒÂ¶Ã‚Â¸ÃƒÂ© Ã‚Â±Ãƒâ€” Ã‚Â¸Ã‚Â¸Ãƒâ€¦Ã‚Â­ Ã‚Â¸Ã‚Â¶Ã‚Â³Ã‚ÂªÃ‚Â¼Ãƒâ€™Ã‚ÂºÃƒÂ±Ã‚Â°Ã‚Â¡ ÃƒÂÃƒâ„¢Ã‚Â¾ÃƒÂ®Ã‚ÂµÃƒÂ§Ã‚Â´Ãƒâ„¢.
 			dV1 = (double)m_pClientList[iClientH]->m_iManaSaveRatio;
@@ -19376,9 +19663,15 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 			dV1 = dV2 * dV3; // Ãƒâ‚¬ÃƒÅ’ Ã‚Â°Ã‚ÂªÃƒâ‚¬ÃƒÅ’ Ãƒâ‚¬ÃƒÂ½Ã‚Â¾ÃƒÂ Ã‚ÂµÃƒâ€¡Ã‚Â´Ãƒâ€š Ã‚Â°Ã‚Âª 
 			dV2 = dV3 - dV1; 
 			iManaCost = (int)dV2;
+	
 			// ÃƒÆ’Ãƒâ€“Ã‚Â¼Ãƒâ€™ 1Ãƒâ‚¬Ã‚Âº Ãƒâ€¡ÃƒÅ Ã‚Â¿ÃƒÂ¤Ãƒâ€¡ÃƒÂÃ‚Â´Ãƒâ„¢. 
 			if (iManaCost <= 0) iManaCost = 1;
+			
+			wWeaponType = ((m_pClientList[iClientH]->m_sAppr2 & 0x0FF0) >> 4);
+				if (wWeaponType == 34)
+				iManaCost += 20;
 		}
+	
 
 		if (iResult < 100) {
 			// ÃƒÂÃƒâ€“Ã‚Â»ÃƒÂ§Ãƒâ‚¬Ã‚Â§Ã‚Â¸Ã‚Â¦ Ã‚Â±Ã‚Â¼Ã‚Â¸Ã‚Â° Ã‚Â°Ã‚ÂªÃƒâ‚¬ÃƒÅ’ iResultÃ‚ÂºÃ‚Â¸Ã‚Â´Ãƒâ„¢ Ã‚Â°Ã‚Â°Ã‚Â°Ãƒâ€¦Ã‚Â³Ã‚Âª Ãƒâ‚¬Ãƒâ€ºÃƒâ‚¬Ã‚Â¸Ã‚Â¸ÃƒÂ© Ã‚Â¼Ã‚ÂºÃ‚Â°ÃƒÂ¸ 
@@ -19494,7 +19787,7 @@ void CGame::PlayerMagicHandler(int iClientH, int dX, int dY, short sType, BOOL b
 				// 05/20/2004 - Hypnotoad - Cancellation
 				case DEF_MAGICTYPE_CANCELLATION:
 					m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
-					if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) && (m_pClientList[sOwnerH]->m_iHP > 0) && (m_pClientList[iClientH]->m_iAdminUserLevel < 1) ) {
+					if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) && (m_pClientList[sOwnerH]->m_iHP > 0) && (m_pClientList[cOwnerType]->m_iAdminUserLevel == 0)) {
 
 						// Removes Invisibility Flag 0x0010
 						SetInvisibilityFlag(sOwnerH, cOwnerType, FALSE);
@@ -21735,7 +22028,363 @@ MAGIC_NOEFFECT:;
 
 }
 
+
 void CGame::NpcMagicHandler(int iNpcH, short dX, short dY, short sType)
+{
+ short  sOwnerH;
+ char   cOwnerType;
+ register int i, iErr, ix, iy, sX, sY, tX, tY, iResult, iWhetherBonus, iMagicAttr;
+ DWORD  dwTime = timeGetTime();
+
+	if (m_pNpcList[iNpcH] == NULL) return;
+	if ((dX < 0) || (dX >= m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->m_sSizeX) ||
+        (dY < 0) || (dY >= m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->m_sSizeY)) return;
+									   
+	if ((sType < 0) || (sType >= 100))     return;
+	if (m_pMagicConfigList[sType] == NULL) return;
+	
+	// °ø°İÀ§Ä¡°¡ °ø°İ ºÒ°¡´É ¸ÊÀÌ¶ó¸é °ø°İ ºÒ°¡´É 
+	if (m_pMapList[ m_pNpcList[iNpcH]->m_cMapIndex ]->m_bIsAttackEnabled == FALSE) return;
+	
+	// ¸ó½ºÅÍ º° ¸¶¹ı ¸íÁß·ü ÀÔ·Â 
+	iResult = m_pNpcList[iNpcH]->m_iMagicHitRatio;
+	
+	// ³¯¾¾¿¡ ÀÇÇÑ ¸¶¹ı °ø°İ·Â Á¶Á¤  
+	iWhetherBonus = iGetWhetherMagicBonusEffect(sType, m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->m_cWhetherStatus);
+
+	// v1.41 ¸¶¹ı ¼Ó¼º 
+	iMagicAttr = m_pMagicConfigList[sType]->m_iAttribute;
+
+	if (m_pMagicConfigList[sType]->m_dwDelayTime == 0) {
+		// Áï½Ã È¿°ú¸¦ º¸´Â ¸¶¹ı 
+		switch (m_pMagicConfigList[sType]->m_sType) {
+		case DEF_MAGICTYPE_INVISIBILITY:
+			switch (m_pMagicConfigList[sType]->m_sValue4) {
+			case 1:
+				// º¸ÀÌÁö ¾Ê´Â »óÅÂ·Î ¸¸µç´Ù. 
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+
+				switch (cOwnerType) {
+				case DEF_OWNERTYPE_PLAYER:
+					if (m_pClientList[sOwnerH] == NULL) goto NMH_NOEFFECT;
+					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] != 0) goto NMH_NOEFFECT;
+					m_pClientList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] = (char)m_pMagicConfigList[sType]->m_sValue4;
+					SetInvisibilityFlag(sOwnerH, cOwnerType, TRUE);
+					// ÀÌ Ä³¸¯ÅÍ¸¦ ÃßÀûÇÏ°í ÀÖ´ø ¸ó½ºÅÍ¸¦ ÇØÁ¦½ÃÅ²´Ù.
+					RemoveFromTarget(sOwnerH, DEF_OWNERTYPE_PLAYER);
+					break;
+
+				case DEF_OWNERTYPE_NPC:
+					if (m_pNpcList[sOwnerH] == NULL) goto NMH_NOEFFECT;
+					if (m_pNpcList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] != 0) goto NMH_NOEFFECT;
+					m_pNpcList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] = (char)m_pMagicConfigList[sType]->m_sValue4;
+					SetInvisibilityFlag(sOwnerH, cOwnerType, TRUE);
+					// ÀÌ NPC¸¦ ÃßÀûÇÏ°í ÀÖ´ø ¸ó½ºÅÍ¸¦ ÇØÁ¦½ÃÅ²´Ù.
+					RemoveFromTarget(sOwnerH, DEF_OWNERTYPE_NPC);
+					break;
+				}
+			
+				// È¿°ú°¡ ÇØÁ¦µÉ ¶§ ¹ß»ıÇÒ µô·¹ÀÌ ÀÌº¥Æ®¸¦ µî·ÏÇÑ´Ù.
+				bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_INVISIBILITY, dwTime + (m_pMagicConfigList[sType]->m_dwLastTime*1000), 
+					                sOwnerH, cOwnerType, NULL, NULL, NULL, m_pMagicConfigList[sType]->m_sValue4, NULL, NULL);
+
+				if (cOwnerType == DEF_OWNERTYPE_PLAYER)
+					SendNotifyMsg(NULL, sOwnerH, DEF_NOTIFY_MAGICEFFECTON, DEF_MAGICTYPE_INVISIBILITY, m_pMagicConfigList[sType]->m_sValue4, NULL, NULL);
+				break;
+
+			case 2:
+				// dX, dY ¹İ°æ 8 ÁÖº¯ÀÇ Invisibility »óÅÂÀÎ Object°¡ ÀÖÀ¸¸é ÇØÁ¦ ½ÃÅ²´Ù.
+				for (ix = dX - 8; ix <= dX + 8; ix++)
+				for (iy = dY - 8; iy <= dY + 8; iy++) {
+					m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, ix, iy);
+					if (sOwnerH != NULL) {
+						switch (cOwnerType) {
+						case DEF_OWNERTYPE_PLAYER:
+							if (m_pClientList[sOwnerH] == NULL) goto NMH_NOEFFECT;
+							if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] != NULL) {
+								m_pClientList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] = NULL;
+								SetInvisibilityFlag(sOwnerH, cOwnerType, FALSE);
+								bRemoveFromDelayEventList(sOwnerH, cOwnerType, DEF_MAGICTYPE_INVISIBILITY);
+							}
+							break;
+
+						case DEF_OWNERTYPE_NPC:
+							if (m_pNpcList[sOwnerH] == NULL) goto NMH_NOEFFECT;
+							if (m_pNpcList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] != NULL) {
+								m_pNpcList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_INVISIBILITY ] = NULL;
+								SetInvisibilityFlag(sOwnerH, cOwnerType, FALSE);
+								bRemoveFromDelayEventList(sOwnerH, cOwnerType, DEF_MAGICTYPE_INVISIBILITY);
+							}
+							break;
+						}
+					}
+				}
+				break;
+			}
+			break;
+
+		case DEF_MAGICTYPE_HOLDOBJECT:
+			// ¿ÀºêÁ§Æ®ÀÇ ¿òÁ÷ÀÓÀ» ºÀ¼âÇÑ´Ù. 
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE) {
+				
+				switch (cOwnerType) {
+				case DEF_OWNERTYPE_PLAYER:
+					if (m_pClientList[sOwnerH] == NULL) goto NMH_NOEFFECT;
+					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] != 0) goto NMH_NOEFFECT;
+					if (m_pClientList[sOwnerH]->m_iAddPR >= 500) goto NMH_NOEFFECT;
+					m_pClientList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] = (char)m_pMagicConfigList[sType]->m_sValue4;
+					break;
+					
+				case DEF_OWNERTYPE_NPC:
+					if (m_pNpcList[sOwnerH] == NULL) goto NMH_NOEFFECT;
+					if (m_pNpcList[sOwnerH]->m_cMagicLevel >= 6) goto NMH_NOEFFECT; // v1.4 ¸¶¹ı ·¹º§ 6ÀÌ»óÀÎ ¸®Ä¡±Ş ÀÌ»óÀÇ ¸¶¹ı ¸ó½ºÅÍ¿¡°Ô´Â ¸¶ºñ ¸¶¹ı ÅëÇÏÁö ¾Ê´Â´Ù.
+					if (m_pNpcList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] != 0) goto NMH_NOEFFECT;
+					m_pNpcList[sOwnerH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] = (char)m_pMagicConfigList[sType]->m_sValue4;
+					break;
+				}
+				
+				// ºÀ¼â È¿°ú°¡ ÇØÁ¦µÉ ¶§ ¹ß»ıÇÒ µô·¹ÀÌ ÀÌº¥Æ®¸¦ µî·ÏÇÑ´Ù.
+				bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_HOLDOBJECT, dwTime + (m_pMagicConfigList[sType]->m_dwLastTime*1000), 
+					sOwnerH, cOwnerType, NULL, NULL, NULL, m_pMagicConfigList[sType]->m_sValue4, NULL, NULL);
+				
+				// È¿°ú°¡ »ı°åÀ½À» ¾Ë·ÁÁØ´Ù.
+				if (cOwnerType == DEF_OWNERTYPE_PLAYER)
+					SendNotifyMsg(NULL, sOwnerH, DEF_NOTIFY_MAGICEFFECTON, DEF_MAGICTYPE_HOLDOBJECT, m_pMagicConfigList[sType]->m_sValue4, NULL, NULL);
+			}
+			break;
+		
+		
+		case DEF_MAGICTYPE_DAMAGE_LINEAR:
+			// ÀÏÁ÷¼± »ó¿¡ ÀÖ´Â ¸ñÇ¥¸¦ ¸ğµÎ °ø°İÇÑ´Ù.
+			sX = m_pNpcList[iNpcH]->m_sX;
+			sY = m_pNpcList[iNpcH]->m_sY;
+
+			for (i = 2; i < 10; i++) {
+				iErr = 0;
+				m_Misc.GetPoint2(sX, sY, dX, dY, &tX, &tY, &iErr, i);
+			
+				// tx, ty
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, tX, tY);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+			
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, tX, tY);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 		 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+				}
+
+				// tx-1, ty
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, tX-1, tY);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+			
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, tX-1, tY);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 		 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+				}
+
+				// tx+1, ty
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, tX+1, tY);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+			
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, tX+1, tY);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 		 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+				}
+
+				// tx, ty-1
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, tX, tY-1);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+			
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, tX, tY-1);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 		 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+				}
+
+				// tx, ty+1
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, tX, tY+1);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+			
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, tX, tY+1);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 		 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+				}
+
+				if ( (abs(tX - dX) <= 1) && (abs(tY - dY) <= 1)) break;
+			}
+
+			// ÁÖº¯ °ø°İ È¿°ú 
+			for (iy = dY - m_pMagicConfigList[sType]->m_sValue3; iy <= dY + m_pMagicConfigList[sType]->m_sValue3; iy++)
+			for (ix = dX - m_pMagicConfigList[sType]->m_sValue2; ix <= dX + m_pMagicConfigList[sType]->m_sValue2; ix++) {
+				// ÀÚ½Åµµ ÇÇÆøµÉ ¼ö ÀÖÀ¸´Ï ÁÖÀÇ.
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, ix, iy);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, ix, iy);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 	     (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+				}
+			}
+
+			// dX, dY
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+				Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6 + iWhetherBonus, FALSE, iMagicAttr);
+			
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+				 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+				// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6 + iWhetherBonus, FALSE, iMagicAttr);
+			}
+			break;
+		
+		case DEF_MAGICTYPE_DAMAGE_SPOT:
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+				Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6 + iWhetherBonus, TRUE, iMagicAttr);
+			
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 	 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+				// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+				Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6 + iWhetherBonus, TRUE, iMagicAttr);
+			}
+			break;
+
+		case DEF_MAGICTYPE_HPUP_SPOT:
+			// ÀÌ ¸¶¹ıÀº ¸íÁß·ü°ú´Â »ó°üÀÌ ¾ø´Ù.
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+			Effect_HpUp_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6);
+			break;
+
+		case DEF_MAGICTYPE_DAMAGE_AREA:
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+				Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6 + iWhetherBonus, TRUE, iMagicAttr);
+			
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 	 (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+				// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+				Effect_Damage_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6 + iWhetherBonus, TRUE, iMagicAttr);
+			}
+			
+			// ÁÖº¯ °ø°İ È¿°ú 
+			for (iy = dY - m_pMagicConfigList[sType]->m_sValue3; iy <= dY + m_pMagicConfigList[sType]->m_sValue3; iy++)
+			for (ix = dX - m_pMagicConfigList[sType]->m_sValue2; ix <= dX + m_pMagicConfigList[sType]->m_sValue2; ix++) {
+				// ÀÚ½Åµµ ÇÇÆøµÉ ¼ö ÀÖÀ¸´Ï ÁÖÀÇ.
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, ix, iy);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot_DamageMove(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, dX, dY, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, ix, iy);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 	     (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot_DamageMove(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, dX, dY, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+			   	}
+			}
+			break;
+
+		case DEF_MAGICTYPE_DAMAGE_AREA_NOSPOT:
+			// Á÷°İÀº °è»êÇÏÁö ¾Ê´Â´Ù.			
+			// ÁÖº¯ °ø°İ È¿°ú 
+			for (iy = dY - m_pMagicConfigList[sType]->m_sValue3; iy <= dY + m_pMagicConfigList[sType]->m_sValue3; iy++)
+			for (ix = dX - m_pMagicConfigList[sType]->m_sValue2; ix <= dX + m_pMagicConfigList[sType]->m_sValue2; ix++) {
+				// ÀÚ½Åµµ ÇÇÆøµÉ ¼ö ÀÖÀ¸´Ï ÁÖÀÇ.
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, ix, iy);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_Damage_Spot_DamageMove(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, dX, dY, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetDeadOwner(&sOwnerH, &cOwnerType, ix, iy);
+				if ( (cOwnerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sOwnerH] != NULL) &&
+			 	     (m_pClientList[sOwnerH]->m_iHP > 0) ) {
+					// Á×Àº Ã´ÇÏ°í ÀÖ´Â ÇÃ·¹ÀÌ¾î´Ù.
+					if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+						Effect_Damage_Spot_DamageMove(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, dX, dY, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9 + iWhetherBonus, FALSE, iMagicAttr);
+			   	}
+			}
+			break;
+
+		case DEF_MAGICTYPE_SPDOWN_AREA:
+			// Sp°¡ ÁÙ¾îµç´Ù.
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+			if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+				Effect_SpDown_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6);
+			// ÁÖº¯ °ø°İ È¿°ú 
+			for (iy = dY - m_pMagicConfigList[sType]->m_sValue3; iy <= dY + m_pMagicConfigList[sType]->m_sValue3; iy++)
+			for (ix = dX - m_pMagicConfigList[sType]->m_sValue2; ix <= dX + m_pMagicConfigList[sType]->m_sValue2; ix++) {
+				// ÀÚ½Åµµ ÇÇÆøµÉ ¼ö ÀÖÀ¸´Ï ÁÖÀÇ.
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, ix, iy);
+				if (bCheckResistingMagicSuccess(m_pNpcList[iNpcH]->m_cDir, sOwnerH, cOwnerType, iResult) == FALSE)
+					Effect_SpDown_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9);
+			}
+			break;
+
+		case DEF_MAGICTYPE_SPUP_AREA:
+			// Sp°¡ »ó½ÂÇÑ´Ù.
+			m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+			// ¸¶¹ı ÀúÇ×ÀÌ ÇÊ¿ä¾ø´Ù. 
+			Effect_SpUp_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue4, m_pMagicConfigList[sType]->m_sValue5, m_pMagicConfigList[sType]->m_sValue6);
+			// ÁÖº¯ °ø°İ È¿°ú 
+			for (iy = dY - m_pMagicConfigList[sType]->m_sValue3; iy <= dY + m_pMagicConfigList[sType]->m_sValue3; iy++)
+			for (ix = dX - m_pMagicConfigList[sType]->m_sValue2; ix <= dX + m_pMagicConfigList[sType]->m_sValue2; ix++) {
+				// ÀÚ½Åµµ ÇÇÆøµÉ ¼ö ÀÖÀ¸´Ï ÁÖÀÇ.
+				m_pMapList[m_pNpcList[iNpcH]->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, ix, iy);
+				// ¸¶¹ıÀúÇ×ÀÌ ÇÊ¿ä ¾ø´Ù.
+				Effect_SpUp_Spot(iNpcH, DEF_OWNERTYPE_NPC, sOwnerH, cOwnerType, m_pMagicConfigList[sType]->m_sValue7, m_pMagicConfigList[sType]->m_sValue8, m_pMagicConfigList[sType]->m_sValue9);
+			}
+			break;
+
+		}
+	}
+	else {
+		// Casting ÈÄ µô·¹ÀÌ°¡ °É¸®´Â ¸¶¹ı
+
+	}
+
+NMH_NOEFFECT:;
+
+	// Mana¸¦ °¨¼Ò½ÃÅ²´Ù.
+	m_pNpcList[iNpcH]->m_iMana -= m_pMagicConfigList[sType]->m_sValue1; // sValue1ÀÌ Mana Cost
+	if (m_pNpcList[iNpcH]->m_iMana < 0) 
+		m_pNpcList[iNpcH]->m_iMana = 0;
+
+	// ¸¶¹ı È¿°ú¸¦ ´Ù¸¥ Å¬¶óÀÌ¾ğÆ®¿¡°Ô Àü¼ÛÇÑ´Ù. ¸¶¹ı¹øÈ£ + 100ÀÌ ¿¡ÆåÆ® ¹øÈ£ 
+	SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_MAGIC, m_pNpcList[iNpcH]->m_cMapIndex,
+					            m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, dX, dY, (sType+100), m_pNpcList[iNpcH]->m_sType);
+
+}
+
+/* void CGame::NpcMagicHandler(int iNpcH, short dX, short dY, short sType)
 {
 	short  sOwnerH;
 	char   cOwnerType;
@@ -22088,9 +22737,8 @@ NMH_NOEFFECT:;
 	SendEventToNearClient_TypeB(MSGID_EVENT_COMMON, DEF_COMMONTYPE_MAGIC, m_pNpcList[iNpcH]->m_cMapIndex,
 		m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, dX, dY, (sType+100), m_pNpcList[iNpcH]->m_sType);
 
-}
+}*/
 
-// 05/22/2004 - Hypnotoad - sends client to proper location after recall
 void CGame::RequestTeleportHandler(int iClientH, char * pData, char * cMapName, int dX, int dY)
 {
 	char  * pBuffer, cTempMapName[21];
@@ -23292,14 +23940,14 @@ void CGame::TrainSkillResponse(BOOL bSuccess, int iClientH, int iSkillNum, int i
 	if ((iSkillLevel < 0) || (iSkillLevel > 100)) return;
 	
 	if (bSuccess == TRUE) {
-		// Ã€ÃŒÂ¹ÃŒ Â±Ã¢Â¼ÃºÃ€Â» Ã€ÃÃˆÃ¹ Â»Ã³Ã…Ã‚Â¶Ã³Â¸Ã© Â¼Ã’Â¿Ã«Ã€ÃŒ Â¾Ã¸Â´Ã™.
+		// ÀÌ¹Ì ±â¼úÀ» ÀÍÈù »óÅÂ¶ó¸é ¼Ò¿ëÀÌ ¾ø´Ù.
 		if (m_pClientList[iClientH]->m_cSkillMastery[iSkillNum] != 0) return;
 		
 		m_pClientList[iClientH]->m_cSkillMastery[iSkillNum] = iSkillLevel;
-		// Â±Ã¢Â¼Ãº ÃƒÃ‘ Ã‡Ã•Ã€Â» Ã€Ã§ Â°Ã¨Â»ÃªÃ‡Ã‘Â´Ã™.
+		// ±â¼ú ÃÑ ÇÕÀ» Àç °è»êÇÑ´Ù.
 		bCheckTotalSkillMasteryPoints(iClientH, iSkillNum);
 
-		// Â±Ã¢Â¼ÃºÃ€Â» Â¹Ã¨Â¿Ã¼Â´Ã™Â´Ã‚ Â¸ÃÂ½ÃƒÃÃ¶Â¸Â¦ Ã€Ã¼Â¼Ã›Ã‡Ã‘Â´Ã™.
+		// ±â¼úÀ» ¹è¿ü´Ù´Â ¸Ş½ÃÁö¸¦ Àü¼ÛÇÑ´Ù.
 		dwp  = (DWORD *)(cData + DEF_INDEX4_MSGID);
 		*dwp = MSGID_NOTIFY;
 		wp   = (WORD *)(cData + DEF_INDEX2_MSGTYPE);
@@ -23307,26 +23955,119 @@ void CGame::TrainSkillResponse(BOOL bSuccess, int iClientH, int iSkillNum, int i
 		
 		cp = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
 		
-		// Â±Ã¢Â¼ÃºÂ¹Ã¸ÃˆÂ£
+		// ±â¼ú¹øÈ£
 		*cp = iSkillNum;
 		cp++;
 		
-		// Â±Ã¢Â¼Ãº Â·Â¹ÂºÂ§ .
+		// ±â¼ú ·¹º§ .
 		*cp = iSkillLevel;
 		cp++;
 	 
-		// ÃÂ¤ÂºÂ¸ Ã€Ã¼Â¼Ã› 
+#ifdef DEF_TAIWANLOG
+		if (m_pSkillConfigList[iSkillNum]->m_cName != NULL) 
+			_bItemLog(DEF_ITEMLOG_SKILLLEARN,iClientH,m_pSkillConfigList[iSkillNum]->m_cName,NULL) ;
+#endif
+
+		// Á¤º¸ Àü¼Û 
 		iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 8);
 		switch (iRet) {
 		case DEF_XSOCKEVENT_QUENEFULL:
 		case DEF_XSOCKEVENT_SOCKETERROR:
 		case DEF_XSOCKEVENT_CRITICALERROR:
 		case DEF_XSOCKEVENT_SOCKETCLOSED:
-			// Â¸ÃÂ½ÃƒÃÃ¶Â¸Â¦ ÂºÂ¸Â³Â¾Â¶Â§ Â¿Â¡Â·Â¯Â°Â¡ Â¹ÃŸÂ»Ã½Ã‡ÃŸÂ´Ã™Â¸Ã© ÃÂ¦Â°Ã…Ã‡Ã‘Â´Ã™.
+			// ¸Ş½ÃÁö¸¦ º¸³¾¶§ ¿¡·¯°¡ ¹ß»ıÇß´Ù¸é Á¦°ÅÇÑ´Ù.
 			DeleteClient(iClientH, TRUE, TRUE);
 			return;
 		}
 	}
+	else {
+
+
+	}
+
+	/*
+	// ±â¼úÀ» ¹è¿î´Ù. 
+	ZeroMemory(cData, sizeof(cData));	
+
+	ZeroMemory(cSkillName, sizeof(cSkillName));
+	memcpy(cSkillName, pName, 20);
+	
+	iRet = _iGetSkillNumber(cSkillName);
+	if (iRet == 0) {
+		// ÀÌ·± ÀÌ¸§ÀÇ ±â¼úÀº Á¸ÀçÇÏÁö ¾Ê´Â´Ù.
+
+	}
+	else {
+		// Å¬¶óÀÌ¾ğÆ®°¡ iRet¹øÂ° ±â¼úÀÇ ¸î·¹º§À» ¹è¿ì´Â Áö, ¹è¿ì±â¿¡ ÃæºĞÇÑ ´É·ÂÄ¡¸¦ °®°í ÀÖ´ÂÁö °Ë»çÇÑ´Ù. 
+		
+		if (1) {
+			// @@ Test¿ëÀ¸·Î ÀÏ´Ü ¹«Á¶°Ç »ç¿ëÀÌ °¡´ÉÇÏ°Ô ¸¸µç´Ù. 
+			m_pClientList[iClientH]->m_cSkillMastery[iRet]++;
+	
+			// ±â¼úÀ» ¹è¿ü´Ù´Â ¸Ş½ÃÁö¸¦ Àü¼ÛÇÑ´Ù.
+			dwp  = (DWORD *)(cData + DEF_INDEX4_MSGID);
+			*dwp = MSGID_NOTIFY;
+			wp   = (WORD *)(cData + DEF_INDEX2_MSGTYPE);
+			*wp  = DEF_NOTIFY_SKILLTRAINSUCCESS;
+
+			cp = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
+			// ±â¼ú ·¹º§ .
+			*cp = m_pClientList[iClientH]->m_cSkillMastery[iRet];
+			cp++;
+
+			// ±â¼ú¹øÈ£
+			*cp = iRet;
+			cp++;
+
+			memcpy(cp, cSkillName, 20);
+			cp += 20;
+
+			// Á¤º¸ Àü¼Û 
+			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 28);
+			switch (iRet) {
+			case DEF_XSOCKEVENT_QUENEFULL:
+			case DEF_XSOCKEVENT_SOCKETERROR:
+			case DEF_XSOCKEVENT_CRITICALERROR:
+			case DEF_XSOCKEVENT_SOCKETCLOSED:
+				// ¸Ş½ÃÁö¸¦ º¸³¾¶§ ¿¡·¯°¡ ¹ß»ıÇß´Ù¸é Á¦°ÅÇÑ´Ù.
+				DeleteClient(iClientH, TRUE, TRUE);
+				return;
+			}
+		}
+		else {
+			// Á¶°ÇÀÌ ¸¸Á·µÇÁö ¾Ê¾Æ ¸¶¹ıÀ» ¹è¿ï ¼ö ¾ø´Ù.
+			// ¸¶¹ıÀ» ¹è¿ï¼ö ¾ø¾ú´Ù´Â ¸Ş½ÃÁö¸¦ Àü¼ÛÇÑ´Ù.
+			dwp  = (DWORD *)(cData + DEF_INDEX4_MSGID);
+			*dwp = MSGID_NOTIFY;
+			wp   = (WORD *)(cData + DEF_INDEX2_MSGTYPE);
+			*wp  = DEF_NOTIFY_SKILLTRAINFAIL;
+
+			cp = (char *)(cData + DEF_INDEX2_MSGTYPE + 2);
+			// ½ÇÆĞÀÌÀ¯.
+			*cp = 1;
+			cp++;
+
+			// ±â¼ú¹øÈ£
+			*cp = iRet;
+			cp++;
+
+			memcpy(cp, cSkillName, 20);
+			cp += 20;
+
+			// Á¤º¸ Àü¼Û 
+			iRet = m_pClientList[iClientH]->m_pXSock->iSendMsg(cData, 28);
+			switch (iRet) {
+			case DEF_XSOCKEVENT_QUENEFULL:
+			case DEF_XSOCKEVENT_SOCKETERROR:
+			case DEF_XSOCKEVENT_CRITICALERROR:
+			case DEF_XSOCKEVENT_SOCKETCLOSED:
+				// ¸Ş½ÃÁö¸¦ º¸³¾¶§ ¿¡·¯°¡ ¹ß»ıÇß´Ù¸é Á¦°ÅÇÑ´Ù.
+				DeleteClient(iClientH, TRUE, TRUE);
+				return;
+			}
+		}
+	}
+	*/
 }
 
 
@@ -26276,7 +27017,7 @@ void CGame::ApplyCombatKilledPenalty(int iClientH, char cPenaltyLevel, BOOL bIsS
 	}
 }
 
-
+// 05/29/2004 - Hypnotoad - Limits some items from not dropping
 void CGame::_PenaltyItemDrop(int iClientH, int iTotal, BOOL bIsSAattacked)
 {
  register int i, j, iRemainItem;
@@ -26286,13 +27027,39 @@ void CGame::_PenaltyItemDrop(int iClientH, int iTotal, BOOL bIsSAattacked)
 	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
 
 	if ((m_pClientList[iClientH]->m_iAlterItemDropIndex != -1) && (m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex] != NULL)) {
-		// Â´Ã«ÃƒÂ¼Ã€Ã»Ã€Â¸Â·Ã Â¶Â³Â¾Ã®ÃÃ¶Â´Ã‚ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€ÃŒ Ã€Ã–Â´Ã™Â¸Ã© Â´Ã™Â¸Â¥ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€ÃŒ Â¶Â³Â¾Ã®ÃÃ¶ÃÃ¶ Â¾ÃŠÂ°Ã­ Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã›Â¸Â¸ Â¶Â³Â¾Ã®ÃÃ¸Â´Ã™. 
-		if (m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_wCurLifeSpan > 0)
-			m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_wCurLifeSpan--;
+		// Testcode
+		if (m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ALTERITEMDROP) {
+			// v2.04 Â½ÂºÃ…Ã¦ Â¿Ã€ÂºÃª Â»ÃµÃ…Â©Â¸Â®Ã†Ã„Ã€ÃŒÂ½ÂºÂ°Â¡ Â¸Ã‚Â´Ã‚ÃÃ¶ ÃˆÂ®Ã€Ã
+			// Â´Ã«ÃƒÂ¼Ã€Ã»Ã€Â¸Â·Ã Â¶Â³Â¾Ã®ÃÃ¶Â´Ã‚ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€ÃŒ Ã€Ã–Â´Ã™Â¸Ã© Â´Ã™Â¸Â¥ Â¾Ã†Ã€ÃŒÃ…Ã›Ã€ÃŒ Â¶Â³Â¾Ã®ÃÃ¶ÃÃ¶ Â¾ÃŠÂ°Ã­ Ã€ÃŒ Â¾Ã†Ã€ÃŒÃ…Ã›Â¸Â¸ Â¶Â³Â¾Ã®ÃÃ¸Â´Ã™. 
+			if (m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_wCurLifeSpan > 0)
+				m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_wCurLifeSpan--;
 
-		DropItemHandler(iClientH, m_pClientList[iClientH]->m_iAlterItemDropIndex, -1, m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_cName);
+			DropItemHandler(iClientH, m_pClientList[iClientH]->m_iAlterItemDropIndex, -1, m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_cName);
+
+			m_pClientList[iClientH]->m_iAlterItemDropIndex = -1;
+		}
+		else {
+			// v2.04 testcode
+			PutLogFileList("Alter Drop Item Index Error1");
+			// Â´Ã™Â½Ãƒ Â°Ã‹Â»Ã¶ 
+			for (i = 0; i < DEF_MAXITEMS; i++) 
+			if ((m_pClientList[iClientH]->m_pItemList[i] != NULL) && (m_pClientList[iClientH]->m_pItemList[i]->m_sItemEffectType == DEF_ITEMEFFECTTYPE_ALTERITEMDROP)) {
+				m_pClientList[iClientH]->m_iAlterItemDropIndex = i;
+				if (m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_wCurLifeSpan > 0)
+					m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_wCurLifeSpan--;
+
+				DropItemHandler(iClientH, m_pClientList[iClientH]->m_iAlterItemDropIndex, -1, m_pClientList[iClientH]->m_pItemList[m_pClientList[iClientH]->m_iAlterItemDropIndex]->m_cName);	
+				m_pClientList[iClientH]->m_iAlterItemDropIndex = -1;
+				return;
+			}
+
+			// Â¿Ã€Â·Ã¹Â¹ÃŸÂ»Ã½! ÃˆÃ±Â»Ã½Â¼Â®Ã€ÃŒ Â¾Ã¸Â´Ã™. 
+			goto PID_DROP;
+		}
 		return;
 	}
+
+PID_DROP:;
 
 	for (i = 1; i <= iTotal; i++) {
 		iRemainItem = 0;
@@ -26588,7 +27355,134 @@ void CGame::CheckDynamicObjectList()
 	}
 }
 
+
 void CGame::CalculateSSN_ItemIndex(int iClientH, short sWeaponIndex, int iValue)
+{
+ short sSkillIndex;
+ int   iOldSSN, iSSNpoint, iWeaponIndex;
+
+	if (m_pClientList[iClientH] == NULL) return;
+	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
+	if (m_pClientList[iClientH]->m_pItemList[sWeaponIndex] == NULL) return;
+	if (m_pClientList[iClientH]->m_bIsKilled == TRUE) return;
+	
+	sSkillIndex = m_pClientList[iClientH]->m_pItemList[sWeaponIndex]->m_sRelatedSkill;
+	if ((sSkillIndex < 0) || (sSkillIndex >= DEF_MAXSKILLTYPE)) return;
+	if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] == 0) return;
+
+#ifdef DEF_TESTSERVER
+	iValue = iValue * 100;
+#endif
+
+	iOldSSN = m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex];
+	m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] += iValue;
+	
+	iSSNpoint = m_iSkillSSNpoint[ m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]+1 ];
+
+	if ( (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] < 100) &&
+		 (m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] > iSSNpoint) ) {
+		
+		m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]++; 
+		
+		switch (sSkillIndex) {
+		case 0:  // Mining
+		case 2:  // Farming
+		case 5:  // Hand-Attack
+		case 13: // Manufacturing
+			if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] > (m_pClientList[iClientH]->m_iStr * 2)) {
+				m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]--;
+				m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = iOldSSN;
+			}
+			else m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = 0;
+			break;
+
+		case 3: // Magic-Resistance
+			if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] > (m_pClientList[iClientH]->m_iLevel * 2)) {
+				m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]--;
+				m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = iOldSSN;
+			}
+			else m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = 0;
+			break;
+
+		case 4:  // Magic
+		case 21: // Staff-Attack
+			if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] > (m_pClientList[iClientH]->m_iMag * 2)) {
+				m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]--;
+				m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = iOldSSN;
+			}
+			else m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = 0;
+			break;
+
+		case 1:  // Fishing
+		case 6:  // Archery
+		case 7:  // Short-Sword
+		case 8:  // Long-Sword
+		case 9:  // Fencing 
+		case 10: // Axe-Attack
+		case 11: // Shield        	
+		case 14: // Hammer 
+			if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] > (m_pClientList[iClientH]->m_iDex * 2)) {
+				m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]--;
+				m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = iOldSSN;
+			}
+			else m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = 0;
+			break;
+
+		case 12: // Alchemy
+		case 15: // ÀÀ±ŞÃ³Ä¡
+		case 19: // Pretend-Corpse
+			if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] > (m_pClientList[iClientH]->m_iInt * 2)) {
+				m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]--;
+				m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = iOldSSN;
+			}
+			else m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = 0;
+			break;
+
+		case 23: // Poison-Resistance
+			if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] > (m_pClientList[iClientH]->m_iVit * 2)) {
+				m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]--;
+				m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = iOldSSN;
+			}
+			else m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = 0;
+			break;
+
+		default:
+			m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] = 0;
+			break;
+		}
+		
+		// ¸¸¾à ¹«±â¿Í °ü·ÃÀÖ´Â ½ºÅ³ÀÌ ¿Ã¶ú°í ÇöÀç ±× ¹«±â¸¦ »ç¿ë ÁßÀÌ¶ó¸é ÇöÀç ¸íÁß·ü¿¡ 1À» ´õÇÑ´Ù. 
+		if (m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] == 0) {
+			// Ä«¿îÆ®°¡ 0ÀÌ¸é ½ºÅ³ÀÌ Á¤»óÀûÀ¸·Î ¿Ã¶ú´Ù´Â ÀÇ¹Ì. 
+			if (m_pClientList[iClientH]->m_sItemEquipmentStatus[ DEF_EQUIPPOS_TWOHAND ] != -1) {
+				// ¾ç¼Õ¹«±â°¡ ÀåÂøµÇ¾î ÀÖ¾ú´Ù. 
+				iWeaponIndex = m_pClientList[iClientH]->m_sItemEquipmentStatus[ DEF_EQUIPPOS_TWOHAND ];
+				if (m_pClientList[iClientH]->m_pItemList[iWeaponIndex]->m_sRelatedSkill == sSkillIndex) {
+					// È°·ùÀÇ »ç¿ë¿¡ ÀÇÇÑ ½ºÅ³ÀÇ »ó½ÂÀÌ¾ú´Ù. ¸íÁß·üÀ» 1 ¿Ã¸°´Ù. 
+					m_pClientList[iClientH]->m_iHitRatio++;
+				}
+			}
+
+			if (m_pClientList[iClientH]->m_sItemEquipmentStatus[ DEF_EQUIPPOS_RHAND ] != -1) {
+				// ¹«±â°¡ ÀåÂøµÇ¾î ÀÖ¾ú´Ù. 
+				iWeaponIndex = m_pClientList[iClientH]->m_sItemEquipmentStatus[ DEF_EQUIPPOS_RHAND ];
+				if (m_pClientList[iClientH]->m_pItemList[iWeaponIndex]->m_sRelatedSkill == sSkillIndex) {
+					// °ËÀÌ³ª Mace·ùÀÇ »ç¿ë¿¡ ÀÇÇÑ ½ºÅ³ÀÇ »ó½ÂÀÌ¾ú´Ù. ¸íÁß·üÀ» 1 ¿Ã¸°´Ù. 
+					m_pClientList[iClientH]->m_iHitRatio++;
+				}
+			}
+		}
+	 		
+		if (m_pClientList[iClientH]->m_iSkillSSN[sSkillIndex] == 0) {
+			// SKillÀÇ ÃÑÇÕÀÌ 600À» ³ÑÀ¸¸é ´Ù¸¥ ½ºÅ³Áß ÇÏ³ª¸¦ 1 ³»¸°´Ù. 
+			bCheckTotalSkillMasteryPoints(iClientH, sSkillIndex);
+			// SkillÀÌ ¿Ã¶ú´Ù´Â °ÍÀ» Å¬¶óÀÌ¾ğÆ®¿¡°Ô ¾Ë·ÁÁØ´Ù.
+			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SKILL, sSkillIndex, m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex], NULL, NULL);
+		}
+	}
+}
+
+/*void CGame::CalculateSSN_ItemIndex(int iClientH, short sWeaponIndex, int iValue)
 {
  short sSkillIndex;
  int   iOldSSN, iSSNpoint, iWeaponIndex;
@@ -26660,6 +27554,7 @@ void CGame::CalculateSSN_ItemIndex(int iClientH, short sWeaponIndex, int iValue)
 		case 9:
 		case 10:
 		case 11:
+		case 14:
 			if (m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex] > (m_pClientList[iClientH]->m_iDex * 2)) {
 				// ÃÂ¦Ã‡Ã‘Ã„Â¡ÂºÂ¸Â´Ã™ Ã„Â¿ÃÂ³Â´Ã™. Â¹Â«ÃˆÂ¿Ã€ÃŒÂ¹Ã‡Â·Ã Ã€ÃŒÃ€Ã¼Â»Ã³Ã…Ã‚Â·Ã ÂµÃ‡ÂµÂ¹Â¸Â°Â´Ã™.
 				m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex]--;
@@ -26723,7 +27618,7 @@ void CGame::CalculateSSN_ItemIndex(int iClientH, short sWeaponIndex, int iValue)
 			SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_SKILL, sSkillIndex, m_pClientList[iClientH]->m_cSkillMastery[sSkillIndex], NULL, NULL);
 		}
 	}
-}
+}*/
 
 
 void CGame::CalculateSSN_SkillIndex(int iClientH, short sSkillIndex, int iValue)
@@ -28581,6 +29476,82 @@ void CGame::NpcBehavior_Stop(int iNpcH)
  short sTarget = NULL;
  BOOL  bFlag;
 
+	// STOPÇÑ NPC´Â ´ëÀåÀåÀÌ°°ÀÌ ÀüÇô ¿òÁ÷ÀÌÁö ¾ÊÀ¸¸ç °¡²û Á¦ÀÚ¸®¿¡¼­ ´Ù¸¥ µ¿ÀÛÀ» ÇÏ´Â °ÍµéÀÌ´Ù. 
+	// m_cActionLimit °¡ 2, 3, 5ÀÎ NPCµéÀÌ ÀÌ·± ¼Ó¼ºÀ» °®´Â´Ù. 
+	if (m_pNpcList[iNpcH] == NULL) return; 
+
+	// ÅÏ Ä«¿îÆ® Áõ°¡.
+	m_pNpcList[iNpcH]->m_sBehaviorTurnCount++;
+
+	switch (m_pNpcList[iNpcH]->m_cActionLimit) {
+	case 5:
+		
+		switch (m_pNpcList[iNpcH]->m_sType) {
+		case 38: // Mana Collector
+			if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount >= 3) {
+				m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
+				bFlag = _bNpcBehavior_ManaCollector(iNpcH);
+
+				if (bFlag == TRUE) {
+					// ¸¶³ª Ã¤Áı. °ø°İ µ¿ÀÛÀ¸·Î ¾Ë·Á¾ß ÇÑ´Ù.	
+					SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTATTACK, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, 1); 
+				}
+			}
+			break;
+
+		case 39: // Detector
+			if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount >= 3) {
+				m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
+				bFlag = _bNpcBehavior_Detector(iNpcH);
+				
+				if (bFlag == TRUE) {
+					// ÀûÀ» ¹ß°ßÇß´Ù. °ø°İ µ¿ÀÛÀ¸·Î ¾Ë·Á¾ß ÇÑ´Ù.	
+					SendEventToNearClient_TypeA(iNpcH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTATTACK, m_pNpcList[iNpcH]->m_sX, m_pNpcList[iNpcH]->m_sY, 1); 
+				}
+			}
+			break;
+
+		case 40: // Energy Shield Generator
+			break;
+
+		case 41: // Grand Magic Generator
+			if (m_pNpcList[iNpcH]->m_sBehaviorTurnCount >= 3) {
+				m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
+				_NpcBehavior_GrandMagicGenerator(iNpcH);
+			}
+			break;
+
+		case 42: // ManaStone: v2.05 Á¤±âÀûÀ¸·Î ¸¶³ª½ºÅæÀÇ ¿¡³ÊÁö¸¦ 5¾¿ »ı¼ºÇÑ´Ù.
+			m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;
+			m_pNpcList[iNpcH]->m_iV1 += 5;
+			if (m_pNpcList[iNpcH]->m_iV1 >= 5) m_pNpcList[iNpcH]->m_iV1 = 5;
+			break;
+
+		default: 
+			TargetSearch(iNpcH, &sTarget, &cTargetType);				
+			break;
+		}
+		break;
+	}
+	
+	if ((sTarget != NULL)) {
+
+		// °ø°İ¸ñÇ¥ ¹ß°ß. 
+		m_pNpcList[iNpcH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
+		m_pNpcList[iNpcH]->m_sBehaviorTurnCount = 0;		
+		m_pNpcList[iNpcH]->m_iTargetIndex = sTarget;
+		m_pNpcList[iNpcH]->m_cTargetType  = cTargetType;
+		// ¿©±â¼­ Ç¥È¿ µ¿ÀÛ°°Àº°ÍÀ» À§ÇÑ ¸Ş½ÃÁö ¹ß¼Û. 
+		return;
+	}
+}
+
+/*void CGame::NpcBehavior_Stop(int iNpcH)
+{
+ char  cTargetType;
+ short sTarget = NULL;
+ BOOL  bFlag;
+
 	// STOPÃ‡Ã‘ NPCÂ´Ã‚ Â´Ã«Ã€Ã¥Ã€Ã¥Ã€ÃŒÂ°Â°Ã€ÃŒ Ã€Ã¼Ã‡Ã´ Â¿Ã²ÃÃ·Ã€ÃŒÃÃ¶ Â¾ÃŠÃ€Â¸Â¸Ã§ Â°Â¡Â²Ã» ÃÂ¦Ã€ÃšÂ¸Â®Â¿Â¡Â¼Â­ Â´Ã™Â¸Â¥ ÂµÂ¿Ã€Ã›Ã€Â» Ã‡ÃÂ´Ã‚ Â°ÃÂµÃ©Ã€ÃŒÂ´Ã™. 
 	// m_cActionLimit Â°Â¡ 2, 3, 5Ã€Ã NPCÂµÃ©Ã€ÃŒ Ã€ÃŒÂ·Â± Â¼Ã“Â¼ÂºÃ€Â» Â°Â®Â´Ã‚Â´Ã™. 
 	if (m_pNpcList[iNpcH] == NULL) return; 
@@ -28646,7 +29617,7 @@ void CGame::NpcBehavior_Stop(int iNpcH)
 		// Â¿Â©Â±Ã¢Â¼Â­ Ã‡Â¥ÃˆÂ¿ ÂµÂ¿Ã€Ã›Â°Â°Ã€ÂºÂ°ÃÃ€Â» Ã€Â§Ã‡Ã‘ Â¸ÃÂ½ÃƒÃÃ¶ Â¹ÃŸÂ¼Ã›. 
 		return;
 	}
-}
+}*/
 
 void CGame::UseItemHandler(int iClientH, short sItemIndex, short dX, short dY, short sDestItemID)
 {
@@ -28683,13 +29654,23 @@ void CGame::UseItemHandler(int iClientH, short sItemIndex, short dX, short dY, s
 				
 		// Â¾Ã†Ã€ÃŒÃ…Ã›Ã€Ã‡ ÃˆÂ¿Â°ÃºÂ¿Â¡ Â¸Ã‚Â´Ã‚ ÃƒÂ³Â¸Â®Â¸Â¦ Ã‡Ã‘Â´Ã™. 
 		switch (m_pClientList[iClientH]->m_pItemList[sItemIndex]->m_sItemEffectType) {
-		case DEF_ITEMEFFECTTYPE_UNFREEZE:
-			if (m_pClientList[iClientH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_ICE ] != 0) {
+		case DEF_ITEMEFFECTTYPE_WARM: // v2.172 2002-7-5 ÇØµ¿ ½Ã¾à. 
+
+			// ³Ãµ¿ »óÅÂÀÎ °æ¿ì ÇØµ¿ µÇ¾ú´Ù´Â ¸Ş¼¼Áö¸¦ º¸³»ÁØ´Ù. 
+			if (m_pClientList[iClientH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_ICE ] == 1) {
+			//	SetIceFlag(iClientH, DEF_OWNERTYPE_PLAYER, FALSE);
+
 				bRemoveFromDelayEventList(iClientH, DEF_OWNERTYPE_PLAYER, DEF_MAGICTYPE_ICE);
-				bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_ICE, dwTime + 1000, iClientH,
-									DEF_OWNERTYPE_PLAYER, NULL, NULL, NULL, 1, NULL, NULL);
-				// Sets a variable here
+
+				// È¿°ú°¡ ÇØÁ¦µÉ ¶§ ¹ß»ıÇÒ µô·¹ÀÌ ÀÌº¥Æ®¸¦ µî·ÏÇÑ´Ù.
+				bRegisterDelayEvent(DEF_DELAYEVENTTYPE_MAGICRELEASE, DEF_MAGICTYPE_ICE, dwTime + (1*1000), 
+							                iClientH, DEF_OWNERTYPE_PLAYER, NULL, NULL, NULL, 1, NULL, NULL);
+
+								
+//				SendNotifyMsg(NULL, iClientH, DEF_NOTIFY_MAGICEFFECTOFF, DEF_MAGICTYPE_ICE, NULL, NULL, NULL);
 			}
+
+			m_pClientList[iClientH]->m_dwWarmEffectTime = dwTime;
 			break;
 
 		case DEF_ITEMEFFECTTYPE_LOTTERY:
@@ -29147,6 +30128,548 @@ void CGame::UseItemHandler(int iClientH, short sItemIndex, short dX, short dY, s
 		}
 	}
 }
+
+void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTargetH, char cTargetType, short sV1, short sV2, short sV3, BOOL bExp, int iAttr)
+{
+ int iPartyID, iDamage, iSideCondition, iIndex, iRemainLife, iTemp, iMaxSuperAttack;
+ char cAttackerSide, cDamageMoveDir;
+ DWORD dwTime;
+ register double dTmp1, dTmp2, dTmp3;
+ short sAtkX, sAtkY, sTgtX, sTgtY, dX, dY;
+
+	if (cAttackerType == DEF_OWNERTYPE_PLAYER)
+		if (m_pClientList[sAttackerH] == NULL) return;
+
+	if (cAttackerType == DEF_OWNERTYPE_NPC)
+		if (m_pNpcList[sAttackerH] == NULL) return;
+
+	//Check to make sure people cant hit civilians
+	if (cTargetType == DEF_OWNERTYPE_PLAYER && cAttackerType == DEF_OWNERTYPE_PLAYER){ //Filter Target Player, Only do PC and not NPC's
+		if (m_pClientList[sTargetH]->m_bIsPlayerCivil == TRUE) //Check if target to hit is a civilian
+			return;
+		//Check to make sure civilians cant hit players
+		if (m_pClientList[sAttackerH]->m_bIsPlayerCivil == TRUE) //Check if attacker is a civilian
+			return;
+		// New 20/05/2004
+		//Check to make sure u cant hit ur own party members
+		if (m_pClientList[sTargetH]->m_iPartyID != NULL && m_pClientList[sAttackerH]->m_iPartyID != NULL &&
+			m_pClientList[sAttackerH]->m_iPartyID == m_pClientList[sTargetH]->m_iPartyID)
+			return;
+	}
+	
+	dwTime = timeGetTime();
+	
+	// ÇØ´ç Å¸ÄÏ¿¡°Ô ´ë¹ÌÁö¸¦ ¸ÔÀÎ´Ù. 
+	iDamage = iDice(sV1, sV2) + sV3;
+	if (iDamage <= 0) iDamage = 0;
+
+	iPartyID = 0;
+
+	// °ø°İÀÚ°¡ ÇÃ·¹ÀÌ¾î¶ó¸é Mag¿¡ µû¸¥ º¸³Ê½º ´ë¹ÌÁö¸¦ °¡»ê 
+	switch (cAttackerType) {
+	case DEF_OWNERTYPE_PLAYER:
+		dTmp1 = (double)iDamage;
+		if (m_pClientList[sAttackerH]->m_iMag <= 0)
+			 dTmp2 = 1.0f;
+		else dTmp2 = (double)m_pClientList[sAttackerH]->m_iMag;
+			
+		dTmp2 = dTmp2 / 3.3f;
+		dTmp3 = dTmp1 + (dTmp1 * (dTmp2 / 100.0f));
+		iDamage = (int)(dTmp3 +0.5f);
+
+		// v1.432 2001 4 7 13 7
+		iDamage += m_pClientList[sAttackerH]->m_iAddMagicalDamage;
+
+		if (iDamage <= 0) iDamage = 0;
+
+		// v1.44 »çÅõÀåÀÌ¸é ´ë¹ÌÁö 1.33¹è 
+		if (m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex]->m_bIsFightZone == TRUE) 
+			iDamage += iDamage/3;
+
+		// Crusade : Àü¸éÀü ¸ğµåÀÏ¶§ ±ºÀÎ ´ëÀÎ °ø°İ·Â 1.33¹è 
+		if ((cTargetType == DEF_OWNERTYPE_PLAYER) && (m_bIsCrusadeMode == TRUE) && (m_pClientList[sAttackerH]->m_iCrusadeDuty == 1)) 
+		{
+			// v2.15 Àú·¦ÀÇ °æ¿ì´Â µ¥¹ÌÁö°¡ Áõ°¡ÇÑ´Ù. 1.7 ¹è 
+			if (m_pClientList[sAttackerH]->m_iLevel <= 80)
+			{
+				iDamage += (iDamage* 7)/10 ;
+			} // v2.15 Àú·¦ÀÇ °æ¿ì´Â µ¥¹ÌÁö°¡ Áõ°¡ÇÑ´Ù. 1.5 ¹è 
+			else if (m_pClientList[sAttackerH]->m_iLevel <= 100)
+			{
+				iDamage += iDamage/2;
+
+			} else iDamage += iDamage/3;
+		}
+		 
+		cAttackerSide = m_pClientList[sAttackerH]->m_cSide;
+		sAtkX = m_pClientList[sAttackerH]->m_sX;
+		sAtkY = m_pClientList[sAttackerH]->m_sY;
+
+		iPartyID = m_pClientList[sAttackerH]->m_iPartyID;
+		break;
+
+	case DEF_OWNERTYPE_NPC:
+		cAttackerSide = m_pNpcList[sAttackerH]->m_cSide;
+		sAtkX = m_pNpcList[sAttackerH]->m_sX;
+		sAtkY = m_pNpcList[sAttackerH]->m_sY;
+		break;
+	}
+
+	switch (cTargetType) {
+	case DEF_OWNERTYPE_PLAYER:
+		// °ø°İ ´ë»óÀÌ Á¸ÀçÇÏÁö ¾ÊÀ¸¸é ¸®ÅÏ 
+		if (m_pClientList[sTargetH] == NULL) return;
+		if (m_pClientList[sTargetH]->m_bIsInitComplete == FALSE) return;
+		// ÀÌ¹Ì Á×¾î ÀÖ´Ù¸é Ã³¸® ¾ÈÇÔ.
+		if (m_pClientList[sTargetH]->m_bIsKilled == TRUE) return;
+
+#ifdef DEF_SAMESIDETOWNPROTECT
+		// v2.172 °°ÀºÆí³¢¸®´Â ¸¶À»¿¡¼­ °ø°İ´çÇÏÁö ¾Ê´Â´Ù. ¹üÁËÀÚ¿Í NPC´Â ¿¹¿Ü Áß¸³µµ °ø°İ ¾ÊµÇ°Ô 
+		if ((m_pClientList[sTargetH]->m_iPKCount == 0) && (cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sTargetH]->m_cSide == cAttackerSide) && (m_pClientList[sTargetH]->m_bIsOnTown == TRUE)) return ;
+#endif 		
+#ifdef DEF_BEGINNERTOWNPROTECT
+		if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sTargetH]->m_bIsNeutral == TRUE) && (m_pClientList[sTargetH]->m_iPKCount == 0) && (m_pClientList[sTargetH]->m_bIsOnTown == TRUE)) return;
+#endif
+		// ·¢À¸·Î ÀÎÇØ º¸È£¸¦ ¹Ş¾Æ¾ß ÇÑ´Ù¸é 
+		if ((dwTime - m_pClientList[sTargetH]->m_dwTime) > DEF_RAGPROTECTIONTIME) return;
+		// °ø°İÀÚ°¡ À§Ä¡ÇÑ ¸ÊÀÌ °ø°İ ºÒ°¡´É ¸ÊÀÌ¶ó¸é 
+		if (m_pMapList[ m_pClientList[sTargetH]->m_cMapIndex ]->m_bIsAttackEnabled == FALSE) return;
+		// v1.41 °ø°İÀÚ°¡ Áß¸³ÀÌ¸é ´ëÀÎ °ø°İÀÌ ºÒ°¡´ÉÇÏ´Ù. 
+		if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH]->m_bIsNeutral == TRUE) && (m_pClientList[sTargetH]->m_iPKCount == 0)) return;
+		
+		// New 19/05/2004
+		// Is the user having an invincibility slate
+		if (cTargetType == DEF_OWNERTYPE_PLAYER)
+			if ((m_pClientList[sTargetH]->m_iStatus & 0x400000) != 0) return;
+
+		// 01-12-17 °°Àº ÆÄÆ¼¿øÀÌ¸é °ø°İ ºÒ°¡ 
+		if ((m_pClientList[sTargetH]->m_iPartyID != NULL) && (iPartyID == m_pClientList[sTargetH]->m_iPartyID)) return;
+
+		// ¸¸¾à °ø°İÀÚ°¡ ÇÃ·¹ÀÌ¾îÀÌ°í 
+		if (cAttackerType == DEF_OWNERTYPE_PLAYER) { 
+			// °ø°İÀÚ°¡ ¾ÈÀü °ø°İ ¸ğµå¶ó¸é °ø°İÀÇ ÀÇ¹Ì°¡ ¾ø´Ù. 
+			if (m_pClientList[sAttackerH]->m_bIsSafeAttackMode == TRUE) {
+				iSideCondition = iGetPlayerRelationship(sAttackerH, sTargetH);
+				if ((iSideCondition == 7) || (iSideCondition == 2) || (iSideCondition == 6)) {
+					// ¾Æ¹« È¿°ú ¾øÀ½. ¸¶³ª ¼Òºñ·®ÀÌ ÁÙ¾úÀ¸¹Ç·Î 
+				}
+				else {
+					// °°Àº ÆíÀÌÁö¸¸ ¸¸¾à »çÅõÀå ³»¿¡¼­ ÆíÀÌ °°´Ù¸é °ø°İ Ã³¸®¸¦ ÇØ¾ßÇÑ´Ù.
+					if (m_pMapList[m_pClientList[sAttackerH]->m_cMapIndex]->m_bIsFightZone == TRUE) {
+						if (m_pClientList[sAttackerH]->m_iGuildGUID != m_pClientList[sTargetH]->m_iGuildGUID) {
+							// »çÅõÀå ³»¿¡¼­ ´Ù¸¥ ±æµå´Ù. °ø°İÀÌ °¡´ÉÇÏ´Ù. 
+						}
+						else return;
+					}
+					else return;
+				}
+			}
+
+			// ¸¶¹ı º¸È£ È¤Àº ¾ÈÀü ¿µ¿ªÀÌ¶ó¸é °ø°İ ¼º°ø ¸øÇÔ 
+			if (m_pMapList[m_pClientList[sTargetH]->m_cMapIndex]->iGetAttribute(m_pClientList[sTargetH]->m_sX, m_pClientList[sTargetH]->m_sY, 0x00000005) != 0) return;
+		}
+
+		// ½ºÅ³ÀÇ »ç¿ë»óÅÂ¸¦ ¸ğµÎ ¹«È¿È­ ÇÑ´Ù.
+		ClearSkillUsingStatus(sTargetH);
+		
+		// v1.432 ¼Ó¼ºº° ´ë¹ÌÁö °¨¼Ò 
+		switch (iAttr) {
+		case 1:
+			if (m_pClientList[sTargetH]->m_iAddAbsEarth != 0) {
+				dTmp1 = (double)iDamage;
+				dTmp2 = (double)m_pClientList[sTargetH]->m_iAddAbsEarth;
+				dTmp3 = (dTmp2/100.0f)*dTmp1;
+				iDamage = iDamage - (int)(dTmp3);
+				if (iDamage < 0) iDamage = 0;
+			}
+			break;
+
+		case 2:
+			if (m_pClientList[sTargetH]->m_iAddAbsAir != 0) {
+				dTmp1 = (double)iDamage;
+				dTmp2 = (double)m_pClientList[sTargetH]->m_iAddAbsAir;
+				dTmp3 = (dTmp2/100.0f)*dTmp1;
+				iDamage = iDamage - (int)(dTmp3);
+				if (iDamage < 0) iDamage = 0;
+			}
+			break;
+
+		case 3:
+			if (m_pClientList[sTargetH]->m_iAddAbsFire != 0) {
+				dTmp1 = (double)iDamage;
+				dTmp2 = (double)m_pClientList[sTargetH]->m_iAddAbsFire;
+				dTmp3 = (dTmp2/100.0f)*dTmp1;
+				iDamage = iDamage - (int)(dTmp3);
+				if (iDamage < 0) iDamage = 0;
+			}
+			break;
+
+		case 4:
+			if (m_pClientList[sTargetH]->m_iAddAbsWater != 0) {
+				dTmp1 = (double)iDamage;
+				dTmp2 = (double)m_pClientList[sTargetH]->m_iAddAbsWater;
+				dTmp3 = (dTmp2/100.0f)*dTmp1;
+				iDamage = iDamage - (int)(dTmp3);
+				if (iDamage < 0) iDamage = 0;
+			}
+			break;
+
+		default: break;
+		}
+
+		iIndex = m_pClientList[sTargetH]->m_iMagicDamageSaveItemIndex;
+		if ((iIndex != -1) && (iIndex >= 0) && (iIndex < DEF_MAXITEMS)) {
+			// ¸¶¹ı ´ë¹ÌÁö Àı°¨ È¿°ú¸¦ °¡Áø ¾ÆÀÌÅÛÀÌ´Ù.
+			
+			// ¾ÆÀÌÅÛÀÇ Á¾·ù¿¡ µû¶ó ´ë¹ÌÁö¸¦ ÁÙÀÎ´Ù. 
+			switch (m_pClientList[sTargetH]->m_pItemList[iIndex]->m_sIDnum) {
+			case 335: // ¿¡¸Ó¶öµå ¹İÁö 20%
+				dTmp1 = (double)iDamage;
+				dTmp2 = dTmp1 * 0.2f;
+				dTmp3 = dTmp1 - dTmp2;
+				iDamage = (int)(dTmp3 +0.5f);
+				break;
+						
+			case 337: // ·çºñ ¹İÁö 10%
+				dTmp1 = (double)iDamage;
+				dTmp2 = dTmp1 * 0.1f;
+				dTmp3 = dTmp1 - dTmp2;
+				iDamage = (int)(dTmp3 +0.5f);
+				break;
+			}
+			if (iDamage <= 0) iDamage = 0;
+			
+			iRemainLife = m_pClientList[sTargetH]->m_pItemList[iIndex]->m_wCurLifeSpan;			
+			if (iRemainLife <= iDamage) {
+				// ¸¶¹ı µ¥¹ÌÁö Àı°¨ ¾ÆÀÌÅÛÀÌ ºÎ¼­Áø´Ù. 
+				ItemDepleteHandler(sTargetH, iIndex, TRUE);
+			}
+			else {
+				// ¸¶¹ı µ¥¹ÌÁö Àı°¨ ¾ÆÀÌÅÛÀÇ ¼ö¸í¸¸ ÁÙÀÎ´Ù. 
+				m_pClientList[sTargetH]->m_pItemList[iIndex]->m_wCurLifeSpan -= iDamage;
+			}
+		}
+
+		// v1.42 Ãß°¡µÈ °íÁ¤ ¸¶¹ı ´ë¹ÌÁö Àı°¨
+		if (m_pClientList[sTargetH]->m_iAddAbsMD != 0) {
+			dTmp1 = (double)iDamage;
+			dTmp2 = (double)m_pClientList[sTargetH]->m_iAddAbsMD;
+			dTmp3 = (dTmp2/100.0f)*dTmp1;
+			iDamage = iDamage - (int)dTmp3;
+		}
+
+		// v1.4 VIT¿¡ µû¸¥ ´ë¹ÌÁö °¨¼Ò 
+		if (cTargetType == DEF_OWNERTYPE_PLAYER) {
+			iDamage -= (iDice(1, m_pClientList[sTargetH]->m_iVit/10) - 1);
+			if (iDamage <= 0) iDamage = 0;
+		}
+	
+		if ((m_pClientList[sTargetH]->m_bIsLuckyEffect == TRUE) && 
+			(iDice(1,10) == 5) && (m_pClientList[sTargetH]->m_iHP <= iDamage)) {
+			// Çà¿îÈ¿°ú·Î Á×À½À» ¸ğ¸éÇÑ´Ù.
+			iDamage = m_pClientList[sTargetH]->m_iHP - 1;
+		}
+
+		// ¸¸¾à ¸¶¹ı º¸È£ÁßÀÌ¶ó¸é ´ë¹ÌÁö´Â 1/2 
+		if (m_pClientList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_PROTECT ] == 2)
+			iDamage = iDamage / 2;
+
+		// v1.432 Æ¯¼ö ´É·Â Áß ¸ğµç ´ë¹ÌÁö¸¦ ¸·´Â È¿°ú°¡ È°¼ºÈ­ µÈ °æ¿ì ´ë¹ÌÁö¸¦ ÀÔÁö ¾Ê´Â´Ù.
+		if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sTargetH]->m_bIsSpecialAbilityEnabled == TRUE)) {
+			switch (m_pClientList[sTargetH]->m_iSpecialAbilityType) {
+			case 51:
+			case 52:
+				// 
+				return;
+			}
+		}
+		
+		m_pClientList[sTargetH]->m_iHP -= iDamage;
+		if (m_pClientList[sTargetH]->m_iHP <= 0) {
+			// ÇÃ·¹ÀÌ¾î°¡ »ç¸ÁÇß´Ù.
+			ClientKilledHandler(sTargetH, sAttackerH, cAttackerType, iDamage);	
+		}
+		else {
+			if (iDamage > 0) {
+				// v2.04 Å¸°İÀ» ¹Ş¾Ò´Âµ¥ ¸¶³ª º¯È¯ Æ¯¼ºÄ¡°¡ ÀÖ¾ú´Ù¸é 
+				/*if (m_pClientList[sTargetH]->m_iAddTransMana > 0) {
+					dTmp1 = (double)m_pClientList[sTargetH]->m_iAddTransMana;
+					dTmp2 = (double)iDamage;
+					dTmp3 = (dTmp1/100.0f)*dTmp2 +1.0f;
+
+					// ÃÖ´ë ¸¶³ªÄ¡ 
+					iTemp = (2*m_pClientList[sTargetH]->m_iMag) + (2*m_pClientList[sTargetH]->m_iLevel) + (m_pClientList[sTargetH]->m_iInt/2);
+					m_pClientList[sTargetH]->m_iMP += (int)dTmp3;
+					if (m_pClientList[sTargetH]->m_iMP > iTemp) m_pClientList[sTargetH]->m_iMP = iTemp;
+				}
+
+				// v2.04 Å¸°İÀ» ¹Ş¾Ò´Âµ¥ ÇÊ»ì ÃæÀüÀÇ Æ¯¼ºÄ¡°¡ ÀÖ¾ú´Ù¸é 
+				if (m_pClientList[sTargetH]->m_iAddChargeCritical > 0) {
+					// È®·ü °è»ê¿¡ µû¶ó¼­ ÇÊ»ì±â°¡ ÃæÀüµÈ´Ù.
+					if (iDice(1,100) < (m_pClientList[sTargetH]->m_iAddChargeCritical)) {
+						iMaxSuperAttack = (m_pClientList[sTargetH]->m_iLevel / 10);
+						if (m_pClientList[sTargetH]->m_iSuperAttackLeft < iMaxSuperAttack) m_pClientList[sTargetH]->m_iSuperAttackLeft++;
+						// v1.12 ¼­¹ö¿Í Å¬¶óÀÌ¾ğÆ® °£¿¡ Ä«¿îÆ®°¡ ÀÏÄ¡ÇÏÁö ¾Ê´Â °æ¿ì°¡ ÀÖÀ» ¼ö ÀÖÀ¸¹Ç·Î °¡°¨¿¡ »ó°ü¾øÀÌ º¸³½´Ù.
+						SendNotifyMsg(NULL, sTargetH, DEF_NOTIFY_SUPERATTACKLEFT, NULL, NULL, NULL, NULL);
+					}
+				}*/
+				
+				// ¹ŞÀº ´ë¹ÌÁö¸¦ Åëº¸ÇÑ´Ù. <- HP¸¦ ±×´ë·Î ¾Ë¸°´Ù.
+				SendNotifyMsg(NULL, sTargetH, DEF_NOTIFY_HP, NULL, NULL, NULL, NULL);
+				// Ãæ°İÀ» ¹Ş¾Ò´Ù¸é Ãæ°İµ¿ÀÛ Àü¼Û 
+				SendEventToNearClient_TypeA(sTargetH, DEF_OWNERTYPE_PLAYER, MSGID_EVENT_MOTION, DEF_OBJECTDAMAGE, iDamage, NULL, NULL);
+
+				// v1.4 Á×ÀºÃ´ÇÏ°í ÀÖ´Â °æ¿ì´Â Owner À§Ä¡¸¦ ¿Å±ä´Ù. 
+				if (m_pClientList[sTargetH]->m_bSkillUsingStatus[19] != TRUE) {
+					m_pMapList[m_pClientList[sTargetH]->m_cMapIndex]->ClearOwner(0, sTargetH, DEF_OWNERTYPE_PLAYER, m_pClientList[sTargetH]->m_sX, m_pClientList[sTargetH]->m_sY);
+					m_pMapList[m_pClientList[sTargetH]->m_cMapIndex]->SetOwner(sTargetH, DEF_OWNERTYPE_PLAYER, m_pClientList[sTargetH]->m_sX, m_pClientList[sTargetH]->m_sY);
+				}
+			
+				if (m_pClientList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] != 0) {
+					// Hold-Person µÇ¾î ÀÖ¾ú´ø »óÅÂ¶ó¸é Ç®¸°´Ù. ¸¶¹ı°ø°İ ÆĞ·²¶óÀÌÁî µÈ °Íµµ Ç®¸°´Ù.
+					// 1: Hold-Person 
+					// 2: Paralize
+					SendNotifyMsg(NULL, sTargetH, DEF_NOTIFY_MAGICEFFECTOFF, DEF_MAGICTYPE_HOLDOBJECT, m_pClientList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ], NULL, NULL);
+							
+					m_pClientList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] = NULL;
+					bRemoveFromDelayEventList(sTargetH, DEF_OWNERTYPE_PLAYER, DEF_MAGICTYPE_HOLDOBJECT);
+				}
+			}
+		}
+
+		sTgtX = m_pClientList[sTargetH]->m_sX;
+		sTgtY = m_pClientList[sTargetH]->m_sY;
+		break;
+
+	case DEF_OWNERTYPE_NPC:
+		if (m_pNpcList[sTargetH] == NULL) return;
+		if (m_pNpcList[sTargetH]->m_iHP <= 0) return;
+		if ((m_bIsCrusadeMode == TRUE) && (cAttackerSide == m_pNpcList[sTargetH]->m_cSide)) return;
+		
+		sTgtX = m_pNpcList[sTargetH]->m_sX;
+		sTgtY = m_pNpcList[sTargetH]->m_sY;
+
+		switch (m_pNpcList[sTargetH]->m_cActionLimit) {
+		case 1:
+		case 2:
+			return;
+
+		case 4: // ¸Â¾ÒÀ» °æ¿ì ÀÌµ¿ÇÏ´Â ¿ÀºêÁ§Æ®.
+			if (sTgtX == sAtkX) {
+				if (sTgtY == sAtkY) return;
+				else if (sTgtY > sAtkY) cDamageMoveDir = 5;
+				else if (sTgtY < sAtkY) cDamageMoveDir = 1;
+			}
+			else if (sTgtX > sAtkX) {
+				if (sTgtY == sAtkY)     cDamageMoveDir = 3;
+				else if (sTgtY > sAtkY) cDamageMoveDir = 4;
+				else if (sTgtY < sAtkY) cDamageMoveDir = 2;
+			}
+			else if (sTgtX < sAtkX) {
+				if (sTgtY == sAtkY)     cDamageMoveDir = 7;
+				else if (sTgtY > sAtkY) cDamageMoveDir = 6;
+				else if (sTgtY < sAtkY) cDamageMoveDir = 8;							
+			}
+
+			dX = m_pNpcList[sTargetH]->m_sX + _tmp_cTmpDirX[cDamageMoveDir];
+			dY = m_pNpcList[sTargetH]->m_sY + _tmp_cTmpDirY[cDamageMoveDir];
+
+			if (m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->bGetMoveable(dX, dY, NULL) == FALSE) {
+				// ´Ù½Ã ÇÑ¹ø ¹æÇâÀ» ·£´ıÇÏ°Ô ±¸ÇÑ´Ù.
+				cDamageMoveDir = iDice(1,8);
+				dX = m_pNpcList[sTargetH]->m_sX + _tmp_cTmpDirX[cDamageMoveDir];
+				dY = m_pNpcList[sTargetH]->m_sY + _tmp_cTmpDirY[cDamageMoveDir];
+						
+				if (m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->bGetMoveable(dX, dY, NULL) == FALSE) return;
+			}
+						
+			// ¿¹Àü À§Ä¡¿¡¼­ Áö¿î´Ù. 
+			m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->ClearOwner(5, sTargetH, DEF_OWNERTYPE_NPC, m_pNpcList[sTargetH]->m_sX, m_pNpcList[sTargetH]->m_sY);
+			// »õ À§Ä¡¿¡ Ç¥½ÃÇÑ´Ù. 
+			m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->SetOwner(sTargetH, DEF_OWNERTYPE_NPC, dX, dY);
+			m_pNpcList[sTargetH]->m_sX   = dX;
+			m_pNpcList[sTargetH]->m_sY   = dY;
+			m_pNpcList[sTargetH]->m_cDir = cDamageMoveDir;
+					
+			// ÀÌº¥Æ® ¾Ë¸°´Ù.
+			SendEventToNearClient_TypeA(sTargetH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTMOVE, NULL, NULL, NULL);
+				
+			// ÇÑ¹ø ´õ °£´Ù.
+			dX = m_pNpcList[sTargetH]->m_sX + _tmp_cTmpDirX[cDamageMoveDir];
+			dY = m_pNpcList[sTargetH]->m_sY + _tmp_cTmpDirY[cDamageMoveDir];
+					
+			if (m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->bGetMoveable(dX, dY, NULL) == FALSE) {
+				// ´Ù½Ã ÇÑ¹ø ¹æÇâÀ» ·£´ıÇÏ°Ô ±¸ÇÑ´Ù.
+				cDamageMoveDir = iDice(1,8);
+				dX = m_pNpcList[sTargetH]->m_sX + _tmp_cTmpDirX[cDamageMoveDir];
+				dY = m_pNpcList[sTargetH]->m_sY + _tmp_cTmpDirY[cDamageMoveDir];
+						
+				if (m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->bGetMoveable(dX, dY, NULL) == FALSE) return;
+			}
+						
+			// ¿¹Àü À§Ä¡¿¡¼­ Áö¿î´Ù. 
+			m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->ClearOwner(5, sTargetH, DEF_OWNERTYPE_NPC, m_pNpcList[sTargetH]->m_sX, m_pNpcList[sTargetH]->m_sY);
+			// »õ À§Ä¡¿¡ Ç¥½ÃÇÑ´Ù. 
+			m_pMapList[m_pNpcList[sTargetH]->m_cMapIndex]->SetOwner(sTargetH, DEF_OWNERTYPE_NPC, dX, dY);
+			m_pNpcList[sTargetH]->m_sX   = dX;
+			m_pNpcList[sTargetH]->m_sY   = dY;
+			m_pNpcList[sTargetH]->m_cDir = cDamageMoveDir;
+					
+			// ÀÌº¥Æ® ¾Ë¸°´Ù.
+			SendEventToNearClient_TypeA(sTargetH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTMOVE, NULL, NULL, NULL);
+
+			if (bCheckEnergySphereDestination(sTargetH, sAttackerH, cAttackerType) == TRUE) {
+				// °æÇèÄ¡ »ó½ÂÀº ¾ø´Ù.
+				DeleteNpc(sTargetH);
+			}
+			return;
+		}
+
+		// ÀüÀï¿ë ±¸Á¶¹°Áß ±×·£µå ¸ÅÁ÷ Á¦³×·¹ÀÌÅÍ, ¿¡³ÊÁö ½Çµå Á¦³×·¹ÀÌÅÍ´Â ¾Æ±ºÀÌ³ª Áß¸³ÀÇ °ø°İ¿¡ ´ë¹ÌÁö¸¦ ÀÔÁö ¾Ê´Â´Ù.
+		if (cAttackerType == DEF_OWNERTYPE_PLAYER) {
+			switch (m_pNpcList[sTargetH]->m_sType) {
+			case 40:
+			case 41:
+				if ((m_pClientList[sAttackerH]->m_cSide == 0) || (m_pNpcList[sTargetH]->m_cSide == m_pClientList[sAttackerH]->m_cSide)) return;
+				break;
+			}
+		}
+		
+		// ¸ó½ºÅÍ°¡ ¸¶¹ı ´ë¹ÌÁö Èí¼ö·üÀÌ ÀÖ´Ù¸é(AbsDamage°¡ 0º¸´Ù Å©´Ù) ¿ø·¡ ¸¶¹ı ´ë¹ÌÁö¸¦ °¨¼Ò½ÃÅ²´Ù.
+		if (m_pNpcList[sTargetH]->m_iAbsDamage > 0) {
+			dTmp1 = (double)iDamage;
+			dTmp2 = (double)(m_pNpcList[sTargetH]->m_iAbsDamage)/100.0f;
+			dTmp3 = dTmp1 * dTmp2;
+			dTmp2 = dTmp1 - dTmp3;
+			iDamage = (int)dTmp2;
+			if (iDamage < 0) iDamage = 1;
+		}
+
+		// ¸¸¾à ¸¶¹ı º¸È£ÁßÀÌ¶ó¸é ´ë¹ÌÁö´Â 1/2 
+		if (m_pNpcList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_PROTECT ] == 2)
+			iDamage = iDamage / 2;
+		
+		m_pNpcList[sTargetH]->m_iHP -= iDamage;
+		if (m_pNpcList[sTargetH]->m_iHP < 0) {
+			// NPC°¡ »ç¸ÁÇß´Ù.
+			NpcKilledHandler(sAttackerH, cAttackerType, sTargetH, iDamage);
+		}
+		else {
+			// °ø°İ´çÇßÁö¸¸ »ì¾ÆÀÖ´Ù. ¹İ°İÇÑ´Ù.
+			// ÆíÀÌ °°À¸¸é ¹İ°İÇÏÁö ¾Ê´Â´Ù.
+			switch (cAttackerType) {
+			case DEF_OWNERTYPE_PLAYER:
+				// v2.15 °æºñ´Â °°Àº Æíµµ ¹İ°İÇÑ´Ù.
+				if ((m_pNpcList[sTargetH]->m_sType != 21) && (m_pNpcList[sTargetH]->m_sType != 55) && (m_pNpcList[sTargetH]->m_sType != 56)
+					&& (m_pNpcList[sTargetH]->m_cSide == cAttackerSide)) return ;
+				break;
+
+			case DEF_OWNERTYPE_NPC:
+				if (m_pNpcList[sAttackerH]->m_cSide == m_pNpcList[sTargetH]->m_cSide) return;
+				break;
+			}
+			
+			// Ãæ°İÀ» ¹Ş¾Ò´Ù¸é Ãæ°İµ¿ÀÛ Àü¼Û
+			SendEventToNearClient_TypeA(sTargetH, DEF_OWNERTYPE_NPC, MSGID_EVENT_MOTION, DEF_OBJECTDAMAGE, iDamage, NULL, NULL);
+			//
+						
+			if ((iDice(1,3) == 2) && (m_pNpcList[sTargetH]->m_cActionLimit == 0)) {
+				// µ¿Á·ÀÌ°í ÆíÀÌ °°À¸¸é ¹İ°İÇÏÁö ¾Ê´Â´Ù.
+				if ((cAttackerType == DEF_OWNERTYPE_NPC) && 
+					(m_pNpcList[sAttackerH]->m_sType == m_pNpcList[sTargetH]->m_sType) &&
+					(m_pNpcList[sAttackerH]->m_cSide == m_pNpcList[sTargetH]->m_cSide)) return;
+
+				// ActionLimit°¡ 1ÀÌ¸é ¹İ°İÀ» ÇÏÁö ¾Ê´Â´Ù. ¿ÀÁ÷ ¿òÁ÷ÀÏ¼ö¸¸ ÀÖÀ¸´Ï.
+				m_pNpcList[sTargetH]->m_cBehavior          = DEF_BEHAVIOR_ATTACK;
+				m_pNpcList[sTargetH]->m_sBehaviorTurnCount = 0;		
+				m_pNpcList[sTargetH]->m_iTargetIndex = sAttackerH;
+				m_pNpcList[sTargetH]->m_cTargetType  = cAttackerType;
+
+				// Damage¸¦ ÀÔÀº Ãæ°İÀ¸·Î ÀÎÇÑ Áö¿¬È¿°ú.
+				m_pNpcList[sTargetH]->m_dwTime = dwTime;
+
+				// ¿©±â¼­ Ç¥È¿ µ¿ÀÛ°°Àº°ÍÀ» À§ÇÑ ¸Ş½ÃÁö ¹ß¼Û.
+				if (m_pNpcList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] != 0) {
+					// Hold µÇ¾î ÀÖ¾ú´ø »óÅÂ¶ó¸é Ç®¸°´Ù. 	
+					m_pNpcList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_HOLDOBJECT ] = NULL;
+					bRemoveFromDelayEventList(sTargetH, DEF_OWNERTYPE_NPC, DEF_MAGICTYPE_HOLDOBJECT);
+				}
+
+				// Crusade
+				int iExp;
+
+				// NPC¿¡ ´ëÇÑ °ø°İÀÌ ¼º°øÇßÀ¸¹Ç·Î °ø°İÀÚ°¡ ÇÃ·¹ÀÌ¾î¶ó¸é ÀÔÈù ´ë¹ÌÁö ¸¸Å­ÀÇ °æÇèÄ¡¸¦ °ø°İÀÚ¿¡°Ô ÁØ´Ù. 
+				if ( (m_pNpcList[sTargetH]->m_iNoDieRemainExp > 0) && (m_pNpcList[sTargetH]->m_bIsSummoned != TRUE) && 
+					 (cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH] != NULL) ) {
+					// ExpStockÀ» ¿Ã¸°´Ù. ´Ü ¼ÒÈ¯¸÷ÀÎ °æ¿ì °æÇèÄ¡¸¦ ¿Ã¸®Áö ¾Ê´Â´Ù.
+					if (m_pNpcList[sTargetH]->m_iNoDieRemainExp > iDamage) {
+						// Crusade
+						iExp = iDamage;
+						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
+
+
+						//v2.03 918 °æÇèÄ¡ Áõ°¡ 
+						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+							dTmp2 = (double)iExp;
+							dTmp3 = (dTmp1/100.0f)*dTmp2;
+							iExp += (int)dTmp3;
+						}
+
+						// v2.17 2002-8-6 °ø°İÀÚÀÇ ·¹º§ÀÌ 100 ÀÌ»óÀÌ¸é Åä³¢³ª °í¾çÀÌ¸¦ ÀâÀ»¶§ °æÇèÄ¡°¡ ¿Ã¶ó°¡Áö ¾Ê´Â´Ù.
+						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+							switch (m_pNpcList[sTargetH]->m_sType) {
+							case 55:
+							case 56:
+								iExp = 0 ;
+							break ;
+							default: break;
+							}
+						}
+											
+						if (bExp == TRUE) 
+							 GetExp(sAttackerH, iExp, TRUE); //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //iDamage;
+						else GetExp(sAttackerH, (iExp/2), TRUE); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(iDamage/2);
+						m_pNpcList[sTargetH]->m_iNoDieRemainExp -= iDamage;
+					}
+					else {
+						// Crusade
+						iExp = m_pNpcList[sTargetH]->m_iNoDieRemainExp;
+						if ((m_bIsCrusadeMode == TRUE) && (iExp > 10)) iExp = 10;
+
+						//v2.03 918 °æÇèÄ¡ Áõ°¡ 
+						if (m_pClientList[sAttackerH]->m_iAddExp > 0) {
+							dTmp1 = (double)m_pClientList[sAttackerH]->m_iAddExp;
+							dTmp2 = (double)iExp;
+							dTmp3 = (dTmp1/100.0f)*dTmp2;
+							iExp += (int)dTmp3;
+						}
+
+						// v2.17 2002-8-6 °ø°İÀÚÀÇ ·¹º§ÀÌ 100 ÀÌ»óÀÌ¸é Åä³¢³ª °í¾çÀÌ¸¦ ÀâÀ»¶§ °æÇèÄ¡°¡ ¿Ã¶ó°¡Áö ¾Ê´Â´Ù.
+						if (m_pClientList[sAttackerH]->m_iLevel > 100 ) {
+							switch (m_pNpcList[sTargetH]->m_sType) {
+							case 55:
+							case 56:
+								iExp = 0 ;
+							break ;
+							default: break;
+							}
+						}
+
+						
+						if (bExp == TRUE) 
+							 GetExp(sAttackerH, iExp, TRUE); //m_pClientList[sAttackerH]->m_iExpStock += iExp;     //m_pNpcList[sTargetH]->m_iNoDieRemainExp;
+						else GetExp(sAttackerH, (iExp/2), TRUE); //m_pClientList[sAttackerH]->m_iExpStock += (iExp/2); //(m_pNpcList[sTargetH]->m_iNoDieRemainExp/2);
+						m_pNpcList[sTargetH]->m_iNoDieRemainExp = 0;
+					}
+				}
+			}
+		}
+		break;
+	}
+}
+
+/*
 void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTargetH, char cTargetType, short sV1, short sV2, short sV3, BOOL bExp, int iAttr)
 {
  int iDamage, iSideCondition, iIndex, iRemainLife;
@@ -29525,7 +31048,7 @@ void CGame::Effect_Damage_Spot(short sAttackerH, char cAttackerType, short sTarg
 		}
 		break;
 	}
-}
+}*/
 
 void CGame::Effect_Damage_Spot_DamageMove(short sAttackerH, char cAttackerType, short sTargetH, char cTargetType, short sAtkX, short sAtkY, short sV1, short sV2, short sV3, BOOL bExp, int iAttr)
 {
@@ -29535,6 +31058,7 @@ void CGame::Effect_Damage_Spot_DamageMove(short sAttackerH, char cAttackerType, 
  register double dTmp1, dTmp2, dTmp3;
  short sTgtX, sTgtY;
  int iMoveDamage;
+ WORD wWeaponType;
 
 	if (cAttackerType == DEF_OWNERTYPE_PLAYER)
 		if (m_pClientList[sAttackerH] == NULL) return;
@@ -29587,6 +31111,11 @@ void CGame::Effect_Damage_Spot_DamageMove(short sAttackerH, char cAttackerType, 
 
 		// Crusade : Ã€Ã¼Â¸Ã©Ã€Ã¼ Â¸Ã°ÂµÃ¥Ã€ÃÂ¶Â§ Â´Ã«Ã€Ã Â°Ã¸Â°ÃÂ·Ã‚ 1.33Â¹Ã¨ 
 		if ((cTargetType == DEF_OWNERTYPE_PLAYER) && (m_bIsCrusadeMode == TRUE) && (m_pClientList[sAttackerH]->m_iCrusadeDuty == 1)) 
+			iDamage += iDamage/3;
+
+		// BerserkWand 30% damage bonus
+		wWeaponType = ((m_pClientList[sAttackerH]->m_sAppr2 & 0x0FF0) >> 4);
+		if (wWeaponType == 34)
 			iDamage += iDamage/3;
 
 		cAttackerSide = m_pClientList[sAttackerH]->m_cSide;
@@ -30066,6 +31595,76 @@ void CGame::Effect_SpUp_Spot(short sAttackerH, char cAttackerType, short sTarget
 	}
 }
 
+BOOL CGame::bCheckResistingMagicSuccess(char cAttackerDir, short sTargetH, char cTargetType, int iHitRatio)
+{
+ double dTmp1, dTmp2, dTmp3;
+ int    iTargetMagicResistRatio, iDestHitRatio, iResult;
+ char   cTargetDir, cProtect;								 
+
+	switch (cTargetType) {
+	case DEF_OWNERTYPE_PLAYER:
+		if (m_pClientList[sTargetH] == NULL) return FALSE;
+		// v1.4 ¿î¿µÀÚ¿¡ ´ëÇÑ ¸¶¹ı °ø°İÀº ¹«ÀÇ¹Ì 
+		// v2.13 ¿î¿µÀÚ ·¹º§1Àº °ø°İÀÌ °¡´ÉÇÏ´Ù. 
+		if (m_pClientList[sTargetH]->m_iAdminUserLevel > 0) return TRUE;
+
+		// New 19/05/2004
+		if ((m_pClientList[sTargetH]->m_iStatus & 0x400000) != 0) return TRUE;
+
+		cTargetDir = m_pClientList[sTargetH]->m_cDir;
+		iTargetMagicResistRatio = m_pClientList[sTargetH]->m_cSkillMastery[3] +m_pClientList[sTargetH]->m_iAddMR; // 3¹ø Resisting Magic
+		// MagÀÌ 50º¸´Ù Å©¸é º¸³Ê½º ¸¶¹ı ¹æ¾î·ü Ãß°¡
+		if (m_pClientList[sTargetH]->m_iMag > 50) 
+			iTargetMagicResistRatio += (m_pClientList[sTargetH]->m_iMag - 50);
+		// Ãß°¡ ¸¶¹ı ¹æ¾î·ü ´õÇÔ 
+		iTargetMagicResistRatio += m_pClientList[sTargetH]->m_iAddResistMagic;
+		cProtect = m_pClientList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_PROTECT ]; 
+		break;
+
+	case DEF_OWNERTYPE_NPC:
+		if (m_pNpcList[sTargetH] == NULL) return FALSE;
+		cTargetDir = m_pNpcList[sTargetH]->m_cDir;
+		iTargetMagicResistRatio = m_pNpcList[sTargetH]->m_cResistMagic;
+		cProtect = m_pNpcList[sTargetH]->m_cMagicEffectStatus[ DEF_MAGICTYPE_PROTECT ]; 
+		break;
+	}
+
+	//v2.16 2002-5-23 °í±¤Çö¼öÁ¤
+	// Absolute Magic Protection
+	if (cProtect == 5) return TRUE;
+
+	// ¸íÁß·ü ÀÌÀü¿¡ ¸¶¹ıº¸È£°¡ °É·ÁÀÖ´Ù¸é ¹«Á¶°Ç ¼º°ø: ´Ü ¸íÁß·üÀÌ 1000º¸´Ù Å©¸é °í·ÁÇÑ´Ù.
+	if ((iHitRatio < 1000) && (cProtect == 2)) return TRUE;
+	// ¸¸¾à ¸íÁß·üÀÌ 10000 ÀÌ»óÀÌ¶ó¸é 9½áÅ¬ ÀÌ»óÀÇ ¸¶¹ıÀÌ¶õ ÀÇ¹Ì. ´Ù½Ã 10000À» »©¼­ Á¦ ¸íÁß·üÀ» °è»êÇÑ´Ù.
+	if (iHitRatio >= 10000) iHitRatio -= 10000;
+
+	if (iTargetMagicResistRatio < 1) iTargetMagicResistRatio = 1;
+		
+	// ÃÖÁ¾ °ø°İ ¸íÁß·üÀ» ±¸ÇÑ´Ù. 
+	dTmp1 = (double)(iHitRatio);
+	dTmp2 = (double)(iTargetMagicResistRatio);
+
+	dTmp3 = (dTmp1 / dTmp2)*50.0f;
+	iDestHitRatio = (int)(dTmp3); 
+	
+	// ÃÖ¼Ò °ø°İ ¸íÁß·üÀ» º¸ÀåÇÑ´Ù. 
+	if (iDestHitRatio < DEF_MINIMUMHITRATIO) iDestHitRatio = DEF_MINIMUMHITRATIO;
+	// ÃÖ´ë °ø°İ ¸íÁß·üÀ» Á¦ÇÑÇÑ´Ù.
+	if (iDestHitRatio > DEF_MAXIMUMHITRATIO) iDestHitRatio = DEF_MAXIMUMHITRATIO;
+	
+	if (iDestHitRatio >= 100) return FALSE; // ¸¶¹ıÀº ¸íÁßÇß´Ù.
+
+	iResult = iDice(1, 100);
+	if (iResult <= iDestHitRatio) return FALSE;
+
+	// ¸¶¹ı ÀúÇ×ÀÌ ¼º°øÇßÀ¸¹Ç·Î Resisting MagicÀÇ SSNÀ» Áõ°¡½ÃÅ²´Ù.
+	if (cTargetType == DEF_OWNERTYPE_PLAYER)
+		CalculateSSN_SkillIndex(sTargetH, 3, 1);
+
+	return TRUE;
+}
+
+/*
 // 05/20/2004 - Hypnotoad - Absolute Magic Protection fixed
 BOOL CGame::bCheckResistingMagicSuccess(char cAttackerDir, short sTargetH, char cTargetType, int iHitRatio)
 {
@@ -30134,9 +31733,41 @@ BOOL CGame::bCheckResistingMagicSuccess(char cAttackerDir, short sTargetH, char 
 		CalculateSSN_SkillIndex(sTargetH, 3, 1);
 
 	return TRUE;
-}
+}*/
 
 BOOL CGame::bCheckResistingIceSuccess(char cAttackerDir, short sTargetH, char cTargetType, int iHitRatio)
+{
+ // ³Ãµ¿µÉ °ÍÀÎ°¡ÀÇ È®·ü °è»ê.
+ int    iTargetIceResistRatio, iResult;
+ char   cTargetDir;
+
+	switch (cTargetType) {
+	case DEF_OWNERTYPE_PLAYER:
+		if (m_pClientList[sTargetH] == NULL) return FALSE;
+		// v1.4 ¿î¿µÀÚ¿¡ ´ëÇÑ ³Ãµ¿°ø°İÀº ¹«ÀÇ¹Ì 
+		if (m_pClientList[sTargetH]->m_iAdminUserLevel > 0) return TRUE;
+		iTargetIceResistRatio = m_pClientList[sTargetH]->m_iAddAbsWater*2; 
+		// v2.172 ÇØµ¿ Æ÷¼ÇÀ» ¸Ô°í 30ÃÊ°£Àº ¾óÁö ¾Ê´Â´Ù.
+		if (m_pClientList[sTargetH]->m_dwWarmEffectTime == NULL) {
+		}
+		else if ((timeGetTime() - m_pClientList[sTargetH]->m_dwWarmEffectTime) < 1000*30) return TRUE;
+		break;
+
+	case DEF_OWNERTYPE_NPC:
+		if (m_pNpcList[sTargetH] == NULL) return FALSE;
+		iTargetIceResistRatio = (m_pNpcList[sTargetH]->m_cResistMagic) - (m_pNpcList[sTargetH]->m_cResistMagic/3); // ¿©±â¿¡ ¾óÀ½ ¹æ¾î ¼öÄ¡ ÀÔ·Â. NPCÀÇ °æ¿ì ¸¶¹ı ÀúÇ×ÀÇ 70% ¼öÁØ 
+		break;
+	}
+	
+	if (iTargetIceResistRatio < 1) iTargetIceResistRatio = 1;
+	
+	iResult = iDice(1, 100);
+	if (iResult <= iTargetIceResistRatio) return TRUE;
+	
+	return FALSE;
+}
+
+/*BOOL CGame::bCheckResistingIceSuccess(char cAttackerDir, short sTargetH, char cTargetType, int iHitRatio)
 {
  // Â³ÃƒÂµÂ¿ÂµÃ‰ Â°ÃÃ€ÃÂ°Â¡Ã€Ã‡ ÃˆÂ®Â·Ã¼ Â°Ã¨Â»Ãª.
  int    iTargetIceResistRatio, iResult;
@@ -30161,7 +31792,7 @@ BOOL CGame::bCheckResistingIceSuccess(char cAttackerDir, short sTargetH, char cT
 	if (iResult <= iTargetIceResistRatio) return TRUE;
 	
 	return FALSE;
-}
+}*/
 
 
 BOOL CGame::bSetItemToBankItem(int iClientH, class CItem * pItem)
@@ -32630,7 +34261,6 @@ void CGame::GetPlayerProfile(int iClientH, char * pMsg, DWORD dwMsgSize)
 	return;
 }
 
-
 void CGame::___RestorePlayerCharacteristics(int iClientH)
 {
 	int iStr, iDex, iInt, iVit, iMag, iCharisma;
@@ -32639,7 +34269,7 @@ void CGame::___RestorePlayerCharacteristics(int iClientH)
 	BOOL bFlag;
 	char cTxt[120];
 	return;
-	if (m_pClientList[iClientH] == NULL) return;
+		if (m_pClientList[iClientH] == NULL) return;
 
 	// Â¸Ã•Ã€Ãº Â°ÂªÃ€Â» Â¹Ã©Â¾Ã·Ã‡Ã‘Â´Ã™. 
 	iStr = m_pClientList[iClientH]->m_iStr;
@@ -33217,6 +34847,7 @@ void CGame::CalcTotalItemEffect(int iClientH, int iEquipItemID, BOOL bNotify)
 					m_pClientList[iClientH]->m_cAttackDiceRange_SM += 2;
 					m_pClientList[iClientH]->m_cAttackDiceRange_L  += 2;
 					break;
+
 				}
 			}
 
@@ -34062,7 +35693,9 @@ void CGame::CalcExpStock(int iClientH)
 	if (m_pClientList[iClientH] == NULL) return;
 	if (m_pClientList[iClientH]->m_bIsInitComplete == FALSE) return;
 	if (m_pClientList[iClientH]->m_iExpStock <= 0) return;
-	if (m_pClientList[iClientH]->m_iLevel >= m_iPlayerMaxLevel) return;
+	// !!!!
+	// v2.12 2002-2-6 ÃÃ¶ÃÂ¸ÂµÂµ Ã‡Ã¶Ã€Ã§ Â°Ã¦Ã‡Ã¨Ã„Â¡Â°Â¡ ÃƒÃ–Â´Ã« Â·Â¹ÂºÂ§ Â°Ã¦Ã‡Ã¨Ã„Â¡ÂºÂ¸Â´Ã™ Ã€Ã»Ã€Â¸Â¸Ã© Â°Ã¦Ã‡Ã¨Ã„Â¡Â¸Â¦ Â¾Ã²Ã€Â»Â¼Ã¶ Ã€Ã–Â°Ã” ÂºÂ¯Â°Ã¦ .. v2.15 Â»Ã¨ÃÂ¦. ÃÃ¶ÃÂ¸ÂµÂµ Â°Ã¦Ã‡Ã¨Ã„Â¡ Â¾Ã²Â´Ã‚Â´Ã™.
+	//if ((m_pClientList[iClientH]->m_iLevel >= m_iPlayerMaxLevel) && (m_pClientList[iClientH]->m_iExp >= m_iLevelExpTable[m_iPlayerMaxLevel])) return;
 
 	// Ã†Ã·Â»Ã³Â°Ãº Ã†Ã¤Â³ÃÃ†Â¼Â°Â¡ Â¾Ã¸Â´Ã‚ Â¸ÃŠ Ã€Â§Â¿Â¡ Â¼Â­ Ã€Ã–Â´Ã™Â¸Ã© Â°Ã¦Ã‡Ã¨Ã„Â¡Â´Ã‚ Â¿ÃƒÂ¶Ã³Â°Â¡ÃÃ¶ Â¾ÃŠÂ´Ã‚Â´Ã™.
 	if (m_pMapList[m_pClientList[iClientH]->m_cMapIndex]->m_cType == DEF_MAPTYPE_NOPENALTY_NOREWARD) {
@@ -34082,8 +35715,21 @@ void CGame::CalcExpStock(int iClientH)
 	// Â·Â¹ÂºÂ§Ã€ÃŒ Â¿ÃƒÂ¶ÃºÂ´Ã‚ÃÃ¶Â¸Â¦ Â°Ã‹Â»Ã§Ã‡Ã‘Â´Ã™.
 	bIsLevelUp = bCheckLevelUp(iClientH);
 
-	if ((bIsLevelUp == TRUE) && (m_pClientList[iClientH]->m_iLevel <= 20)) {
-		// ÃƒÃŠÂºÂ¸Â¿Ã« Gold ÃÃ¶Â±Ã. Â·Â¹ÂºÂ§ 1~20Â±Ã®ÃÃ¶ 6000 Gold ÃÃ¶Â±Ã.
+	// v2.03 ÂºÂ¯Â°Ã¦ 9/1
+	if ((bIsLevelUp == TRUE) && (m_pClientList[iClientH]->m_iLevel <= 5)) {
+		// ÃƒÃŠÂºÂ¸Â¿Ã« Gold ÃÃ¶Â±Ã. Â·Â¹ÂºÂ§ 1~5Â±Ã®ÃÃ¶ 100 Gold ÃÃ¶Â±Ã.
+		pItem = new class CItem;
+		if (_bInitItemAttr(pItem, "Gold") == FALSE) {
+			delete pItem;
+			return;
+		}
+		else pItem->m_dwCount = (DWORD)100;
+		bAddItem(iClientH, pItem, NULL);
+	}
+
+	// v2.03 ÂºÂ¯Â°Ã¦ 9/1
+	if ((bIsLevelUp == TRUE) && (m_pClientList[iClientH]->m_iLevel > 5 ) &&  (m_pClientList[iClientH]->m_iLevel <= 20) ) {
+		// ÃƒÃŠÂºÂ¸Â¿Ã« Gold ÃÃ¶Â±Ã. Â·Â¹ÂºÂ§ 5~20Â±Ã®ÃÃ¶ 300 Gold ÃÃ¶Â±Ã.
 		pItem = new class CItem;
 		if (_bInitItemAttr(pItem, "Gold") == FALSE) {
 			delete pItem;
@@ -34092,11 +35738,13 @@ void CGame::CalcExpStock(int iClientH)
 		else pItem->m_dwCount = (DWORD)300;
 		bAddItem(iClientH, pItem, NULL);
 	}
-	if (bIsLevelUp == TRUE) {
-		//m_pClientList[iClientH]->m_iLU_Pool += DEF_TOTALLEVELUPPOINT;
-		wsprintf(G_cTxt, "(*) Level Up: Char(%s) Level (%d) m_pClientList[iClientH]->m_iLU_Pool (%d)", m_pClientList[iClientH]->m_cCharName, m_pClientList[iClientH]->m_iLevel, m_pClientList[iClientH]->m_iLU_Pool);		
-		PutLogList(G_cTxt);
-	}
+
+	//Level up Notify on Hgserver.exe
+	//if (bIsLevelUp == TRUE) {
+	//	//m_pClientList[iClientH]->m_iLU_Pool += DEF_TOTALLEVELUPPOINT;
+	//	wsprintf(G_cTxt, "(*) Level Up: Char(%s) Level (%d) m_pClientList[iClientH]->m_iLU_Pool (%d)", m_pClientList[iClientH]->m_cCharName, m_pClientList[iClientH]->m_iLevel, m_pClientList[iClientH]->m_iLU_Pool);		
+	//	PutLogList(G_cTxt);
+	//}
 }
 
 void CGame::___RestorePlayerRating(int iClientH)
@@ -35392,6 +37040,7 @@ int CGame::iGetPlayerRelationship(int iClientH, int iOpponentH)
 
 	return iRet;
 }
+
 int CGame::iGetPlayerABSStatus(int iWhatH, int iRecvH)
 {
 	int iRet;
@@ -35400,7 +37049,7 @@ int CGame::iGetPlayerABSStatus(int iWhatH, int iRecvH)
 	if (m_pClientList[iRecvH] == NULL) return 0;
 
 	iRet = 0;
-
+				
 	if (m_pMapList[m_pClientList[iRecvH]->m_cMapIndex]->m_bIsFightZone == TRUE &&
 		m_pClientList[iWhatH]->m_iGuildRank != -1 && m_pClientList[iRecvH]->m_iGuildRank != -1 &&
 		memcmp(m_pClientList[iWhatH]->m_cGuildName,m_pClientList[iRecvH]->m_cGuildName,20) != 0) {
@@ -35419,131 +37068,13 @@ int CGame::iGetPlayerABSStatus(int iWhatH, int iRecvH)
 			iRet = iRet | 2;
 		}
 
-		if (m_pClientList[iWhatH]->m_bIsPlayerCivil == TRUE)
+		if (m_pClientList[iWhatH]->m_bIsPlayerCivil == TRUE) {
 			iRet = iRet | 1;
+		}
 
 		return iRet;
 }
-/*
-int CGame::iGetPlayerABSStatus(int iWhatH, int iRecvH)
-{
-	// Ã€Ã½Â´Ã«Ã€Ã»Ã€Ã Ã„Â³Â¸Â¯Ã…ÃÃ€Ã‡ Â¼Ã’Â¼Ã“Ã€Â» Â¾Ã²Â´Ã‚Â´Ã™. 
 
-//		0: Â¹Â«Â¼Ã’Â¼Ã“ 
-//
-//		1: Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â¼Ã’Â¼Ã“
-//		2: Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â¹Ã¼ÃÃ‹Ã€Ãš
-//		3: Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â°Â°Ã€Âº Â±Ã¦ÂµÃ¥Â¿Ã¸
-//		4: Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â¿Ã¸
-//		5: Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â°Â°Ã€Âº Â±Ã¦ÂµÃ¥Â¸Â¶Â½ÂºÃ…Ã  
-//		6: Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â¸Â¶Â½ÂºÃ…Ã
-//
-//		8:  Â¿Â¤Â¹Ã™Ã€Ã Â¼Ã’Â¼Ã“
-//		9:  Â¿Â¤Â¹Ã™Ã€Ã Â¹Ã¼ÃÃ‹Ã€Ãš
-//		10: Â¿Â¤Â¹Ã™Ã€Ã Â°Â°Ã€Âº Â±Ã¦ÂµÃ¥Â¿Ã¸
-//		11: Â¿Â¤Â¹Ã™Ã€Ã Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â¿Ã¸
-//		12: Â¿Â¤Â¹Ã™Ã€Ã Â°Â°Ã€Âº Â±Ã¦ÂµÃ¥Â¸Â¶Â½ÂºÃ…Ã  
-//		13: Â¿Â¤Â¹Ã™Ã€Ã Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â¸Â¶Â½ÂºÃ…Ã
-//
-//		15: Â¹Â«Â¼Ã’Â¼Ã“ Â¹Ã¼ÃÃ‹Ã€Ãš 
-
-	if (m_pClientList[iWhatH] == NULL) return 0;
-	if (m_pClientList[iRecvH] == NULL) return 0;
-
-	if (memcmp(m_pClientList[iWhatH]->m_cLocation, "NONE", 4) == 0) {
-		// Â¹Â«Â¼Ã’Â¼Ã“Ã€ÃŒÂ´Ã™.
-		if (m_pClientList[iWhatH]->m_iPKCount != 0) {
-			// Â¹Â«Â¼Ã’Â¼Ã“ Â¹Ã¼ÃÃ‹Ã€Ãš 
-			return 15;
-		}
-		else return 0;
-	}
-	else if (memcmp(m_pClientList[iWhatH]->m_cLocation, "aresden", 7) == 0) {
-		// Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â¼Ã’Â¼Ã“ 
-		if (m_pClientList[iWhatH]->m_iPKCount != 0) {
-			// Â¾Ã†Â·Â¹Â½ÂºÂµÂ§Ã€Ã‡ Â¹Ã¼ÃÃ‹Ã€Ãš 
-			return 2;
-		}
-		else {
-			if (m_pClientList[iWhatH]->m_iGuildRank == 0) {
-				// Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â±Ã¦ÂµÃ¥Â¸Â¶Â½ÂºÃ…Ã 
-				if (memcmp(m_pClientList[iWhatH]->m_cGuildName, m_pClientList[iRecvH]->m_cGuildName, 20) == 0) {
-					// Â³Â» Â±Ã¦ÂµÃ¥ Â¸Â¶Â½ÂºÃ…Ã 
-					return 5;
-				}
-				else {
-					// Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥ Â¸Â¶Â½ÂºÃ…Ã 
-					// v1.44 Â»Ã§Ã…ÃµÃ€Ã¥Ã€ÃŒÂ¸Ã© Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â´Ã‚ Ã€Ã»Ã€ÃŒÂ´Ã™.
-					if (m_pMapList[m_pClientList[iRecvH]->m_cMapIndex]->m_bIsFightZone == TRUE) 
-						 return 2;
-					else return 6;
-				}
-			}
-			else if (m_pClientList[iWhatH]->m_iGuildRank == 12) { 
-				// Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â±Ã¦ÂµÃ¥Â¿Ã¸ 
-				if (memcmp(m_pClientList[iWhatH]->m_cGuildName, m_pClientList[iRecvH]->m_cGuildName, 20) == 0) {
-					// Â°Â°Ã€Âº Â±Ã¦ÂµÃ¥Â¿Ã¸ 
-					return 3;
-				}
-				else {
-					// Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â¿Ã¸ 
-					// v1.44 Â»Ã§Ã…ÃµÃ€Ã¥Ã€ÃŒÂ¸Ã© Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â´Ã‚ Ã€Ã»Ã€ÃŒÂ´Ã™.
-					if (m_pMapList[m_pClientList[iRecvH]->m_cMapIndex]->m_bIsFightZone == TRUE) 
-						 return 2;
-					else return 4;
-				}
-			}
-			else {
-				// Â¾Ã†Â·Â¹Â½ÂºÂµÂ§ Â½ÃƒÂ¹Ã 
-				return 1;
-			}
-		}
-	}
-	else if (memcmp(m_pClientList[iWhatH]->m_cLocation, "elvine", 6) == 0) {
-		// Â¿Â¤Â¹Ã™Ã€Ã Â¼Ã’Â¼Ã“ 
-		if (m_pClientList[iWhatH]->m_iPKCount != 0) {
-			// Â¿Â¤Â¹Ã™Ã€ÃÃ€Ã‡ Â¹Ã¼ÃÃ‹Ã€Ãš 
-			return 9;
-		}
-		else {
-			if (m_pClientList[iWhatH]->m_iGuildRank == 0) {
-				// Â¿Â¤Â¹Ã™Ã€Ã Â±Ã¦ÂµÃ¥Â¸Â¶Â½ÂºÃ…Ã 
-				if (memcmp(m_pClientList[iWhatH]->m_cGuildName, m_pClientList[iRecvH]->m_cGuildName, 20) == 0) {
-					// Â³Â» Â±Ã¦ÂµÃ¥ Â¸Â¶Â½ÂºÃ…Ã 
-					return 12;
-				}
-				else {
-					// Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥ Â¸Â¶Â½ÂºÃ…Ã 
-					// v1.44 Â»Ã§Ã…ÃµÃ€Ã¥Ã€ÃŒÂ¸Ã© Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â´Ã‚ Ã€Ã»Ã€ÃŒÂ´Ã™.
-					if (m_pMapList[m_pClientList[iRecvH]->m_cMapIndex]->m_bIsFightZone == TRUE) 
-						 return 9;
-					else return 13;
-				}
-			}
-			else if (m_pClientList[iWhatH]->m_iGuildRank == 12) { 
-				// Â¿Â¤Â¹Ã™Ã€Ã Â±Ã¦ÂµÃ¥Â¿Ã¸ 
-				if (memcmp(m_pClientList[iWhatH]->m_cGuildName, m_pClientList[iRecvH]->m_cGuildName, 20) == 0) {
-					// Â°Â°Ã€Âº Â±Ã¦ÂµÃ¥Â¿Ã¸ 
-					return 10;
-				}
-				else {
-					// Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â¿Ã¸
-					// v1.44 Â»Ã§Ã…ÃµÃ€Ã¥Ã€ÃŒÂ¸Ã© Â´Ã™Â¸Â¥ Â±Ã¦ÂµÃ¥Â´Ã‚ Ã€Ã»Ã€ÃŒÂ´Ã™.
-					if (m_pMapList[m_pClientList[iRecvH]->m_cMapIndex]->m_bIsFightZone == TRUE) 
-						 return 9;
-					else return 11;
-				}
-			}
-			else {
-				// Â¿Â¤Â¹Ã™Ã€Ã Â½ÃƒÂ¹Ã 
-				return 8;
-			}
-		}
-	}
-
-	return 0;
-}
-*/
 int CGame::iGetNpcRelationship(int iWhatH, int iRecvH) 
 { 
 	int iRet; 
@@ -41777,7 +43308,7 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 			}
 
 			// NPC experience to Gold ratio
-			pItem->m_dwCount = (DWORD)(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 2)); //(iDice(1, m_pNpcList[iNpcH]->m_iExpDice * 3) + m_pNpcList[iNpcH]->m_iExpDice);
+			pItem->m_dwCount = (DWORD)(iDice(1, m_pNpcList[iNpcH]->m_iExpDice*2)) + m_pNpcList[iNpcH]->m_iExpDice;
 
 			// v1.42 Gold 
 			if ((cAttackerType == DEF_OWNERTYPE_PLAYER) && (m_pClientList[sAttackerH]->m_iAddGold != NULL)) {
@@ -42012,13 +43543,14 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 				case 10: // Ettin
 					switch (iDice(1,5)) {
-				case 1: iItemID = 46;  break; // Claymore
-				case 2: iItemID = 31;  break; // Esterk
-				case 3: iItemID = 34;  break; // Rapier
-				case 4: iItemID = 760; break; // Hammer
-				case 5: iItemID = 761; break; // GiantHammer
+					case 1: iItemID = 46;  break; // Claymore
+					case 2: iItemID = 31;  break; // Esterk
+					case 3: iItemID = 34;  break; // Rapier
+					case 4: iItemID = 760; break; // Hammer
+					case 5: iItemID = 761; break; // GiantHammer
 					}
 					break;
+
 						}
 					}
 					else {
@@ -42035,6 +43567,9 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 						case 7:
 						case 8:
 							iItemID = 256; break; // MagicWand(MS20)
+						case 9:
+						case 10:
+							break;
 						}	
 					}
 				}
@@ -42124,6 +43659,10 @@ void CGame::NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType
 
 					case 8: // Demon, Unicorn, Hellclaw, Tigerworm, Gagoyle
 						iItemID = 402; // Cape
+						break;
+
+					case 9:
+					case 10:
 						break;
 					}
 				}
@@ -43603,7 +45142,6 @@ BOOL CGame::bCheckEnergySphereDestination(int iNpcH, short sAttackerH, char cAtt
 					SendNotifyMsg(NULL, i, DEF_NOTIFY_ENERGYSPHEREGOALIN, cResult, m_pClientList[sAttackerH]->m_cSide, 1, m_pClientList[sAttackerH]->m_cCharName);
 				}
 			}
-			return TRUE;
 		}
 		return FALSE;
 	}
@@ -43869,176 +45407,199 @@ BOOL CGame::bGetItemNameWhenDeleteNpc(int & iItemID, short sNpcType)
 
 	switch (sNpcType) { 
 
-		   case 49: // Hellclaw 
-			iResult = iDice(1,10000); 
-			if ((iResult >= 1) && (iResult <= 598))  iItemID = 650; //ZemstoneofSacrifice 
-			else if ((iResult >= 599) && (iResult <= 998))  iItemID = 657; //StoneOfMerien 
-			else if ((iResult >= 999) && (iResult <= 1398))  iItemID = 656; //StoneOfXelima 
-			else if ((iResult >= 1399)&& (iResult <= 1798))  iItemID = 868; //AncientTablet(LU) 
-			else if ((iResult >= 1799) && (iResult <= 2198))  iItemID = 869; //AncientTablet(LD) 
-			else if ((iResult >= 2199) && (iResult <= 2598))  iItemID = 870; //AncientTablet(RU) 
-			else if ((iResult >= 2599) && (iResult <= 2999))  iItemID = 871; //AncientTablet(RD) 
-			else if ((iResult >= 3000) && (iResult <= 3999))  iItemID = 333; //PlatinumRing 
-			else if ((iResult >= 4000) && (iResult <= 4999))  iItemID = 335; //EmeraldRing 
-			else if ((iResult >= 5000) && (iResult <= 5999))  iItemID = 337; //RubyRing 
-			else if ((iResult >= 6000) && (iResult <= 6999))  iItemID = 305; //MagicNecklace(DM+1) 
-			else if ((iResult >= 7000) && (iResult <= 7499))  iItemID = 300; //MagicNecklace(RM10) 
-			else if ((iResult >= 7500) && (iResult <= 7999))  iItemID = 259; //MagicWand(M.Shield) 
-			else if ((iResult >= 8000) && (iResult <= 8249))  iItemID = 311; //MagicNecklace(DF+10) 
-			else if ((iResult >= 8250) && (iResult <= 8499))  iItemID = 308; //MagicNecklace(MS10) 
-			else if ((iResult >= 8500) && (iResult <= 8749))  iItemID = 633; //RingOfDemonpower 
-			else if ((iResult >= 8750) && (iResult <= 8999))  iItemID = 640; //NecklaceOfSufferent 
-			else if ((iResult >= 9000) && (iResult <= 9249))  iItemID = 290; //Flameberge+3(LLF) 
-			else if ((iResult >= 9250) && (iResult <= 9449))  iItemID = 639; //KnecklaceOfPoisonPro 
-			else if ((iResult >= 9500) && (iResult <= 9969))  iItemID = 641; //NecklaceOfMedusa  
-			else if ((iResult >= 9970) && (iResult <= 9979))  iItemID = 621; //MerienPlateMail(M) 
-			else if ((iResult >= 9980) && (iResult <= 9989))  iItemID = 622; //MerienPlateMail(W) 
-			else if ((iResult >= 9990) && (iResult <= 10000)) iItemID = 620; //MerienShield 
-			return TRUE; 
-
-		case 50: // Tigerworm 
-			iResult = iDice(1,10000); 
-			if ((iResult >= 1) && (iResult <= 598))  iItemID = 650; //ZemstoneofSacrifice 
-			else if ((iResult >= 599) && (iResult <= 998))  iItemID = 657; //StoneOfMerien 
-			else if ((iResult >= 999) && (iResult <= 1398))  iItemID = 656; //StoneOfXelima 
-			else if ((iResult >= 1399)&& (iResult <= 1798))  iItemID = 868; //AncientTablet(LU) 
-			else if ((iResult >= 1799) && (iResult <= 2198))  iItemID = 869; //AncientTablet(LD) 
-			else if ((iResult >= 2199) && (iResult <= 2598))  iItemID = 870; //AncientTablet(RU) 
-			else if ((iResult >= 2599) && (iResult <= 2999))  iItemID = 871; //AncientTablet(RD) 
-			else if ((iResult >= 3000) && (iResult <= 3999))  iItemID = 311; //MagicNecklace(DF+10) 
-			else if ((iResult >= 4000) && (iResult <= 4999))  iItemID = 305; //MagicNecklace(DM+1) 
-			else if ((iResult >= 5000) && (iResult <= 5999))  iItemID = 308; //MagicNecklace(MS10) 
-			else if ((iResult >= 6000) && (iResult <= 6999))  iItemID = 631; //RingOftheAbaddon 
-			else if ((iResult >= 7000) && (iResult <= 7499))  iItemID = 630; //RingOfXelima 
-			else if ((iResult >= 7500) && (iResult <= 7999))  iItemID = 633; //RingOfDemonpower 
-			else if ((iResult >= 8000) && (iResult <= 8249))  iItemID = 290; //Flameberge+3(LLF) 
-			else if ((iResult >= 8250) && (iResult <= 8499))  iItemID = 490; //BloodSword 
-			else if ((iResult >= 8500) && (iResult <= 8749))  iItemID = 491; //BloodAxe 
-			else if ((iResult >= 8750) && (iResult <= 8999))  iItemID = 492; //BloodRapier 
-			else if ((iResult >= 9000) && (iResult <= 9249))  iItemID = 637; //KnecklaceOfLightPro 
-			else if ((iResult >= 9250) && (iResult <= 9499))  iItemID = 644; //KnecklaceOfAirEle 
-			else if ((iResult >= 9500) && (iResult <= 9968))  iItemID = 20; //Excalibur 
-			else if ((iResult >= 9970) && (iResult <= 9979))  iItemID = 612; //XelimaRapier 
-			else if ((iResult >= 9980) && (iResult <= 9989))  iItemID = 610; //XelimaBlade 
-			else if ((iResult >= 9990) && (iResult <= 10000)) iItemID = 611; //XelimaAxe 
+		case 49: // Hellclaw 
+			iResult = iDice(1,20000);
+			if ((iResult >= 1) && (iResult <= 500))  iItemID = 361;				// Dye(Crimson-Red) 
+			else if ((iResult >= 500) && (iResult <= 1000))  iItemID = 363;		// Dye(Gold) 
+			else if ((iResult >= 1000) && (iResult <= 2000))  iItemID = 650;	// ZemstoneofSacrifice
+			else if ((iResult >= 2000) && (iResult <= 3000))  iItemID = 657;	// StoneOfMerien 
+			else if ((iResult >= 3000) && (iResult <= 4000))  iItemID = 656;	// StoneOfXelima 
+			else if ((iResult >= 4000) && (iResult <  5000)) iItemID = 308 ;	// MagicNecklace(MS10)
+			else if ((iResult >= 5000) && (iResult <  10000)) iItemID = 259 ;	// MagicWand(M.Shield)
+			else if ((iResult >= 10000) && (iResult < 13000))  iItemID = 337 ;  // RubyRing
+			else if ((iResult >= 13000) && (iResult < 15000))  iItemID = 335 ;  // EmeraldRing
+			else if ((iResult >= 15000) && (iResult < 17500))  iItemID = 300 ;  // MagicNecklace(RM10)
+			else if ((iResult >= 17500) && (iResult < 18750))  iItemID = 311 ;  // MagicNecklace(DF+10)
+			else if ((iResult >= 18750) && (iResult < 19000))  iItemID = 305 ;  // MagicNecklace(DM+1)
+			else if ((iResult >= 19000) && (iResult < 19700))  iItemID = 634 ;  // RingofWizard
+			else if ((iResult >= 19700) && (iResult < 19844))  iItemID = 635 ;  // RingofMage
+			else if ((iResult >= 19844) && (iResult < 19922))  iItemID = 643 ;  // KnecklaceOfIceEle	
+			else if ((iResult >= 19922) && (iResult < 19961))  iItemID = 640 ;  // KnecklaceOfSufferent
+			else if ((iResult >= 19961) && (iResult < 19981))  iItemID = 637 ;  // KnecklaceOfLightPro
+			else if ((iResult >= 19981) && (iResult < 19991))  iItemID = 620 ;  // MerienShield	
+			else if ((iResult >= 19991) && (iResult < 19996))  iItemID = 644 ;  // KnecklaceOfAirEle	
+			else if ((iResult >= 19996) && (iResult < 19999))  iItemID = 614 ;  // SwordofIceElemental	
+			else if ((iResult >= 19999) && (iResult <= 20000)) iItemID = 636 ;  // RingofGrandMage
 			return TRUE;
+		
+	case 50: // Tigerworm
+		iResult = iDice(1,10000);
+		if ((iResult >= 1) && (iResult <= 4999)) {
+			if (iDice(1,2) == 1) 
+				 iItemID = 311 ;  // MagicNecklace(DF+10)
+			else iItemID = 305 ;  // MagicNecklace(DM+1)
+		}
+		else if ((iResult >= 5000) && (iResult <= 7499))  iItemID = 614 ;  // SwordofIceElemental	
+		else if ((iResult >= 7500) && (iResult <= 8749))  iItemID = 290 ;  // Flameberge+3(LLF)
+		else if ((iResult >= 8750) && (iResult <= 9374))  iItemID = 633 ;  // RingofDemonpower
+		else if ((iResult >= 9375) && (iResult <= 9687))  iItemID = 492 ;  // BloodRapier		
+		else if ((iResult >= 9688) && (iResult <= 9843))  iItemID = 490 ;  // BloodSword		
+		else if ((iResult >= 9844) && (iResult <= 9921))  iItemID = 491 ;  // BloodAxe		
+		else if ((iResult >= 9922) && (iResult <= 9960))  iItemID = 291 ;  // MagicWand(MS30-LLF)	
+		else if ((iResult >= 9961) && (iResult <= 9980))  iItemID = 630 ;  // RingoftheXelima	
+		else if ((iResult >= 9981) && (iResult <= 9990))  iItemID = 612 ;  // XelimaRapier	
+		else if ((iResult >= 9991) && (iResult <= 9996))  iItemID = 610 ;  // XelimaBlade	
+		else if ((iResult >= 9996) && (iResult <= 9998))  iItemID = 611 ;  // XelimaAxe	
+		else if ((iResult >= 9999) && (iResult <= 10000)) iItemID = 631 ;  // RingoftheAbaddon
+		return TRUE;
 
-		default: // ë‹¤ë¥¸ ëª¬ìŠ¤í„°. í™•ë¥  ê³„ì‚°í•œë‹¤. 
+		default:
 	   break; 
 	}
 
-	// ì¼ë‹¨ í™•ë¥  ê³„ì‚°.
-		if (iDice(1,50) == 13) {
-		switch (sNpcType) {
-			case 11: if (iDice(1,550) != 11) return FALSE;	 break;	 // Skeleton   2 * 100
-			case 12: if (iDice(1,400) != 11) return FALSE;	 break;	 // Stone-Golem 2 * 100
-			case 13: if (iDice(1,100) != 11) return FALSE;	 break;	 // Cyclops  6 * 100
-			case 14: if (iDice(1,700) != 11) return FALSE;	 break;	 // Orc 4 * 100
-			case 17: if (iDice(1,600) != 11) return FALSE;	 break;	 // Scorpoin 5 * 100
-			case 18: if (iDice(1,850) != 11) return FALSE;	 break;	 // Zombie 1 * 100
-			case 22: if (iDice(1,600) != 11) return FALSE;	 break;	 // Amphis 5 * 100
-			case 23: if (iDice(1,400) != 11) return FALSE;	 break;	 // Clay-Golem 2 * 100
-			case 27: if (iDice(1,100) != 11) return FALSE;	 break;	 // Hellhound 7 * 100
-			case 28: if (iDice(1,100) != 11) return FALSE;	 break;	 // Troll 5 * 100
-			case 29: if (iDice(1,15) != 3) return FALSE;	 break;	 // Orge  7 * 100
-			case 30: if (iDice(1,10) !=  3) return FALSE;	 break;  // Liche 1 * 100
-			case 31:  	                                     break;	 // Demon 5 * 100
-			case 32: if (iDice(1,2) !=  1) return FALSE;	 break;	 // Unicorn 5 * 100
-			case 33: if (iDice(1,30) !=  3) return FALSE;	 break;  // WereWolf 7 * 100
-			case 48: if (iDice(1,30) !=  3) return FALSE;	 break;  // Stalker 
-			default: return FALSE;
+		if (iDice(1,45) == 13) {
+			switch (sNpcType) {
+				case 11: if (iDice(1,55) != 11) return FALSE;	  // Skeleton   2 * 100	
+				case 12: if (iDice(1,40) != 11) return FALSE;	  // Stone-Golem 2 * 100	
+				case 13: if (iDice(1,10) != 11) return FALSE;	  // Cyclops  6 * 100	
+				case 14: if (iDice(1,70) != 11) return FALSE;	  // Orc 4 * 100	
+				case 17: if (iDice(1,60) != 11) return FALSE;	  // Scorpoin 5 * 100	
+				case 18: if (iDice(1,85) != 11) return FALSE;	  // Zombie 1 * 100	
+				case 22: if (iDice(1,60) != 11) return FALSE;	  // Amphis 5 * 100	
+				case 23: if (iDice(1,40) != 11) return FALSE;	  // Clay-Golem 2 * 100	
+				case 27: if (iDice(1,10) != 11) return FALSE;	  // Hellhound 7 * 100	
+				case 28: if (iDice(1,10) != 11) return FALSE;	  // Troll 5 * 100	
+				case 29: 
+				case 30: 
+				case 31: break;	                                  // Demon 5 * 100	
+				case 32: if (iDice(1,2) !=  1) return FALSE;	  // Unicorn 5 * 100	
+				case 33: if (iDice(1,3) !=  3) return FALSE;	  // WereWolf 7 * 100
+				case 48: if (iDice(1,10) !=  3) return FALSE;	  // Stalker 
+				case 52: if (iDice(1,3)  !=  1) return FALSE;     // Gagoyle
+				case 53: if (iDice(1,50) !=  11) return FALSE;	  // Beholder
+				case 54: if (iDice(1,2) !=  11) return FALSE;	  // Dark-Elf
+				case 57: if (iDice(1,40) !=  11) return FALSE;	  // Giant-Frog
+				default: return FALSE;
 		}
 	}
 	else return FALSE;
 
-	// GenType ê²°ì •
-	switch (sNpcType) { 
-	    case 11: //Skeleton 
-		case 17: //Scorpion
-		case 14: //Orc-Mage
-		case 28: //Troll
-			switch (iDice(1,7)) { 
-				case 1: iItemID = 334; break; //LuckyGoldRing 
-				case 2: iItemID = 336; break; //SapphireRing 
-				case 3: iItemID = 335; break; //EmeraldRing 
-				case 4: iItemID = 337; break; //RubyRing 
-				case 5: iItemID = 333; break; //PlatinumRing 
-				case 6: if (iDice(1,15) == 3) iItemID = 634; break; //RingOfWizard 
-				case 7: if (iDice(1,25) == 3) iItemID = 635; break; //RingOfMage 
-			} 
-		break; 
-
-		case 13: //Cyclops 
-		case 27: //Hellbound
-		case 29: //Orge
-			switch (iDice(1,7)) { 
-				case 1: iItemID = 311; break; //MagicNecklace(DF+10) 
-				case 2: if (iDice(1,20) == 13) iItemID = 257; break; //MagicNecklace(MS10) 
-				case 3: if (iDice(1,10) == 13) iItemID = 305; break; //MagicNecklace(DM+1) 
-				case 4: iItemID = 300; break; //MagicNecklace(RM10 
-				case 5: if (iDice(1,30) == 13) iItemID = 632; break; //RingOfOgrepower 
-				case 6: if (iDice(1,30) == 13) iItemID = 637; break; //KnecklaceOfLightPro 
-				case 7: if (iDice(1,30) == 13) iItemID = 638; break; //KnecklaceOfFirePro 
-			} 
-		break; 
-
-		case 18: //Zombie
-		case 22: //Amphis
-			switch (iDice(1,4)) { 
-				case 1: if (iDice(1,75) == 13) iItemID = 613; break; //SwordofMedusa 
-				case 2: if (iDice(1,20) == 13) iItemID = 639; break; //KnecklaceOfPoisonPro 
-				case 3: if (iDice(1,40) == 13) iItemID = 641; break; //NecklaceOfMedusa 
-				case 4: if (iDice(1,30) == 13) iItemID = 640; break; //NecklaceOfSufferent 
-			} 
-		break; 
-
-		case 12: //Stone-Golem
-		case 23: //Clay-Golem
-		case 32: //Unicorn
-			switch (iDice(1,4)) { 
-				case 1: if (iDice(1,30) == 13) iItemID = 620; break; //MerienShield 
-				case 2: if (iDice(1,30) == 13) iItemID = 621; break; //MerienPlateMail(M) 
-				case 3: if (iDice(1,30) == 13) iItemID = 622; break; //MerienPlateMail(W) 
-				case 4: if (iDice(1,20) == 11) iItemID = 644; break; //KnecklaceOfAirEle 
-			} 
-		break; 
-
-		case 33: //WereWolf
-		case 48: //Stalker
-			switch (iDice(1,2)) { 
-				case 1: if (iDice(1,30) == 3) iItemID = 290; break; //Flameberge+3(LLF) 
-				case 2: iItemID = 74; break; //4BladeGoldenAxe 
-			} 
-		break; 
-
-		case 30: //Liche
-			switch (iDice(1,7)) { 
-				case 1: if (iDice(1,5) == 3) iItemID = 380; break; //IceStormManual 
-				case 2: iItemID = 259; break; //MagicWand(M.Shield)
-				case 3: if (iDice(1,20) == 3) iItemID = 291; break; //MagicWand(MS30-LLF) 
-				case 4: if (iDice(1,10) == 3) iItemID = 614; break; //SwordofIceElemental 
-				case 5: if (iDice(1,10) == 3) iItemID = 642; break; //KnecklaceOfIcePro 
-				case 6: if (iDice(1,15) == 3) iItemID = 643; break; //KnecklaceOfIceEle 
-				case 7: if (iDice(1,20) == 3) iItemID = 636; break; //RingOfGrandMage 
-			} 
-		break; 
-
-		case 31: //Demon
-			switch (iDice(1,12)) { 
-				case 1: if (iDice(1,15) == 3) iItemID = 382; break; //BloodyShockW.Manual
-				case 2: iItemID = 491; break; //BloodAxe 
-				case 3: if (iDice(1,5) == 3) iItemID = 490; break; //BloodSword 
-				case 4: iItemID = 492; break; //BloodRapier 
-				case 5: if (iDice(1,10) == 3) iItemID = 610; break; //XelimaBlade
-				case 6: if (iDice(1,10) == 3) iItemID = 611; break; //XelimaAxe 
-				case 7: if (iDice(1,10) == 3) iItemID = 612; break; //XelimaRapier 
-				case 8: if (iDice(1,5) == 3)  iItemID = 381; break; //MassFireStrikeManual 
-				case 9: if (iDice(1,10) == 3)  iItemID = 633; break; //RingOfDemonpower 
-				case 10: if (iDice(1,10) == 3) iItemID = 645; break; //KnecklaceOfEfreet 
-				case 11: if (iDice(1,20) == 3)  iItemID = 630; break; //RingOftheXelima
-				case 12: if (iDice(1,30) == 3) iItemID = 631; break; //RingOftheAbaddon 
-			} 
+	switch (sNpcType) {
+	case 11: // Skeleton
+	case 17: // Scorpoin
+	case 14: // Orc
+	case 28: // Troll
+	case 57: // Giant-Frog
+		switch (iDice(1,7)) {
+		case 1: iItemID = 334 ; break; // LuckyGoldRing
+		case 2: iItemID = 336 ; break; // SapphireRing
+		case 3: if (iDice(1,15) == 3) iItemID = 335 ; break; // EmeraldRing
+		case 4: iItemID = 337 ; break; // RubyRing		
+		case 5: iItemID = 333 ; break; // PlatinumRing
+		case 6: if (iDice(1,15) == 3) iItemID = 634 ; break; // RingofWizard
+		case 7: if (iDice(1,25) == 3) iItemID = 635 ; break; // RingofMage
+		}
 		break;
+	
+	case 13: // Cyclops
+	case 27: // Hellhound
+	case 29: // Orge
+		switch (iDice(1,7)) {
+		case 1: iItemID = 311 ; break; // MagicNecklace(DF+10)
+		case 2: if (iDice(1,20) == 13) iItemID = 308 ; break; // MagicNecklace(MS10)
+		case 3: if (iDice(1,10) == 13) iItemID = 305 ; break; // MagicNecklace(DM+1)
+		case 4: iItemID = 300 ; break; // MagicNecklace(RM10)
+		case 5: if (iDice(1,30) == 13) iItemID = 632 ; break; // RingofOgrepower
+		case 6: if (iDice(1,30) == 13) iItemID = 637 ; break; // KnecklaceOfLightPro
+		case 7: if (iDice(1,30) == 13) iItemID = 638 ; break; // KnecklaceOfFirePro
+		}
+		break;
+
+	case 18: // Zombie
+	case 22: // Amphis
+		switch (iDice(1,4)) {
+		case 1: if (iDice(1,75) == 13) iItemID = 613 ; break; // SwordofMedusa
+		case 2: if (iDice(1,20) == 13) iItemID = 639 ; break; // KnecklaceOfPoisonPro
+		case 3: if (iDice(1,40) == 13) iItemID = 641 ; break; // KnecklaceOfMedusa
+		case 4: if (iDice(1,30) == 13) iItemID = 640 ; break; // KnecklaceOfSufferent
+		}
+		break;
+
+	case 12: // Stone-Golem
+		switch (iDice(1,5)) {
+		case 1: if (iDice(1,40) == 13) iItemID = 620 ; break; // MerienShield
+		case 2: if (iDice(1,40) == 13) iItemID = 621 ; break; // MerienPlateMail(M)
+		case 3: if (iDice(1,40) == 13) iItemID = 622 ; break; // MerienPlateMail(W)
+		case 4: if (iDice(1,20) == 11) iItemID = 644 ; break; // KnecklaceOfAirEle
+		case 5: if (iDice(1,20) == 11) iItemID = 647 ; break; // KnecklaceOfStoneGolem
+		}
+		break;
+
+	case 23: // Clay-Golem
+	case 32: // Unicorn
+		switch (iDice(1,4)) {
+		case 1: if (iDice(1,40) == 13) iItemID = 620 ; break; // MerienShield	
+		case 2: if (iDice(1,40) == 13) iItemID = 621 ; break; // MerienPlateMail(M)
+		case 3: if (iDice(1,40) == 13) iItemID = 622 ; break; // MerienPlateMail(W)
+		case 4: if (iDice(1,20) == 11) iItemID = 644 ; break; // KnecklaceOfAirEle
+		}
+		break;
+
+	case 33: // WereWolf
+	case 48: // Stalker
+		switch (iDice(1,2)) {
+		case 1: if (iDice(1,30) == 3) iItemID = 290 ; break; // Flameberge+3(LLF)
+		case 2: iItemID = 292 ; break; // GoldenAxe(LLF)
+		}
+		break;
+
+	case 30: // Liche
+		switch (iDice(1,8)) {
+		case 1: if (iDice(1,10) == 3) iItemID = 380 ; break; // IceStormManual
+		case 2: iItemID = 259 ; break; // MagicWand(M.Shield)
+		case 3: if (iDice(1,30) == 3) iItemID = 291 ; break; // MagicWand(MS30-LLF)
+		case 4: if (iDice(1,10) == 3) iItemID = 614 ; break; // SwordofIceElemental	
+		case 5: if (iDice(1,10) == 3) iItemID = 642 ; break; // KnecklaceOfIcePro
+		case 6: if (iDice(1,15) == 3) iItemID = 643 ; break; // KnecklaceOfIceEle	
+		case 7: if (iDice(1,30) == 3) iItemID = 636 ; break; // RingofGrandMage
+		case 8: if (iDice(1,30) == 3) iItemID = 734 ; break; // RingOfArcmage
+		}
+		break;
+
+	case 31: // Demon 
+		switch (iDice(1,8)) {
+		case 1: if (iDice(1,30) == 3) iItemID = 382 ; break; // BloodyShockW.Manual
+		case 2: iItemID = 491 ; break; // BloodAxe
+		case 3: if (iDice(1,10) == 3) iItemID = 490 ; break; // BloodSword
+		case 4: iItemID = 492 ; break; // BloodRapier
+		case 5: if (iDice(1,10) == 3) iItemID = 381 ; break; // MassFireStrikeManual
+		case 6: if (iDice(1,30) == 3) iItemID = 633 ; break; // RingofDemonpower
+		case 7: if (iDice(1,10) == 3) iItemID = 645 ; break; // KnecklaceOfEfreet
+		case 8: if (iDice(1,20) == 3) iItemID = 616 ; break; // DemonSlayer
+		}
+		break;
+
+	case 52: // Gagoyle
+		switch (iDice(1,11)) {
+		case 1: if (iDice(1,30) == 3) iItemID = 382 ; break; // BloodyShockW.Manual	
+		case 2: if (iDice(1,20) == 3) iItemID = 610 ; break; // XelimaBlade	
+		case 3: if (iDice(1,20) == 3) iItemID = 611 ; break; // XelimaAxe	
+		case 4: if (iDice(1,20) == 3) iItemID = 612 ; break; // XelimaRapier
+		case 5: if (iDice(1,10) == 3) iItemID = 381 ; break; // MassFireStrikeManual
+		case 6: if (iDice(1,30) == 3) iItemID = 633 ; break; // RingofDemonpower
+		case 7: if (iDice(1,10) == 3) iItemID = 645 ; break; // KnecklaceOfEfreet
+		case 8: if (iDice(1,40) == 3) iItemID = 630 ; break; // RingoftheXelima	
+		case 9: if (iDice(1,50) == 3) iItemID = 631 ; break; // RingoftheAbaddon
+		case 10: if (iDice(1,20) == 3) iItemID = 735 ; break; // RingOfDragonpower
+		case 11: if (iDice(1,40) == 3) iItemID = 20 ; break;  // Excalibur
+		}
+		break ;
+
+	case 53: // Beholder
+		if (iDice(1,20) == 11) iItemID = 646; break; // KnecklaceOfBeholder	
+
+	case 54: // Dark-Elf
+		if (iDice(1,20) == 11) iItemID = 618; break; // DarkElfBow
 	} 
 
 	if (iItemID == 0) 
@@ -44649,7 +46210,6 @@ void CGame::_NpcBehavior_GrandMagicGenerator(int iNpcH)
 		break;
 	}
 }
-
 
 void CGame::MeteorStrikeMsgHandler(char cAttackerSide)
 {
@@ -45850,7 +47410,7 @@ void CGame::ServerStockMsgHandler(char *pData)
 				break;
 			}
 			break;
-		
+				
 		//New Changed 11/05/2004
 		case  GSM_GRANDMAGICRESULT:
 			cp++;
@@ -46188,26 +47748,26 @@ void CGame::DoMeteorStrikeDamageHandler(int iMapIndex)
 	}
 }
 
-//New Changed 11/05/2004
+// v2.15 ¸ŞÅ×¿À¿¡ ¸ÂÀ»¶§ ³²Àº °Ç¹° HP ¸¦ º¸¿©ÁÖ±â À§ÇÑ ·çÆ¾ 
+// ÁÖÀÇ ÇöÀç °Ç¹°ÀÌ 4°³ÀÎ °æ¿ì¿¡ ¸ÂÃç¼­ ·çÆ¾ÀÌ Çü¼º µÇ¾î ÀÖ´Ù.
 void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 {
- int i, iActiveStructure;
- char * cp, * cp2, cData[120], cData2[120], cWinnerSide;
+ int i, iActiveStructure, iStructureHP[DEF_MAXSTRIKEPOINTS] ;
+ char * cp, * cp2, cData[120], cWinnerSide, cTempData[120];
  WORD * wp;
- int iMapStrikePointHP[DEF_MAXSTRIKEPOINTS];
 
 	if (m_bIsCrusadeMode == FALSE) return;
 
-	for(i = 0; i < DEF_MAXSTRIKEPOINTS; i++){
-		iMapStrikePointHP[i] = 0;
-	}
+	// »ç¿ëÀÚ¿¡°Ô ³²Àº °Ç¹°ÀÇ HP¸¦ º¸¿©ÁÖ±â À§ÇÑ º¯¼ö ÃÊ±âÈ­ 
+	for(i = 0 ; i < DEF_MAXSTRIKEPOINTS; i++)
+		iStructureHP[i] = 0 ;
 
-	// Ã†Ã¸Â°ÃÃ€Ã‡ ÃˆÂ¿Â°ÃºÂ¸Â¦ Â°Ã¨Â»ÃªÃ‡Ã‘Â´Ã™. Â¸Ã°ÂµÃ§ Â°Ã‡Â¹Â°Ã€ÃŒ Ã†Ã„Â±Â«ÂµÃ‡Â¾ÃºÂ´Ã™Â¸Ã© Ã€Ã¼Â¸Ã©Ã€Ã¼ Â¸Ã°ÂµÃ¥ ÃÂ¾Â·Ã¡. Â±Ã—Â·Â¸ÃÃ¶ Â¾ÃŠÃ€Â¸Â¸Ã© Â°Ã¡Â°ÃºÂ¸Â¦ Â¸Ã°ÂµÃ§ Â¼Â­Â¹Ã¶Â¿Â¡ Â¸Â®Ã†Ã·Ã†Â®.
+	// Æø°İÀÇ È¿°ú¸¦ °è»êÇÑ´Ù. ¸ğµç °Ç¹°ÀÌ ÆÄ±«µÇ¾ú´Ù¸é Àü¸éÀü ¸ğµå Á¾·á. ±×·¸Áö ¾ÊÀ¸¸é °á°ú¸¦ ¸ğµç ¼­¹ö¿¡ ¸®Æ÷Æ®.
 	iActiveStructure = 0;
 	for (i = 1; i <= m_pMapList[iMapIndex]->m_iTotalStrikePoints; i++) {
 		if (m_pMapList[iMapIndex]->m_stStrikePoint[i].iHP > 0) {
 			iActiveStructure++;
-			iMapStrikePointHP[i] = m_pMapList[iMapIndex]->m_stStrikePoint[i].iHP;
+			iStructureHP[i] = m_pMapList[iMapIndex]->m_stStrikePoint[i].iHP ;
 		}
 	}
 	
@@ -46216,22 +47776,22 @@ void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 	PutLogList(G_cTxt);
 
 	if (iActiveStructure == 0) {
-		// Ã€Ã›ÂµÂ¿ÃÃŸÃ€Ã Â°Ã‡Â¹Â°Ã€ÃŒ Â¾Ã¸Â´Ã™. Ã…Â©Â·Ã§Â¼Â¼Ã€ÃŒÂµÃ¥ Â¸Ã°ÂµÃ¥ ÃÂ¾Â·Ã¡: Â´Ã™Â¸Â¥ Â¼Â­Â¹Ã¶Â¿Â¡ Â¾Ã‹Â·ÃÃÃ˜Â´Ã™.
-		// Ã…Â©Â·Ã§Â¼Â¼Ã€ÃŒÂµÃ¥ Â¸Ã°ÂµÃ¥ ÃÂ¾Â·Ã¡ÂµÃŠÃ€Â» Ã‡Ã¶Ã€Ã§ Â¼Â­Â¹Ã¶Ã€Ã‡ Ã…Â¬Â¶Ã³Ã€ÃŒÂ¾Ã°Ã†Â®ÂµÃ©Â¿Â¡Â°Ã” Â¹Ã™Â·Ã Ã€Ã¼Â´Ã.
+		// ÀÛµ¿ÁßÀÎ °Ç¹°ÀÌ ¾ø´Ù. Å©·ç¼¼ÀÌµå ¸ğµå Á¾·á: ´Ù¸¥ ¼­¹ö¿¡ ¾Ë·ÁÁØ´Ù.
+		// Å©·ç¼¼ÀÌµå ¸ğµå Á¾·áµÊÀ» ÇöÀç ¼­¹öÀÇ Å¬¶óÀÌ¾ğÆ®µé¿¡°Ô ¹Ù·Î Àü´Ş.
 		if (iMapIndex == m_iAresdenMapIndex) {
 			cWinnerSide = 2;
-			LocalEndCrusadeMode(2); // Ã€ÃŒÂ±Ã¤ Ã‚ÃŠÃ€Âº Â¿Â¤Â¹Ã™Ã€Ã
+			LocalEndCrusadeMode(2); // ÀÌ±ä ÂÊÀº ¿¤¹ÙÀÎ
 		}
 		else if (iMapIndex == m_iElvineMapIndex) {
 			cWinnerSide = 1;
-			LocalEndCrusadeMode(1); // Ã€ÃŒÂ±Ã¤ Ã‚ÃŠÃ€Âº Â¾Ã†Â·Â¹Â½ÂºÂµÂ§
+			LocalEndCrusadeMode(1); // ÀÌ±ä ÂÊÀº ¾Æ·¹½ºµ§
 		}
 		else {
 			cWinnerSide = 0;
 			LocalEndCrusadeMode(0); 
 		}
 		
-		// Â´Ã™Â¸Â¥ Â¼Â­Â¹Ã¶Â¿Â¡ Ã…Â©Â·Ã§Â¼Â¼Ã€ÃŒÂµÃ¥ ÃÂ¾Â·Ã¡Â¸Â¦ Â¾Ã‹Â¸Â².
+		// ´Ù¸¥ ¼­¹ö¿¡ Å©·ç¼¼ÀÌµå Á¾·á¸¦ ¾Ë¸².
 		ZeroMemory(cData, sizeof(cData));
 		cp = (char *)(cData);
 		*cp =  GSM_ENDCRUSADE;
@@ -46256,12 +47816,10 @@ void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 		cp += 10;
 
 		bStockMsgToGateServer(cData, 18);
-		
-		// Ã‡Ã¶Ã€Ã§ Â¼Â­Â¹Ã¶Â¿Â¡Â´Ã‚ Â½ÂºÃ…Ã¥ Â¸ÃÂ½ÃƒÃÃ¶Â°Â¡ Â¿Ã€ÃÃ¶ Â¾ÃŠÃ€Â¸Â¹Ã‡Â·Ã ÃÃ·ÃÂ¢ Ã€Ã¼Â´ÃÃ‡Ã‘Â´Ã™.
-		//GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure);
+
 	}
 	else {
-		// Ã‡Ã‡Ã‡Ã˜ Â»Ã³ÃˆÂ²Ã€Â» Â¸Ã°ÂµÃ§ Â¼Â­Â¹Ã¶Â·Ã Â¸Â®Ã†Ã·Ã†Â®.
+		// ÇÇÇØ »óÈ²À» ¸ğµç ¼­¹ö·Î ¸®Æ÷Æ®.
 		ZeroMemory(cData, sizeof(cData));
 		cp = (char *)(cData);
 		*cp =  GSM_GRANDMAGICRESULT;
@@ -46283,32 +47841,34 @@ void CGame::CalcMeteorStrikeEffectHandler(int iMapIndex)
 		cp += 2;
 
 		wp  = (WORD *)cp;
-		*wp = iActiveStructure;
+		*wp = (WORD) iActiveStructure;
 		cp += 2;
-		
-		ZeroMemory(cData2,sizeof(cData2));
-		cp2 = (char *)(cData2);
+
+		//v2.15 Ãß°¡  ÅäÅ» °Ç¹°ÀÇ °¹¼ö 
+		ZeroMemory(cTempData, sizeof(cTempData));
+		cp2 = (char *)(cTempData); 
 
 		wp = (WORD *)cp2;
-		*wp = m_pMapList[iMapIndex]->m_iTotalStrikePoints;
+		*wp = (WORD) m_pMapList[iMapIndex]->m_iTotalStrikePoints;
 		cp2 += 2;
 
-		for(i = 1; i <= m_pMapList[iMapIndex]->m_iTotalStrikePoints; i++){
+		for (i = 1; i <= m_pMapList[iMapIndex]->m_iTotalStrikePoints;i++){
 			wp = (WORD *)cp2;
-			*wp = (WORD)iMapStrikePointHP[i];
+			*wp = (WORD) iStructureHP[i];
 			cp2 += 2;
 		}
 
-		memcpy(cp,cData2,(m_pMapList[iMapIndex]->m_iTotalStrikePoints*2)+2);
+		memcpy(cp,cTempData,2*(m_pMapList[iMapIndex]->m_iTotalStrikePoints+1) ) ;
 
-		bStockMsgToGateServer(cData, (m_pMapList[iMapIndex]->m_iTotalStrikePoints*2)+21); // Stupid simentech cant count
-
-		GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure, m_pMapList[iMapIndex]->m_iTotalStrikePoints, cData2);
-		// Ã‡Ã¶Ã€Ã§ Â¼Â­Â¹Ã¶Â¿Â¡Â´Ã‚ Â½ÂºÃ…Ã¥ Â¸ÃÂ½ÃƒÃÃ¶Â°Â¡ Â¿Ã€ÃÃ¶ Â¾ÃŠÃ€Â¸Â¹Ã‡Â·Ã ÃÃ·ÃÂ¢ Ã€Ã¼Â´ÃÃ‡Ã‘Â´Ã™.
-		//GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure);
+		// v2.15 
+		bStockMsgToGateServer(cData, 18 + (m_pMapList[iMapIndex]->m_iTotalStrikePoints+1)*2 );
+		
+		// ÇöÀç ¼­¹ö¿¡´Â ½ºÅå ¸Ş½ÃÁö°¡ ¿ÀÁö ¾ÊÀ¸¹Ç·Î Á÷Á¢ Àü´ŞÇÑ´Ù.
+		// v2.15 °Ç¹°ÀÇ °¹¼ö¿Í HP¸¦ º¸³½´Ù.
+		GrandMagicResultHandler(m_pMapList[iMapIndex]->m_cName, m_stMeteorStrikeResult.iCrashedStructureNum, m_stMeteorStrikeResult.iStructureDamageAmount, m_stMeteorStrikeResult.iCasualties, iActiveStructure,m_pMapList[iMapIndex]->m_iTotalStrikePoints, cTempData);
 	}
 
-	// Â°Ã¡Â°Ãº ÂºÂ¸Â°Ã­Â¿Ã« Â½ÂºÃ†Â®Â·Â°ÃƒÃ§ Ã…Â¬Â¸Â®Â¾Ã®
+	// °á°ú º¸°í¿ë ½ºÆ®·°Ãç Å¬¸®¾î
 	m_stMeteorStrikeResult.iCasualties            = 0;
 	m_stMeteorStrikeResult.iCrashedStructureNum   = 0;
 	m_stMeteorStrikeResult.iStructureDamageAmount = 0;
@@ -49970,10 +51530,10 @@ void CGame::SetSlateFlag(int iClientH, short sType, bool bFlag)
 
 void CGame::CheckForceRecallTime(int iClientH)
 {
+	int iTL_ = 0;
 	SYSTEMTIME SysTime;
-	int iTL_;
 
-	if(m_pClientList[iClientH] == NULL) return;
+	if (m_pClientList[iClientH] == NULL) return;
 	if (m_pClientList[iClientH]->m_iAdminUserLevel > 0) return;
 
 	if (m_pClientList[iClientH]->m_iTimeLeft_ForceRecall == 0) {

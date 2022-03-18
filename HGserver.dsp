@@ -325,7 +325,23 @@ SOURCE=.\Ws2_32.lib
 # End Group
 # Begin Source File
 
+SOURCE=.\DebugDialog.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\DebugDialog.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\GlobalDef.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\HGserver.rc
+# End Source File
+# Begin Source File
+
+SOURCE=.\logo.bmp
 # End Source File
 # End Target
 # End Project
