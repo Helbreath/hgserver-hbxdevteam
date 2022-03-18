@@ -28,10 +28,14 @@
 #define DEF_MAXNMR				50
 #define DEF_MAXSPOTMOBGENERATOR	100
 #define DEF_MAXFISHPOINT		200
+#define DEF_MAXITEMEVENTS		200
 #define DEF_MAXMINERALPOINT		200
+#define DEF_MAXHELDENIANDOOR	200
 #define DEF_MAXOCCUPYFLAG		20001 //3001
 #define	DEF_MAXINITIALPOINT		20
 #define DEF_MAXAGRICULTURE		200
+#define DEF_MAXDYNAMICGATES		10
+#define DEF_MAXHELDENIANTOWER	200
 
 #include <windows.h>
 #include "Game.h"
@@ -53,6 +57,9 @@
 class CMap  
 {
 public:
+	
+	BOOL bCheckFlySpaceAvailable(short sX, char sY, char cDir, short sOwner);
+	BOOL bGetIsFarm(short tX, short tY);
 	void RestoreStrikePoints();
 	BOOL bRemoveCrusadeStructureInfo(short sX, short sY);
 	BOOL bAddCrusadeStructureInfo(char cType, short sX, short sY, char cSide);
@@ -79,7 +86,7 @@ public:
 	BOOL bSetItem(short sX, short sY, class CItem * pItem);
 	void ClearDeadOwner(short sX, short sY);
 	void ClearOwner(int iDebugCode, short sOwnerH, char cOwnerType, short sX, short sY);
-	BOOL bGetMoveable(short dX, short dY, short * pDOtype = NULL);
+	BOOL bGetMoveable(short dX, short dY, short * pDOtype = NULL, short * pTopItem = NULL);
 	void GetOwner(short * pOwner, char * pOwnerClass, short sX, short sY);
 	void SetOwner(short sOwner, char cOwnerClass, short sX, short sY);
 	void SetDeadOwner(short sOwner, char cOwnerClass, short sX, short sY);
@@ -131,6 +138,17 @@ public:
 
 	POINT m_FishPointList[DEF_MAXFISHPOINT];
 	int   m_iTotalFishPoint, m_iMaxFish, m_iCurFish;
+	
+	int	  m_iApocalypseMobGenType, m_iApocalypseBossMobNpcID;
+	short m_sApocalypseBossMobRectX1, m_sApocalypseBossMobRectY1, m_sApocalypseBossMobRectX2, m_sApocalypseBossMobRectY2;
+	char  m_cDynamicGateType;
+	short m_sDynamicGateCoordRectX1, m_sDynamicGateCoordRectY1, m_sDynamicGateCoordRectX2, m_sDynamicGateCoordRectY2;
+	char  m_cDynamicGateCoordDestMap[11];
+	short m_sDynamicGateCoordTgtX, m_sDynamicGateCoordTgtY;
+	BOOL  m_bIsCitizenLimit;
+	short m_sHeldenianTowerType, m_sHeldenianTowerXPos, m_sHeldenianTowerYPos;
+	char  m_cHeldenianTowerSide;
+	char  m_cHeldenianModeMap;
 
 	BOOL  m_bMineralGenerator;
 	char  m_cMineralGeneratorLevel;
@@ -169,6 +187,13 @@ public:
 	BOOL m_bIsEnergySphereGoalEnabled;
 	int m_iCurEnergySphereGoalPointIndex; 
 
+	struct {
+		BOOL m_bIsGateMap;
+		char m_cDynamicGateMap[11];
+		int m_iDynamicGateX;
+		int m_iDynamicGateY;
+	} m_stDynamicGateCoords[DEF_MAXDYNAMICGATES];
+
 	// 현재 맵에서의 플레이어들의 활동 성향을 파악하는 테이블.
 	struct {
 		int iPlayerActivity;
@@ -178,6 +203,29 @@ public:
 		int iMonsterActivity;
 
 	} m_stSectorInfo[DEF_MAXSECTORS][DEF_MAXSECTORS], m_stTempSectorInfo[DEF_MAXSECTORS][DEF_MAXSECTORS];
+	short sMobEventAmount;
+	int m_iTotalItemEvents;
+	struct {
+		char cItemName[21];
+		int iAmount;
+		int iTotal;
+		int iMonth;
+		int iDay;
+		int iTotalNum;
+	} m_stItemEventList[DEF_MAXITEMEVENTS];
+
+	struct {
+		char  cDir;
+		short dX;
+		short dY;
+	} m_stHeldenianGateDoor[DEF_MAXHELDENIANDOOR];
+
+	struct {
+		short sTypeID;
+		short dX;
+		short dY;
+		char  cSide;
+	} m_stHeldenianTower[DEF_MAXHELDENIANTOWER];
 
 	int m_iMaxNx, m_iMaxNy, m_iMaxAx, m_iMaxAy, m_iMaxEx, m_iMaxEy, m_iMaxMx, m_iMaxMy, m_iMaxPx, m_iMaxPy;
 	
@@ -194,6 +242,7 @@ public:
 	int m_iTotalStrikePoints;
 
 	BOOL m_bIsDisabled;		// 폭격으로 기능이 마비된 경우 
+	int m_iTotalAgriculture;
 
 	struct {
 		char cType;			// 이게 NULL이면 정의되지 않은것을 의미.
@@ -201,12 +250,15 @@ public:
 		short sX, sY;		// 설치된 위치 
 	} m_stCrusadeStructureInfo[DEF_MAXCRUSADESTRUCTURES];
 	int m_iTotalCrusadeStructures;
-
+	BOOL m_bIsEnergySphereAutoCreation;
 private:
 	BOOL _bDecodeMapDataFileContents();
 public:
 	// Snow BOOLean for certain maps to snow instead of rain
 	BOOL m_bIsSnowEnabled;
+	BOOL m_bIsRecallImpossible;
+	BOOL m_bIsApocalypseMap;
+	BOOL m_bIsHeldenianMap;
 };
 
 #endif // !defined(AFX_MAP_H__12609160_8060_11D2_A8E6_00001C7030A6__INCLUDED_)

@@ -12,6 +12,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "XSocket.h"
 #include "Item.h"
 #include "GuildsMan.h"
@@ -22,21 +23,38 @@
 
 #define DEF_MSGBUFFERSIZE	30000
 #define DEF_MAXITEMS		50
-#define DEF_MAXBANKITEMS	120
+#define DEF_MAXBANKITEMS	200
 #define DEF_MAXGUILDSMAN	128 // 최대 길드원 수 
 
 #define	DEF_MAXMAGICTYPE	100	// 변경하려면 로그서버내용도 바꾸어야 한다.
 #define DEF_MAXSKILLTYPE	60
 
-#define DEF_MAXPARTYMEMBERS	8
+#define DEF_MAXPARTYMEMBERS	9
 
 #define DEF_SPECABLTYTIMESEC	1200
 
 class CClient  
 {
 public:
+		
+	char m_cVar;
+	int m_iRecentWalkTime;
+	int m_iRecentRunTime;
+	short m_sV1;
+	char m_cHeroArmourBonus;
+
 	BOOL bCreateNewParty();
-	
+
+	// Hack Checkers
+	DWORD m_dwMagicFreqTime, m_dwMoveFreqTime, m_dwAttackFreqTime;
+	BOOL m_bIsMoveBlocked, m_bMagicItem;
+	DWORD dwClientTime;
+	BOOL m_bMagicConfirm;
+	int m_iSpellCount;
+	BOOL m_bMagicPauseTime;
+	//int m_iUninteruptibleCheck;
+	//char m_cConnectionCheck;
+
 	CClient(HWND hWnd);
 	virtual ~CClient();
 
@@ -67,7 +85,6 @@ public:
 	int   m_iStatus;
 
 	DWORD m_dwTime, m_dwHPTime, m_dwMPTime, m_dwSPTime, m_dwAutoSaveTime, m_dwHungerTime, m_dwWarmEffectTime;
-
 	// Player 특성치 
 
 	char m_cSex, m_cSkin, m_cHairStyle, m_cHairColor, m_cUnderwear;
@@ -76,7 +93,8 @@ public:
 	int  m_iHPstock;
 	int  m_iMP;
 	int  m_iSP;
-	int  m_iExp, m_iNextLevelExp;
+	int  m_iExp;
+	int m_iNextLevelExp;
 	BOOL m_bIsKilled;
 
 	int  m_iDefenseRatio;		// Defense Ratio
@@ -98,10 +116,14 @@ public:
 	//MOG var - 3.51
 	int m_iGizonItemUpgradeLeft;
 
+	int m_iAddTransMana, m_iAddChargeCritical;
+
 	int  m_iEnemyKillCount, m_iPKCount, m_iRewardGold;
 	int  m_iCurWeightLoad;		// 현재 총 소지품 무게 
 
 	char m_cSide;				// 플레이어의 편 
+	
+	BOOL m_bInhibition;
 
 	char m_cAttackDiceThrow_SM;	// 공격치 주사위 던지는 회수 
 	char m_cAttackDiceRange_SM;	// 공격치 주사위 범위 
@@ -154,6 +176,9 @@ public:
 	int   m_iTimeLeft_ForceRecall;  // 강제 리콜되기 위해 남아있는 시간틱 
 	int   m_iTimeLeft_FirmStaminar; // 스태미너가 달아 없어지지 않는 시간 텀 
 
+	BOOL isForceSet;   //hbest
+	time_t m_iForceStart;
+
 	BOOL  m_bIsOnServerChange;     // 이 값이 활성화 되어 있으면 삭제시 데이터 저장 및 카운팅을 하지 않는다.
 
 	int   m_iExpStock;			 // 쌓여있는 경험치 
@@ -193,15 +218,24 @@ public:
 	
 	BOOL  m_bIsBWMonitor;		// BadWord 모니터인가?
 
-	BOOL  m_bIsExchangeMode;		// 현재 아이템 교환 모드인가? 
-	int   m_iExchangeH;				// 교환할 대상의 인덱스 
-	char  m_cExchangeName[11];		// 교환할 대상의 이름 
-	char  m_cExchangeItemName[21];	// 교환하고자 하는 아이템 이름 
+	//BOOL  m_bIsExchangeMode;		// 현재 아이템 교환 모드인가? 
+	//int   m_iExchangeH;				// 교환할 대상의 인덱스 
+	//char  m_cExchangeName[11];		// 교환할 대상의 이름 
+	//char  m_cExchangeItemName[21];	// 교환하고자 하는 아이템 이름 
+	//char  m_cExchangeItemIndex;  // 교환할 아이템 인덱스 
+	//int   m_iExchangeItemAmount; // 교환할 아이템 갯수 
+	//BOOL  m_bIsExchangeConfirm;  // 교환 확인 
 
-	char  m_cExchangeItemIndex;  // 교환할 아이템 인덱스 
-	int   m_iExchangeItemAmount; // 교환할 아이템 갯수 
+	BOOL  m_bIsExchangeMode;			// Is In Exchange Mode? 
+	int   m_iExchangeH;					// Client ID to Exchanging with 
+	char  m_cExchangeName[11];			// Name of Client to Exchanging with 
+	char  m_cExchangeItemName[4][21];	// Name of Item to exchange 
 
-	BOOL  m_bIsExchangeConfirm;  // 교환 확인 
+	char  m_cExchangeItemIndex[4];		// ItemID to Exchange
+	int   m_iExchangeItemAmount[4];		// Ammount to exchange with
+
+	BOOL  m_bIsExchangeConfirm;			// Has the user hit confirm? 
+	int	  iExchangeCount;				//Keeps track of items which are on list
 
 	int   m_iQuest;				 // 현재 할당된 Quest 
 	int   m_iQuestID;			 // 할당받은 Quest의 ID값 
@@ -267,14 +301,15 @@ public:
 												// 방어형
 												// 50: 무기 수명 0로 만듬. 51:해당 부위 대미지 무효화  52: 모5든 부위 대미지 무효화
 	int   m_iSpecialAbilityEquipPos;			// 방어구인 경우 특수효과가 적용되는 부위를 의미함.
-	BOOL  m_bIsAdminCreateItemEnabled;
+	BOOL  m_bIsAdminCommandEnabled;
 	int   m_iAlterItemDropIndex;				// 아이템 대신 떨어지는 아이템 인덱스 
 
 	int   m_iWarContribution;					// 전쟁 공헌도 
 
 	DWORD m_dwSpeedHackCheckTime;				// 속도버그 검사 루틴 
 	int   m_iSpeedHackCheckExp;		
-	
+	DWORD m_dwLogoutHackCheck;
+
 	DWORD m_dwInitCCTimeRcv;
 	DWORD m_dwInitCCTime;
 
@@ -283,6 +318,8 @@ public:
 
 	int   m_iCrusadeDuty;						// 크루세이드에서 맡은 역할: 1-용병. 2-건설자. 3-지휘관
 	DWORD m_dwCrusadeGUID;						// 크루세이드 GUID
+	DWORD m_dwHeldenianGUID;
+	BOOL m_bInRecallImpossibleMap;
 
 	// 이 스트럭쳐는 맵의 내용을 복사하는 것이다. 한번에 보내 줄 수 없기 때문에 여러번에 걸쳐 나누어 전송한다.
 	struct {
@@ -327,15 +364,22 @@ public:
 	// New 16/05/2004
 	char m_cWhisperPlayerName[11];
 	BOOL m_bIsAdminOrderGoto;
+	BOOL m_bIsInsideWarehouse;
+	BOOL m_bIsInsideWizardTower;
+	BOOL m_bIsInsideOwnTown;
 	BOOL m_bIsCheckingWhisperPlayer;
 	BOOL m_bIsOwnLocation;
 	BOOL m_pIsProcessingAllowed;
 
-	// New 24/05/2004
-	char m_cHeroArmourBonus;
+	// Updated 10/11/2004 - 24/05/2004
+	char m_cHeroArmorBonus;
 
 	// New 25/05/2004
 	BOOL m_bIsBeingResurrected;
+
+	DWORD m_dwFightzoneDeadTime;
+	char m_cSaveCount;
+
 };
 
 #endif // !defined(AFX_CLIENT_H__39CC7700_789F_11D2_A8E6_00001C7030A6__INCLUDED_)

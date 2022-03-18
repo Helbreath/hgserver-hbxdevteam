@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /G5 /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /G5 /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x412 /d "NDEBUG"
@@ -276,11 +276,27 @@ SOURCE=.\StrTok.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Teleport.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Teleport.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\TeleportLoc.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\TeleportLoc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TempNpcItem.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TempNpcItem.h
 # End Source File
 # Begin Source File
 

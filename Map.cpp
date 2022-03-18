@@ -67,9 +67,11 @@ CMap::CMap(class CGame * pGame)
 		m_stEnergySphereGoalList[i].cResult   = NULL;
 	}
 	
+	m_bIsHeldenianMap = FALSE;
 	m_iTotalActiveObject = 0;
 	m_iTotalAliveObject  = 0;
-
+	m_iTotalItemEvents = 0;
+	sMobEventAmount = 15;
 	//m_sInitialPointX = 0;
 	//m_sInitialPointY = 0;
 
@@ -124,6 +126,19 @@ CMap::CMap(class CGame * pGame)
 	
 	m_iMaxNx = m_iMaxNy = m_iMaxAx = m_iMaxAy = m_iMaxEx = m_iMaxEy = m_iMaxMx = m_iMaxMy = m_iMaxPx = m_iMaxPy = 0;
 
+	for (i = 0; i < DEF_MAXHELDENIANDOOR; i++) {
+		m_stHeldenianGateDoor[i].cDir = 0;
+		m_stHeldenianGateDoor[i].dX = 0;
+		m_stHeldenianGateDoor[i].dY = 0;
+	}
+
+	for (i = 0; i < DEF_MAXHELDENIANTOWER; i++) {
+		m_stHeldenianTower[i].sTypeID = 0;
+		m_stHeldenianTower[i].dX = 0;
+		m_stHeldenianTower[i].dY = 0;
+		m_stHeldenianTower[i].cSide = 0;
+	}
+	
 	for (i = 0; i < DEF_MAXSTRIKEPOINTS; i++) {
 		m_stStrikePoint[i].dX  = 0;
 		m_stStrikePoint[i].dY  = 0;
@@ -141,7 +156,7 @@ CMap::CMap(class CGame * pGame)
 		m_stCrusadeStructureInfo[i].sY = NULL;
 	}
 	m_iTotalCrusadeStructures = 0;
-
+	m_iTotalAgriculture = 0;
 }
 
 CMap::~CMap()
@@ -173,6 +188,22 @@ void CMap::SetOwner(short sOwner, char cOwnerClass, short sX, short sY)
 	pTile->m_cOwnerClass = cOwnerClass;
 }
 
+char _tmp_cMoveDirX[9] = { 0,0,1,1,1,0,-1,-1,-1 };
+char _tmp_cMoveDirY[9] = { 0,-1,-1,0,1,1,1,0,-1 };
+BOOL CMap::bCheckFlySpaceAvailable(short sX, char sY, char cDir, short sOwner)
+{
+ class CTile * pTile;
+ short dX, dY;
+
+	if ((cDir <= 0) || (cDir > 8)) return 0;
+	dX = _tmp_cMoveDirX[cDir] + sX;
+	dY = _tmp_cMoveDirY[cDir] + sY;
+	if ((dX < 20) || (dX >= m_sSizeX - 20) || (dY < 20) || (dY >= m_sSizeY - 20)) return 0;
+	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
+	if (pTile->m_sOwner != NULL) return 0;
+	pTile->m_sOwner = sOwner;
+	return 1;
+}
 
 void CMap::SetDeadOwner(short sOwner, char cOwnerClass, short sX, short sY)
 {
@@ -186,6 +217,13 @@ void CMap::SetDeadOwner(short sOwner, char cOwnerClass, short sX, short sY)
 }
 
 
+/*********************************************************************************************************************
+**  void CMap::GetOwner(short * pOwner, char * pOwnerClass, short sX, short sY)										**
+**  description			:: check if the tile contains a player														**
+**  last updated		:: November 17, 2004; 10:48 PM; Hypnotoad													**
+**	return value		:: void																						**
+**  commentary			::	-	added check to see if owner is class 1 or if is greater than max clients 			**
+**********************************************************************************************************************/
 void CMap::GetOwner(short * pOwner, char * pOwnerClass, short sX, short sY)
 {
  class CTile * pTile;	
@@ -200,10 +238,21 @@ void CMap::GetOwner(short * pOwner, char * pOwnerClass, short sX, short sY)
 	*pOwner      = pTile->m_sOwner;
 	*pOwnerClass = pTile->m_cOwnerClass;
 	
+	if ((*pOwnerClass == 1) && (*pOwner > DEF_MAXCLIENTS)) {
+		*pOwner      = NULL;	
+		*pOwnerClass = NULL;
+		return;	
+	}
+	
 	if (pTile->m_sOwner == 0) *pOwnerClass = 0;
 }
 
-
+/*********************************************************************************************************************
+**  void CMap::GetDeadOwner(short * pOwner, char * pOwnerClass, short sX, short sY)									**
+**  description			:: check if the tile contains a dead player													**
+**  last updated		:: November 20, 2004; 9:13 PM; Hypnotoad													**
+**	return value		:: void																						**
+**********************************************************************************************************************/
 void CMap::GetDeadOwner(short * pOwner, char * pOwnerClass, short sX, short sY)
 {
  class CTile * pTile;	
@@ -220,15 +269,15 @@ void CMap::GetDeadOwner(short * pOwner, char * pOwnerClass, short sX, short sY)
 }
 
  								  
-BOOL CMap::bGetMoveable(short dX, short dY, short * pDOtype)
+BOOL CMap::bGetMoveable(short dX, short dY, short * pDOtype, short * pTopItem)
 {
  class CTile * pTile;	
 	
 	if ((dX < 20) || (dX >= m_sSizeX - 20) || (dY < 20) || (dY >= m_sSizeY - 20)) return FALSE;
-
 	pTile = (class CTile *)(m_pTile + dX + dY*m_sSizeY);
 	
-	if (pDOtype != NULL) *pDOtype = pTile->m_sDynamicObjectType; // v1.4
+	if (pDOtype != NULL) *pDOtype = pTile->m_sDynamicObjectType;
+	if (pTopItem != NULL) *pTopItem = pTile->m_cTotalItem;
 
 	if (pTile->m_sOwner != NULL) return FALSE;
 	if (pTile->m_bIsMoveAllowed == FALSE) return FALSE;
@@ -251,6 +300,18 @@ BOOL CMap::bGetIsMoveAllowedTile(short dX, short dY)
 	return TRUE;
 }
 
+/*BOOL CMap::sub_4C0F20(short dX, short dY)
+{
+ class CTile * pTile;	
+	
+	3CA18h = 0;
+
+	if ((dX < 14) || (dX >= m_sSizeX - 16) || (dY < 12) || (dY >= m_sSizeY - 14)) return FALSE;
+
+	pTile = (class CTile *)(m_pTile + dX + dY*m_sSizeY);
+
+}*/
+
 BOOL CMap::bGetIsTeleport(short dX, short dY)
 {
  class CTile * pTile;	
@@ -269,7 +330,7 @@ void CMap::ClearOwner(int iDebugCode, short sOwnerH, char cOwnerType, short sX, 
  class CTile * pTile;	
 	
 	if ((sX < 0) || (sX >= m_sSizeX) || (sY < 0) || (sY >= m_sSizeY)) return;
-
+ 
 	pTile = (class CTile *)(m_pTile + sX + sY*m_sSizeY);
 
 	// 현 위치에 핸들이 일치하면 모두 클리어한다. 
@@ -474,12 +535,19 @@ BOOL CMap::_bDecodeMapDataFileContents()
 		}
 		else pTile->m_bIsTeleport = FALSE;
 
+		if ((cTemp[8] & 0x20) != 0) {
+			 pTile->m_bIsFarm = TRUE;
+		}
+		else pTile->m_bIsFarm = FALSE;
+
 		sp = (short *)&cTemp[0];
 		if (*sp == 19) {
 			// 물 타일이다. 
 			 pTile->m_bIsWater = TRUE;
 		}
 		else pTile->m_bIsWater = FALSE;
+
+
 	}
 
 	CloseHandle(hFile);
@@ -564,6 +632,45 @@ BOOL CMap::bGetIsWater(short dX, short dY)
 	pTile = (class CTile *)(m_pTile + dX + dY*m_sSizeY);
 	
 	if (pTile->m_bIsWater == FALSE) return FALSE;
+	
+	return TRUE;
+}
+
+//v2.19 2002-12-16 농사 스킬 관련
+BOOL CMap::bRemoveCropsTotalSum()
+{
+	if(m_iTotalAgriculture < DEF_MAXAGRICULTURE)
+	{
+		m_iTotalAgriculture--;
+		if(m_iTotalAgriculture < 0)
+		{
+			m_iTotalAgriculture = 0;
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+//v2.19 2002-12-16 농사 스킬 관련
+BOOL CMap::bAddCropsTotalSum()
+{
+	if(m_iTotalAgriculture < DEF_MAXAGRICULTURE)
+	{
+		m_iTotalAgriculture++;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+BOOL CMap::bGetIsFarm(short tX, short tY)
+{
+ class CTile * pTile;	
+	
+	if ((tX < 14) || (tX >= m_sSizeX - 16) || (tY < 12) || (tY >= m_sSizeY - 14)) return FALSE;
+
+	pTile = (class CTile *)(m_pTile + tX + tY*m_sSizeY);
+	
+	if (pTile->m_bIsFarm == FALSE) return FALSE;
 	
 	return TRUE;
 }
@@ -667,6 +774,12 @@ void CMap::_SetupNoAttackArea()
 	}
 }
 
+/*********************************************************************************************************************
+**  int CMap::iGetAttribute(int dX, int dY, int iBitMask)															**
+**  description			:: check if the tile contains a dead player													**
+**  last updated		:: November 20, 2004; 9:55 PM; Hypnotoad													**
+**	return value		:: int																						**
+**********************************************************************************************************************/
 int CMap::iGetAttribute(int dX, int dY, int iBitMask)
 {
  class CTile * pTile;
@@ -694,6 +807,32 @@ BOOL CMap::bAddCrusadeStructureInfo(char cType, short sX, short sY, char cSide)
 
 	return FALSE;
 }
+
+/*BOOL CMap::bAddHeldenianTowerInfo(char cType, short sX, short sY, char cSide)
+{
+ register int i;
+
+	for (i = 0; i < DEF_MAXHELDENIANTOWER; i++)
+	if (m_stHeldenianTower[i].cType == NULL) {
+	if (m_stHeldenianTower[i].cSide == 1) {
+		m_stHeldenianTower[i].sTypeID = sTypeID;
+		m_stHeldenianTower[i].cSide = cSide;
+		m_stHeldenianTower[i].sX = sX;
+		m_stHeldenianTower[i].sY = sY;
+		m_iHeldenianAresdenLeftTower++;
+		return TRUE;
+	}
+	else if (m_stHeldenianTower[i].cSide == 2) {
+		m_stHeldenianTower[i].sTypeID = sTypeID;
+		m_stHeldenianTower[i].cSide = cSide;
+		m_stHeldenianTower[i].sX = sX;
+		m_stHeldenianTower[i].sY = sY;
+		m_iHeldenianElvineLeftTower++;
+		return TRUE;
+	}
+
+	return FALSE;
+}*/
 
 BOOL CMap::bRemoveCrusadeStructureInfo(short sX, short sY)
 {

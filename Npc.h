@@ -34,11 +34,12 @@ class CNpc
 public:
 	CNpc(char * pName5);
 	virtual ~CNpc();
+
 	// Auras
 	char m_pMagicConfigList[100];
 
 	char  m_cNpcName[21]; // NPC의 이름. 사람 이름같은 것
-	
+
 	char  m_cName[6];	// 이 이름은 프로그램을 위한 식별자임
 	char  m_cMapIndex;
 	short m_sX, m_sY;
@@ -54,7 +55,7 @@ public:
 	short m_sType;
 	short m_sOriginalType;
 	short m_sAppr2;
-	short m_iStatus;
+	int	  m_iStatus;
 
 	DWORD m_dwTime;
 	DWORD m_dwActionTime;
@@ -69,8 +70,11 @@ public:
 	int  m_iHitRatio;				// HitRatio
 	int  m_iMagicHitRatio;			// v1.4 마법 공격 Ratio
 	int  m_iMinBravery;			    // 최소 용감치 
-	int  m_iExpDice;				// 죽었을 경우 얻게되는 경험치 주사위 굴림 X dice 4
-		
+	int  m_iExpDiceMin;
+	int	 m_iExpDiceMax;
+	int  m_iGoldDiceMin;
+	int  m_iGoldDiceMax;
+
 	char m_cSide;					// NPC가 속한 팀 
 	char m_cActionLimit;            // 이 값이 1이면 Move만 가능하며 죽지도 않는다.  이 값이 2면 움직이지도 않으며 죽지도 않는다. 3이면 Dummy다. 맞는 역할, 
 	                                // 4면 에너지 스피어, 5면 건축물   
@@ -120,7 +124,7 @@ public:
 	*/
 	int   m_iAttackCount;			// 연속 공격 동작 횟수 카운트 
 	BOOL  m_bIsKilled;
-
+	BOOL  m_bIsUnsummoned;
 
 	int   m_iLastDamage;			// 마지막 죽기 전에 얻은 대미지. 대미지가 너무 크면 연금술 재료가 떨어지지 않는다.
 	int   m_iSummonControlMode;		// 소환몹 조정 모드: 0이면 Free, 1 Hold 2 Tgt 
@@ -151,9 +155,15 @@ case 8:  "Hi-Explosive"
 	int   m_iManaStock;				// 그랜드 매직 제네레이터의 경우 마나축적량 
 	BOOL  m_bIsMaster;				// 마스터 몹인지의 여부 
 	int   m_iGuildGUID;				// 전쟁용 유니트인 경우 소환자의 길드 아이디가 입력된다.
+	
+	char m_cCropType;
+	char m_cCropSkill;
 
 	int   m_iV1;
 	char m_cArea;
+	
+	int m_iNpcItemType;
+	int m_iNpcItemMax;
 };
 
 #endif // !defined(AFX_NPC_H__6F7A5C80_A709_11D2_B143_00001C7030A6__INCLUDED_)

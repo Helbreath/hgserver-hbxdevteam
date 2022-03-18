@@ -1,4 +1,3 @@
-
 #define DEF_TOTALACTION			10
 
 #define DEF_OBJECTSTOP			0

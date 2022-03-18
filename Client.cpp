@@ -11,7 +11,7 @@
 CClient::CClient(HWND hWnd)
 {
  register int i;
-	
+
 	m_pXSock = NULL;
 	m_pXSock = new class XSocket(hWnd, DEF_CLIENTSOCKETBLOCKLIMIT);
 	m_pXSock->bInitBufferSize(DEF_MSGBUFFERSIZE);
@@ -38,11 +38,16 @@ CClient::CClient(HWND hWnd)
 	// v1.432 사용하지 않는다.
 	//m_iHitRatio_ItemEffect_SM = 0;
 	//m_iHitRatio_ItemEffect_L  = 0;
-
+	m_cVar = 0;
 	m_iEnemyKillCount = 0;
 	m_iPKCount = 0;
 	m_iRewardGold = 0;
 	m_iCurWeightLoad = 0;
+	m_dwLogoutHackCheck = 0;
+
+	// Charges
+	m_iAddTransMana = 0;
+	m_iAddChargeCritical = 0;
 
 	m_bIsSafeAttackMode  = FALSE;
 
@@ -80,7 +85,7 @@ CClient::CClient(HWND hWnd)
 	m_cMapIndex = -1;
 	m_sX = -1;
 	m_sY = -1;
-	m_cDir = 5;
+	m_cDir = 5; 
 	m_sType   = 0;
 	m_sOriginalType = 0;
 	m_sAppr1  = 0;
@@ -124,7 +129,7 @@ CClient::CClient(HWND hWnd)
 	m_iHungerStatus  = 100;  // 최대값은 100
 	
 	m_bIsWarLocation = FALSE;
-	
+
 	m_bIsPoisoned    = FALSE;
 	m_iPoisonLevel   = NULL;
 
@@ -134,8 +139,13 @@ CClient::CClient(HWND hWnd)
 	m_iTimeLeft_Rating = 0;
 	m_iTimeLeft_ForceRecall  = 0;
 	m_iTimeLeft_FirmStaminar = 0;
+	
+	m_iRecentWalkTime  = 0;
+	m_iRecentRunTime   = 0;
+	m_sV1			   = 0;
 
 	m_bIsOnServerChange  = FALSE;
+	m_bInhibition = FALSE;
 
 	m_iExpStock = 0;
 
@@ -164,6 +174,7 @@ CClient::CClient(HWND hWnd)
 
 	m_iComboAttackCount = 0;
 	m_iDownSkillIndex   = -1;
+	m_bInRecallImpossibleMap = 0;
 
 	m_iMagicDamageSaveItemIndex = -1;
 
@@ -188,6 +199,9 @@ CClient::CClient(HWND hWnd)
 	m_bIsBWMonitor    = FALSE;
 	m_bIsExchangeMode = FALSE;
 
+	//hbest
+	isForceSet = FALSE;
+
 	// v1.4311-3 추가 변수 초기화 사투장 예약 관련 변수 
     m_iFightZoneTicketNumber =	m_iFightzoneNumber = m_iReserveTime = 0 ;            
 
@@ -197,8 +211,10 @@ CClient::CClient(HWND hWnd)
 	ZeroMemory(m_cExchangeName, sizeof(m_cExchangeName));			// 교환할 대상의 이름 
 	ZeroMemory(m_cExchangeItemName, sizeof(m_cExchangeItemName));	// 교환할 아이템 이름 
 
-	m_cExchangeItemIndex  = -1; // 교환할 아이템 인덱스 
-	m_iExchangeItemAmount = 0;  // 교환할 아이템 갯수 
+	for(i=0; i<4; i++){
+		m_cExchangeItemIndex[i]  = -1; 
+		m_iExchangeItemAmount[i] = 0;
+	}
 
 	m_bIsExchangeConfirm = FALSE;
 
@@ -213,6 +229,8 @@ CClient::CClient(HWND hWnd)
 	m_iContribution = NULL;			// 공헌도 
 	m_bQuestMatchFlag_Loc = FALSE;  // 퀘스트 장소 확인용 플래그.
 	m_bIsQuestCompleted   = FALSE;
+
+	m_cHeroArmourBonus = 0;
 
 	m_bIsNeutral      = FALSE;
 	m_bIsObserverMode = FALSE;
@@ -240,7 +258,7 @@ CClient::CClient(HWND hWnd)
 	m_iRunMsgRecvCount    = 0;
 	m_iSkillMsgRecvCount  = 0;
 
-	m_bIsAdminCreateItemEnabled = FALSE;
+	m_bIsAdminCommandEnabled = FALSE;
 	m_iAlterItemDropIndex = -1;
 
 	m_iAutoExpAmount = 0;
@@ -257,6 +275,7 @@ CClient::CClient(HWND hWnd)
 
 	m_iCrusadeDuty  = NULL;
 	m_dwCrusadeGUID = NULL;
+	m_dwHeldenianGUID = NULL;
 
 	for (i = 0; i < DEF_MAXCRUSADESTRUCTURES; i++) {
 		m_stCrusadeStructureInfo[i].cType = NULL;
@@ -264,6 +283,7 @@ CClient::CClient(HWND hWnd)
 		m_stCrusadeStructureInfo[i].sX = NULL;
 		m_stCrusadeStructureInfo[i].sY = NULL;
 	}
+
 	m_iCSIsendPoint = NULL;
 
 	m_bIsSendingMapStatus = FALSE;
@@ -274,17 +294,21 @@ CClient::CClient(HWND hWnd)
 	ZeroMemory(m_cConstructMapName, sizeof(m_cConstructMapName));
 	m_iConstructLocX = m_iConstructLocY = -1;
 
-	// New 16/05/2004
 	m_bIsAdminOrderGoto = FALSE;
+	m_bIsInsideWarehouse = FALSE;
+	m_bIsInsideWizardTower = FALSE;
+	m_bIsInsideOwnTown = FALSE;
 	m_bIsCheckingWhisperPlayer = FALSE;
 	m_bIsOwnLocation = FALSE;
 	m_pIsProcessingAllowed = FALSE;
 
-	// New 24/05/2004
-	m_cHeroArmourBonus = 0;
+	m_cHeroArmorBonus = 0;
 
-	// New 25/05/2004
 	m_bIsBeingResurrected = FALSE;
+	m_bMagicConfirm = FALSE;
+	m_bMagicItem = FALSE;
+	m_iSpellCount = 0;
+	m_bMagicPauseTime = FALSE;
 }
 
 CClient::~CClient()

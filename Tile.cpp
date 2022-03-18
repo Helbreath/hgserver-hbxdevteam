@@ -15,6 +15,7 @@ CTile::CTile()
 	m_bIsMoveAllowed = TRUE;
 	m_bIsTeleport    = FALSE;
 	m_bIsWater       = FALSE;
+	m_bIsFarm        = FALSE;
 												   
 	m_sOwner      = NULL;
 	m_cOwnerClass = NULL;
