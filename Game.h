@@ -118,6 +118,7 @@
 #define DEF_ITEMLOG_REPAIR				17
 #define DEF_ITEMLOG_SKILLLEARN			12
 #define DEF_ITEMLOG_MAGICLEARN			16
+#define DEF_ITEMLOG_USE					32
 
 #define DEF_MAXDUPITEMID				100
 
@@ -269,7 +270,7 @@ public:
 	//void GrandMagicResultHandler(char * cMapName, int iCrashedStructureNum, int iStructureDamageAmount, int iCasualities, int iActiveStructure);
 	void CalcMeteorStrikeEffectHandler(int iMapIndex);
 	void DoMeteorStrikeDamageHandler(int iMapIndex);
-	void GSM_RequestFindCharacter(WORD wReqServerID, WORD wReqClientH, char * pName);
+	void GSM_RequestFindCharacter(WORD wReqServerID, WORD wReqClientH, char *pName, char * pFinder); // New 16/05/2001 Changed
 	void ServerStockMsgHandler(char * pData);
 	void SendStockMsgToGateServer();
 	BOOL bStockMsgToGateServer(char * pData, DWORD dwSize);
@@ -557,7 +558,7 @@ public:
 	int  iClientMotion_Attack_Handler(int iClientH, short sX, short sY, short dX, short dY, short wType, char cDir, WORD wTargetObjectID, BOOL bResponse = TRUE);
 	void ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize);
 	void NpcProcess();
-	BOOL bCreateNewNpc(char * pNpcName, char * pName, char * pMapName, short sClass, char cSA, char cMoveType, int * poX, int * poY, char * pWaypointList, RECT * pArea, int iSpotMobIndex, char cChangeSide, BOOL bHideGenMode, BOOL bIsSummoned = FALSE, BOOL bFirmBerserk = FALSE, BOOL bIsMaster = FALSE, int iGuildGUID = NULL);
+	int bCreateNewNpc(char * pNpcName, char * pName, char * pMapName, short sClass, char cSA, char cMoveType, int * poX, int * poY, char * pWaypointList, RECT * pArea, int iSpotMobIndex, char cChangeSide, BOOL bHideGenMode, BOOL bIsSummoned = FALSE, BOOL bFirmBerserk = FALSE, BOOL bIsMaster = FALSE, int iGuildGUID = NULL);
 	//BOOL bCreateNewNpc(char * pNpcName, char * pName, char * pMapName, short sX, short sY);
 	BOOL _bReadMapInfoFiles(int iMapIndex);
 	
@@ -631,6 +632,10 @@ public:
 	BOOL bGetMultipleItemNamesWhenDeleteNpc(short sNpcType, int iProbability, int iMin, int iMax, short sBaseX, short sBaseY,
 											   int iItemSpreadType, int iSpreadRange,
 											   int *iItemIDs, POINT *BasePos, int *iNumItem);
+
+	// Player shutup
+	void GSM_RequestShutupPlayer(char * pGMName,WORD wReqServerID, WORD wReqClientH, WORD wTime,char * pPlayer );
+
 	CGame(HWND hWnd);
 	virtual ~CGame();
 
@@ -797,6 +802,9 @@ public:
 		int iIndex[12];
 	}m_stPartyInfo[DEF_MAXCLIENTS];
 
+	// New 17/05/2004
+	short m_sForceRecallTime;
+
 private:
 	int __iSearchForQuest(int iClientH, int iWho, int * pQuestType, int * pMode, int * pRewardType, int * pRewardAmount, int * pContribution, char * pTargetName, int * pTargetType, int * pTargetCount, int * pX, int * pY, int * pRange);
 	int _iTalkToNpcResult_Cityhall(int iClientH, int * pQuestType, int * pMode, int * pRewardType, int * pRewardAmount, int * pContribution, char * pTargetName, int * pTargetType, int * pTargetCount, int * pX, int * pY, int * pRange);
@@ -813,6 +821,12 @@ public:
 	BOOL _bCrusadeLog(int iAction,int iClientH,int iData, char * cName);
 	int iGetPlayerABSStatus(int iClientH);
 	BOOL _bInitItemAttr(class CItem * pItem, int iItemID);
+	void ReqCreateSlateHandler(int iClientH, char* pData);
+	void SetSlateFlag(int iClientH, short sType, bool bFlag);
+	void CheckForceRecallTime(int iClientH);
+	void SetPlayingStatus(int iClientH);
+	void ForceChangePlayMode(int iClientH, bool bNotify);
+	void ShowVersion(int iClientH);
 };
 
 #endif // !defined(AFX_GAME_H__C3D29FC5_755B_11D2_A8E6_00001C7030A6__INCLUDED_)

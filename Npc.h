@@ -153,6 +153,7 @@ case 8:  "Hi-Explosive"
 	int   m_iGuildGUID;				// 전쟁용 유니트인 경우 소환자의 길드 아이디가 입력된다.
 
 	int   m_iV1;
+	char m_cArea;
 };
 
 #endif // !defined(AFX_NPC_H__6F7A5C80_A709_11D2_B143_00001C7030A6__INCLUDED_)

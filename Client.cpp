@@ -119,7 +119,8 @@ CClient::CClient(HWND hWnd)
 		m_cMagicEffectStatus[i]	= 0;
 
 	m_iWhisperPlayerIndex = -1;
-	
+	ZeroMemory(m_cWhisperPlayerName, sizeof(m_cWhisperPlayerName));
+
 	m_iHungerStatus  = 100;  // 최대값은 100
 	
 	m_bIsWarLocation = FALSE;
@@ -272,6 +273,12 @@ CClient::CClient(HWND hWnd)
 
 	ZeroMemory(m_cConstructMapName, sizeof(m_cConstructMapName));
 	m_iConstructLocX = m_iConstructLocY = -1;
+
+	// New 16/05/2004
+	m_bIsAdminOrderGoto = FALSE;
+	m_bIsCheckingWhisperPlayer = FALSE;
+	m_bIsOwnLocation = FALSE;
+	m_pIsProcessingAllowed = FALSE;
 }
 
 CClient::~CClient()
@@ -284,7 +291,7 @@ CClient::~CClient()
 			delete m_pItemList[i];
 			m_pItemList[i] = NULL;
 		}
-	for(i=0;i<DEF_MAXBANKITEMS;i++)
+	for(i = 0; i < DEF_MAXBANKITEMS; i++)
 		if (m_pItemInBankList[i] != NULL) {
 			delete m_pItemInBankList[i];
 			m_pItemInBankList[i]=NULL;

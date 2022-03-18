@@ -141,6 +141,7 @@ CMap::CMap(class CGame * pGame)
 		m_stCrusadeStructureInfo[i].sY = NULL;
 	}
 	m_iTotalCrusadeStructures = 0;
+
 }
 
 CMap::~CMap()
@@ -738,3 +739,4 @@ void CMap::RestoreStrikePoints()
 		m_stStrikePoint[i].iInitHP = m_stStrikePoint[i].iHP;
 	}
 }
+

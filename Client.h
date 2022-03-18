@@ -323,6 +323,13 @@ public:
 	// New 07/05/2004
 	DWORD m_dwLastActionTime;
 	int m_iDeadPenaltyTime;
+
+	// New 16/05/2004
+	char m_cWhisperPlayerName[11];
+	BOOL m_bIsAdminOrderGoto;
+	BOOL m_bIsCheckingWhisperPlayer;
+	BOOL m_bIsOwnLocation;
+	BOOL m_pIsProcessingAllowed;
 };
 
 #endif // !defined(AFX_CLIENT_H__39CC7700_789F_11D2_A8E6_00001C7030A6__INCLUDED_)

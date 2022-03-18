@@ -31,6 +31,7 @@
 #define DEF_MAXMINERALPOINT		200
 #define DEF_MAXOCCUPYFLAG		20001 //3001
 #define	DEF_MAXINITIALPOINT		20
+#define DEF_MAXAGRICULTURE		200
 
 #include <windows.h>
 #include "Game.h"
@@ -82,6 +83,10 @@ public:
 	void GetOwner(short * pOwner, char * pOwnerClass, short sX, short sY);
 	void SetOwner(short sOwner, char cOwnerClass, short sX, short sY);
 	void SetDeadOwner(short sOwner, char cOwnerClass, short sX, short sY);
+	BOOL bRemoveCropsTotalSum();
+	BOOL bAddCropsTotalSum();
+	void SetBigOwner(short sOwner, char cOwnerClass, short sX, short sY, char cArea);
+
 	CMap(class CGame * pGame);
 	virtual ~CMap();
 

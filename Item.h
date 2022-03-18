@@ -25,6 +25,7 @@
 #define DEF_EQUIPPOS_RFINGER	10
 #define DEF_EQUIPPOS_LFINGER	11
 #define DEF_EQUIPPOS_BACK		12
+#define DEF_EQUIPPOS_RELEASEALL	13
  
 #define DEF_ITEMTYPE_NOTUSED	-1	// v1.4 기존에 사용되었으나 현재로서는 사용되지 않는 아이템: 포상금으로 대체된다.
 #define DEF_ITEMTYPE_NONE		 0
@@ -74,6 +75,7 @@
 #define DEF_ITEMEFFECTTYPE_CONSTRUCTIONKIT		27	// 건축 키트
 
 #define DEF_ITEMEFFECTTYPE_UNFREEZE			28		// Unfreeze pot ?
+#define DEF_ITEMEFFECTTYPE_FARMING			30
 #define DEF_ITEMEFFECTTYPE_SLATES			31
 
 #define DEF_ITET_UNIQUE_OWNER				1		// ItemTouchEffect: 주인을 갖는 아이템 
