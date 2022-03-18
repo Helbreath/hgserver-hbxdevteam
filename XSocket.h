@@ -13,7 +13,7 @@
 #endif // _MSC_VER >= 1000
 
 #define _WINSOCK2API_
-#define  FD_SETSIZE 2000
+//#define  FD_SETSIZE 2000
 #include <windows.h>
 #include <windowsx.h>
 #include <winsock2.h>
@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <malloc.h>
+#include "DebugDialog.h"
 
 #define DEF_XSOCK_LISTENSOCK			1
 #define DEF_XSOCK_NORMALSOCK			2				

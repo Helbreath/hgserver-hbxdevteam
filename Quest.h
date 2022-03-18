@@ -67,8 +67,8 @@ public:
 	int  m_iReqContribution;	// 퀘스트를 맡기 위한 최저 공헌도 제한. 
 
 
-	CQuest();
-	virtual ~CQuest();
+	//CQuest();
+	//virtual ~CQuest();
 
 };
 

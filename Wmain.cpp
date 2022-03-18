@@ -25,6 +25,8 @@
 #include "Game.h"
 #include "UserMessages.h"
 
+void PutAdminLogFileList(char * cStr);
+
 // --------------------------------------------------------------
 
 #define WM_USER_TIMERSIGNAL		WM_USER + 500
@@ -166,7 +168,7 @@ BOOL InitApplication( HINSTANCE hInstance)
 BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 {
  char cTitle[100];
- HANDLE hFile;
+// HANDLE hFile;
  SYSTEMTIME SysTime;
 	// 서버 부팅시간 기록 
 	
@@ -271,7 +273,6 @@ void OnDestroy()
 }
 
 
-
 void PutLogList(char * cMsg)
 {
  char cTemp[120*50];
@@ -281,6 +282,19 @@ void PutLogList(char * cMsg)
 	memcpy((cTemp + 120), G_cMsgList, 120*49);
 	memcpy(cTemp, cMsg, strlen(cMsg));
 	memcpy(G_cMsgList, cTemp, 120*50);
+	PutAdminLogFileList(cMsg);
+
+}
+void PutXSocketLogList(char * cMsg)
+{
+ char cTemp[120*50];
+	
+	//G_cMsgUpdated = TRUE;
+	//ZeroMemory(cTemp, sizeof(cTemp));
+	//memcpy((cTemp + 120), G_cMsgList, 120*49);
+	//memcpy(cTemp, cMsg, strlen(cMsg));
+	//memcpy(G_cMsgList, cTemp, 120*50);
+	PutXSocketLogFileList(cMsg);
 
 }
 
@@ -391,6 +405,25 @@ void PutAdminLogFileList(char * cStr)
  SYSTEMTIME SysTime;
 	
 	pFile = fopen("AdminEvents.log", "at");
+	if (pFile == NULL) return;
+
+	ZeroMemory(cBuffer, sizeof(cBuffer));
+	
+	GetLocalTime(&SysTime);
+	wsprintf(cBuffer, "(%4d:%2d:%2d:%2d:%2d) - ", SysTime.wYear, SysTime.wMonth, SysTime.wDay, SysTime.wHour, SysTime.wMinute);
+	strcat(cBuffer, cStr);
+	strcat(cBuffer, "\n");
+
+	fwrite(cBuffer, 1, strlen(cBuffer), pFile);
+	fclose(pFile);
+}
+void PutXSocketLogFileList(char * cStr)
+{
+ FILE * pFile;
+ char cBuffer[512];
+ SYSTEMTIME SysTime;
+	
+	pFile = fopen("XSocket.log", "at");
 	if (pFile == NULL) return;
 
 	ZeroMemory(cBuffer, sizeof(cBuffer));

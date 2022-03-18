@@ -19,6 +19,7 @@
 #include <memory.h>
 #include <direct.h>
 
+#include "winmain.h"
 #include "StrTok.h"
 #include "Xsocket.h"
 #include "Client.h"
@@ -80,7 +81,7 @@
 #define DEF_MAXSKILLPOINTS		700			// 스킬 포인트의 총합 
 #define DEF_NIGHTTIME			40
 
-#define DEF_CHARPOINTLIMIT		200			// 각각의 특성치의 최대값 
+#define DEF_CHARPOINTLIMIT		300			// 각각의 특성치의 최대값 
 #define DEF_RAGPROTECTIONTIME	7000		// 몇 초 이상 지나면 랙으로 부터 보호를 받는지 
 #define DEF_MAXREWARDGOLD		99999999	// 포상금 최대치 
 
@@ -108,7 +109,7 @@
 #define DEF_MAXDUPITEMID				100
 
 #define DEF_MAXGUILDS					1000 // 동시에 접속할 수 있는 길드수 
-#define DEF_MAXONESERVERUSERS			800	 // 한 서버에서 허용할 수 있는 최대 사용자수. 초과된 경우 부활존 혹은 블리딩 아일, 농경지로 보내진다.
+#define DEF_MAXONESERVERUSERS			800	// 800 // 한 서버에서 허용할 수 있는 최대 사용자수. 초과된 경우 부활존 혹은 블리딩 아일, 농경지로 보내진다.
 
 #define DEF_MAXGATESERVERSTOCKMSGSIZE	10000
 
@@ -130,7 +131,7 @@
 //============================
 
 //============================
-#define DEF_PLAYERMAXLEVEL	180				// 최대 레벨: Npc.cfg 파일에 설정되어 있지 않을 경우 m_iPlayerMaxLevel에 입력된다.
+#define DEF_PLAYERMAXLEVEL	250				// 최대 레벨: Npc.cfg 파일에 설정되어 있지 않을 경우 m_iPlayerMaxLevel에 입력된다.
 //============================
 
 //============================
@@ -142,13 +143,84 @@
 #define DEF_MAXWARCONTRIBUTION	 1000000
 
 
+// MOG Definitions - 3.51
+// Level up MSG
+#define MSGID_LEVELUPSETTINGS				0x11A01000
+// 2003-04-14 지존 포인트를 레벨 수정에 쓸수 있다...
+// Stat Point Change MSG
+#define MSGID_STATECHANGEPOINT				0x11A01001
+
+//#define DEF_NOTIFY_STATECHANGE_FAILED 0x11A01002
+//#define DEF_NOTIFY_SETTING_FAILED 0x11A01003
+//#define DEF_NOTIFY_STATECHANGE_SUCCESS 0x11A01004
+//#define DEF_NOTIFY_SETTING_SUCCESS 0x11A01005
+
+//Mine
+//#define DEF_NOTIFY_SETTING_FAILED 0x11A01003
+//#define DEF_NOTIFY_SETTING_SUCCESS 0x11A01005
+//2.24
+//#define DEF_NOTIFY_SETTING_FAILED 0xBB4
+//#define DEF_NOTIFY_SETTING_SUCCESS 0xBB3
+
+#define DEF_NOTIFY_SETTING_SUCCESS					0xBB3
+#define DEF_NOTIFY_SETTING_FAILED					0xBB4
+#define DEF_NOTIFY_STATECHANGE_SUCCESS				0xBB5
+#define DEF_NOTIFY_STATECHANGE_FAILED				0xBB6
+
+
+#define DEF_STR 0x01
+#define DEF_DEX 0x02
+#define DEF_INT 0x03
+#define DEF_VIT 0x04
+#define DEF_MAG 0x05
+#define DEF_CHR 0x06
+
 //#define DEF_TESTSERVER
 
-//#define NO_MSGSPEEDCHECK
+#define NO_MSGSPEEDCHECK
 
 class CGame  
 {
 public:
+	void GetHeroMantleHandler(int iClientH,int iItemID,char * pString);
+	void AdminOrder_Weather(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SendMSG(int iClientH, char *pData, DWORD dwMsgSize);
+	void SendMsg(short sOwnerH, char cOwnerType, BOOL bStatus, long lPass);
+	BOOL bCheckMagicInt(int iClientH);
+	BOOL bChangeState(char cStateChange, char* cStr, char *cVit,char *cDex,char *cInt,char *cMag,char *cChar);
+	void StateChangeHandler(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SetStatus(int iClientH, char *pData, DWORD dwMsgSize);
+	void SetStatusFlag(short sOwnerH, char cOwnerType, BOOL bStatus, int iPass);
+	void SetPoisonFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void GayDave(char cDave[350], char cInput[350]);
+	void AdminOrder_SummonStorm(int iClientH, char* pData, DWORD dwMsgSize);
+	void AdminOrder_CallMagic(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SummonDeath(int iClientH);
+	void AdminOrder_SetZerk(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SetFreeze(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_Kill(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_Revive(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SetObserverMode(int iClientH);
+	void AdminOrder_EnableAdminCreateItem(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_CreateItem(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_Summon(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SummonAll(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SummonPlayer(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_UnsummonDemon(int iClientH);
+	void AdminOrder_UnsummonAll(int iClientH);
+	void AdminOrder_SetAttackMode(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_SummonDemon(int iClientH);
+	void AdminOrder_SetInvi(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_Polymorph(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_GetNpcStatus(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_CheckIP(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_CreateFish(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_Teleport(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_ReserveFightzone(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_CloseConn(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_CallGuard(int iClientH, char * pData, DWORD dwMsgSize);
+	void AdminOrder_DisconnectAll(int iClientH, char * pData, DWORD dwMsgSize);
+
 	BOOL bCopyItemContents(class CItem * pOriginal, class CItem * pCopy);
 	int  iGetMapLocationSide(char * pMapName);
 	void ManualEndCrusadeMode(int iWinnerSide);
@@ -210,10 +282,7 @@ public:
 	void CreateNewPartyHandler(int iClientH);
 	void _DeleteRandomOccupyFlag(int iMapIndex);
 	void RequestSellItemListHandler(int iClientH, char * pData);
-	void AdminOrder_EnableAdminCreateItem(int iClientH, char * pData, DWORD dwMsgSize);
-	void AdminOrder_CreateItem(int iClientH, char * pData, DWORD dwMsgSize);
 	void RequestRestartHandler(int iClientH);
-	void AdminOrder_SetObserverMode(int iClientH);
 	int iRequestPanningMapDataRequest(int iClientH, char * pData);
 	void GetMagicAbilityHandler(int iClientH);
 	void Effect_Damage_Spot_DamageMove(short sAttackerH, char cAttackerType, short sTargetH, char cTargetType, short sAtkX, short sAtkY, short sV1, short sV2, short sV3, BOOL bExp, int iAttr);
@@ -228,13 +297,8 @@ public:
 	BOOL _bDecodeDupItemIDFileContents(char * pData, DWORD dwMsgSize);
 	void NpcDeadItemGenerator(int iNpcH, short sAttackerH, char cAttackerType);
 	int  iGetPlayerABSStatus(int iWhatH, int iRecvH);
-	void AdminOrder_DisconnectAll(int iClientH, char * pData, DWORD dwMsgSize);
 	void CheckSpecialEvent(int iClientH);
-	void AdminOrder_Summon(int iClientH, char * pData, DWORD dwMsgSize);
 	char _cGetSpecialAbility(int iKindSA);
-	void AdminOrder_UnsummonDemon(int iClientH);
-	void AdminOrder_UnsummonAll(int iClientH);
-	void AdminOrder_SetAttackMode(int iClientH, char * pData, DWORD dwMsgSize);
 	void BuildItemHandler(int iClientH, char * pData);
 	BOOL _bDecodeBuildItemConfigFileContents(char * pData, DWORD dwMsgSize);
 	BOOL _bCheckSubLogSocketIndex();
@@ -244,7 +308,6 @@ public:
 	void OnSubLogSocketEvent(UINT message, WPARAM wParam, LPARAM lParam);
 	void _CheckStrategicPointOccupyStatus(char cMapIndex);
 	void GetMapInitialPoint(int iMapIndex, short * pX, short * pY, char * pPlayerLocation = NULL);
-	void AdminOrder_SummonDemon(int iClientH);
 	int  iGetMaxHP(int iClientH);
 	void _ClearQuestStatus(int iClientH);
 	BOOL _bCheckItemReceiveCondition(int iClientH, class CItem * pItem);
@@ -269,7 +332,7 @@ public:
 	void _BWM_Init(int iClientH, char * pData);
 	void CheckUniqueItemEquipment(int iClientH);
 	void _SetItemPos(int iClientH, char * pData);
-	void GetHeroMantleHandler(int iClientH);
+	//void GetHeroMantleHandler(int iClientH);
 	
 	BOOL _bDecodeOccupyFlagSaveFileContents(char * pData, DWORD dwMsgSize);
 	void GetOccupyFlagHandler(int iClientH);
@@ -280,7 +343,6 @@ public:
 	void SetDownSkillIndexHandler(int iClientH, int iSkillIndex);
 	int iGetComboAttackBonus(int iSkill, int iComboCount);
 	int  _iGetWeaponSkillType(int iClientH);
-	void AdminOrder_GetNpcStatus(int iClientH, char * pData, DWORD dwMsgSize);
 	void CheckFireBluring(char cMapIndex, int sX, int sY);
 	void NpcTalkHandler(int iClientH, int iWho);
 	BOOL bDeleteMineral(int iIndex);
@@ -292,18 +354,14 @@ public:
 	void ReqCreatePortionHandler(int iClientH, char * pData);
 	void _CheckAttackType(int iClientH, short * spType);
 	BOOL bOnClose();
-	void AdminOrder_SetInvi(int iClientH, char * pData, DWORD dwMsgSize);
-	void AdminOrder_Polymorph(int iClientH, char * pData, DWORD dwMsgSize);
 	void ForceDisconnectAccount(char * pAccountName, WORD wCount);
 	void NpcRequestAssistance(int iNpcH);
 	void ToggleSafeAttackModeHandler(int iClientH);
-	void AdminOrder_CheckIP(int iClientH, char * pData, DWORD dwMsgSize);
 	void SetBerserkFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
 	void SpecialEventHandler();
 	int iGetPlayerRelationship_SendEvent(int iClientH, int iOpponentH);
 	int iGetNpcRelationship_SendEvent(int iNpcH, int iOpponentH);
 	int _iForcePlayerDisconect(int iNum);
-	void AdminOrder_Teleport(int iClientH, char * pData, DWORD dwMsgSize);
 	int iGetMapIndex(char * pMapName);
 	//int iGetNpcRelationship(int iClientH, int iOpponentH);
 	int iGetNpcRelationship(int iWhatH, int iRecvH);
@@ -313,7 +371,6 @@ public:
 	int _iCalcPlayerNum(char cMapIndex, short dX, short dY, char cRadius);
 	void FishGenerator();
 	void ReqGetFishThisTimeHandler(int iClientH);
-	void AdminOrder_CreateFish(int iClientH, char * pData, DWORD dwMsgSize);
 	void FishProcessor();
 	int iCheckFish(int iClientH, char cMapIndex, short dX, short dY);
 	BOOL bDeleteFish(int iHandle, int iDelMode);
@@ -322,9 +379,6 @@ public:
 	// v1.4311-3 변경 함수 선언  Expire -> Ban 으로 
 	void UserCommand_BanGuildsman(int iClientH, char * pData, DWORD dwMsgSize);
 	// v1.4311-3 추가 함수 선언 이벤트를 대비하여 운영자가 사투장을 예약해놓는다.
-	void AdminOrder_ReserveFightzone(int iClientH, char * pData, DWORD dwMsgSize);
-	void AdminOrder_CloseConn(int iClientH, char * pData, DWORD dwMsgSize);
-	void AdminOrder_CallGuard(int iClientH, char * pData, DWORD dwMsgSize);
 	int iGetExpLevel(int iExp);
 	void ___RestorePlayerRating(int iClientH);
 	void CalcExpStock(int iClientH);

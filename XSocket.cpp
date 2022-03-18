@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "XSocket.h"
+#include "Client.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -432,7 +433,7 @@ int XSocket::iSendMsg(char * cData, DWORD dwSize, char cKey)
 
 	memcpy((char *)(m_pSndBuffer + 3), cData, dwSize);
 	// v.14 : m_pSndBuffer +3 부터 dwSize까지 cKey가 0이 아니라면 암호화한다.
-	if (cKey != NULL) {
+	if (cKey != NULL) {//Encryption
 		for (i = 0; i < dwSize; i++) {
 			m_pSndBuffer[3+i] += (i ^ cKey);
 			m_pSndBuffer[3+i]  = m_pSndBuffer[3+i] ^ (cKey ^ (dwSize - i));
@@ -550,8 +551,10 @@ char * XSocket::pGetRcvDataPointer(DWORD * pMsgSize, char * pKey)
 	*pMsgSize = (*wp) - 3;				// 헤더크기는 제외해서 반환한다. 
 	dwSize    = (*wp) - 3;
 
+	if (dwSize > DEF_MSGBUFFERSIZE) dwSize = DEF_MSGBUFFERSIZE;
+
 	// v.14 : m_pSndBuffer +3 부터 dwSize까지 cKey가 0이 아니라면 암호화를 푼다.
-	if (cKey != NULL) {
+	if (cKey != NULL) {//Encryption
 		for (i = 0; i < dwSize; i++) {
 			m_pRcvBuffer[3+i]  = m_pRcvBuffer[3+i] ^ (cKey ^ (dwSize - i));
 			m_pRcvBuffer[3+i] -= (i ^ cKey);

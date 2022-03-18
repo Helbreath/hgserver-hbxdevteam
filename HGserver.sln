@@ -1,0 +1,28 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HGserver", "HGserver.vcproj", "{E4A5A6E3-FBDA-4BD2-91FE-10585EB89B0A}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SourceCodeControl) = preSolution
+		SccNumberOfProjects = 1
+		SccProjectUniqueName0 = HGserver.vcproj
+		SccProjectName0 = \u0022$/HGserver\u0022,\u0020KDAAAAAA
+		SccLocalPath0 = .
+		SccProvider0 = MSSCCI:Microsoft\u0020Visual\u0020SourceSafe
+	EndGlobalSection
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{E4A5A6E3-FBDA-4BD2-91FE-10585EB89B0A}.Debug.ActiveCfg = Debug|Win32
+		{E4A5A6E3-FBDA-4BD2-91FE-10585EB89B0A}.Debug.Build.0 = Debug|Win32
+		{E4A5A6E3-FBDA-4BD2-91FE-10585EB89B0A}.Release.ActiveCfg = Release|Win32
+		{E4A5A6E3-FBDA-4BD2-91FE-10585EB89B0A}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

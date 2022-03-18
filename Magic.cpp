@@ -18,3 +18,4 @@ CMagic::~CMagic()
 {										    
 
 }
+

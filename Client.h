@@ -91,8 +91,12 @@ public:
 
 	int  m_iLevel;
 	int  m_iStr, m_iInt, m_iVit, m_iDex, m_iMag, m_iCharisma;
-	char m_cLU_Str, m_cLU_Int, m_cLU_Vit, m_cLU_Dex, m_cLU_Mag, m_cLU_Char;   // 레벨업시에 할당되어 올라가는 특성치값.
+	//char m_cLU_Str, m_cLU_Int, m_cLU_Vit, m_cLU_Dex, m_cLU_Mag, m_cLU_Char;   // 레벨업시에 할당되어 올라가는 특성치값.
 	int  m_iLuck; 
+	int  m_iLU_Pool;
+	char m_cAura;
+	//MOG var - 3.51
+	int m_iGizonItemUpgradeLeft;
 
 	int  m_iEnemyKillCount, m_iPKCount, m_iRewardGold;
 	int  m_iCurWeightLoad;		// 현재 총 소지품 무게 

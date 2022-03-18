@@ -31,7 +31,9 @@ CClient::CClient(HWND hWnd)
 
 	m_bIsInitComplete = FALSE;
 
-	m_cLU_Str = m_cLU_Int = m_cLU_Vit = m_cLU_Dex = m_cLU_Mag = m_cLU_Char = 0;
+	//m_cLU_Str = m_cLU_Int = m_cLU_Vit = m_cLU_Dex = m_cLU_Mag = m_cLU_Char = 0;
+	m_iLU_Pool = 0;
+	m_cAura = 0;
 
 	// v1.432 사용하지 않는다.
 	//m_iHitRatio_ItemEffect_SM = 0;
@@ -272,10 +274,15 @@ CClient::~CClient()
 	
 	if (m_pXSock != NULL) delete m_pXSock;
 	for (i = 0; i < DEF_MAXITEMS; i++)
-	if (m_pItemList[i] != NULL) {
-		delete m_pItemList[i];
-		m_pItemList[i] = NULL;
-	}
+		if (m_pItemList[i] != NULL) {
+			delete m_pItemList[i];
+			m_pItemList[i] = NULL;
+		}
+	for(i=0;i<DEF_MAXBANKITEMS;i++)
+		if (m_pItemInBankList[i] != NULL) {
+			delete m_pItemInBankList[i];
+			m_pItemInBankList[i]=NULL;
+		}
 }
 
 

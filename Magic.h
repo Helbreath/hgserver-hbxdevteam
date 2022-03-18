@@ -32,9 +32,9 @@
 #define DEF_MAGICTYPE_DAMAGE_LINEAR			19
 #define DEF_MAGICTYPE_POLYMORPH				20
 #define DEF_MAGICTYPE_DAMAGE_AREA_NOSPOT	21
-#define DEF_MAGICTYPE_TREMOR				22 // ¶¥ÀÇ ¼Ó¼ºÀÇ Áøµ¿ 
-#define DEF_MAGICTYPE_ICE					23 // ¾ó¸®´Â°Í 
-
+#define DEF_MAGICTYPE_TREMOR				22 // ¶ARÇ LÓLsRÇ Árµz 
+#define DEF_MAGICTYPE_ICE					23 // ló¸®´Â°Í 
+#define DEF_MAGICTYPE_RESURRECTION          24 // Ressurect
 #define DEF_MAXMAGICEFFECTS			100
 
 class CMagic  
@@ -52,8 +52,9 @@ public:
 	short m_sIntLimit;
 	int   m_iGoldCost;
 	
-	char  m_cCategory; // ¸¶¹ý Á¾·ù: ÀÏ¹Ý ¸¶¹ý 0, °ø°Ý¸¶¹ý 1, ¹æ¾î ¸¶¹ý 2 
-	int   m_iAttribute; // ¸¶¹ý ¼Ó¼º:  ¶¥ 1 ÇÏ´Ã 2 ºÒ 3 ¹° 4  
+	char  m_cCategory; // ¸¶aý Ál·u: RDaÝ ¸¶aý 0, °r°Ý¸¶aý 1, aclî ¸¶aý 2 
+	int   m_iAttribute; // ¸¶aý LÓLs:  ¶A 1 ÇD´A 2 sN 3 a° 4  
 };
 
 #endif // !defined(AFX_MAGIC_H__CD611900_EF3A_11D2_9B6C_00001C7030A6__INCLUDED_)
+
