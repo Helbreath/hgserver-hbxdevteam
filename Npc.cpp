@@ -32,7 +32,7 @@ CNpc::CNpc(char * pName5)
 	
 	m_cAttribute = NULL;
 	m_iAbsDamage = NULL;
-	m_sStatus    = NULL;
+	m_iStatus    = NULL;
 	m_sAppr2     = NULL;
 
 	m_iAttackRange    = 1;

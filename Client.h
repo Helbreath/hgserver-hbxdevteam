@@ -64,7 +64,7 @@ public:
 	short m_sAppr3;
 	short m_sAppr4;
 	int   m_iApprColor;			// v1.4 외형 컬러테이블
-	short m_sStatus;
+	int   m_iStatus;
 
 	DWORD m_dwTime, m_dwHPTime, m_dwMPTime, m_dwSPTime, m_dwAutoSaveTime, m_dwHungerTime;
 

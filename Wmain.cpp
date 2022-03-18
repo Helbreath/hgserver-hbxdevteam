@@ -178,14 +178,15 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 	//CloseHandle(hFile);
 
 	GetLocalTime(&SysTime);
+	//wsprintf(cTitle, "Helbreath Korean Test Server Version %s.%s %d (Executed at: %d %d %d)", DEF_UPPERVERSION, DEF_LOWERVERSION, DEF_BUILDDATE, SysTime.wMonth, SysTime.wDay, SysTime.wHour);
 	wsprintf(cTitle, "Helbreath GameServer V%s.%s %d (Executed at: %d %d %d)", DEF_UPPERVERSION, DEF_LOWERVERSION, DEF_BUILDDATE, SysTime.wMonth, SysTime.wDay, SysTime.wHour);
 	
 	G_hWnd = CreateWindowEx(0,  // WS_EX_TOPMOST,
         szAppClass,
         cTitle,
         WS_VISIBLE | // so we don't have to call ShowWindow
-        WS_POPUP |   // non-app window
-        WS_CAPTION | // so our menu doesn't look ultra-goofy
+        //WS_POPUP |   // non-app window
+        //WS_CAPTION | // so our menu doesn't look ultra-goofy
         WS_SYSMENU |  // so we get an icon in the tray
         WS_MINIMIZEBOX, 
 		CW_USEDEFAULT,

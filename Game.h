@@ -175,6 +175,7 @@
 #define DEF_MAG 0x05
 #define DEF_CHR 0x06
 
+#define DEF_TEST 0xFFFF0000
 //#define DEF_TESTSERVER
 
 #define NO_MSGSPEEDCHECK

@@ -52,7 +52,7 @@ public:
 	short m_sType;
 	short m_sOriginalType;
 	short m_sAppr2;
-	short m_sStatus;
+	short m_iStatus;
 
 	DWORD m_dwTime;
 	DWORD m_dwActionTime;

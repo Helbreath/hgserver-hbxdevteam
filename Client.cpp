@@ -88,7 +88,7 @@ CClient::CClient(HWND hWnd)
 	m_sAppr3  = 0;
 	m_sAppr4  = 0;
 	m_iApprColor = 0; // v1.4
-	m_sStatus = 0;
+	m_iStatus = 0;
 
 	m_cSex  = 0;
 	m_cSkin = 0;
