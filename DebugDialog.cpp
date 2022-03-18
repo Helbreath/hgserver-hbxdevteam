@@ -18,6 +18,7 @@ void CDebugWindow::Startup(void)
 {
 	DWORD lpThreadId;
 	//Create a thread for dialog
+	m_isVisible = TRUE;
 	CloseHandle(CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)DebugWindowThread,NULL,0,&lpThreadId));
 	//Give time for dialog to startup properly
 	Sleep(10);

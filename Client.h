@@ -28,7 +28,7 @@
 #define	DEF_MAXMAGICTYPE	100	// 변경하려면 로그서버내용도 바꾸어야 한다.
 #define DEF_MAXSKILLTYPE	60
 
-#define DEF_MAXPARTYMEMBERS	6
+#define DEF_MAXPARTYMEMBERS	8
 
 #define DEF_SPECABLTYTIMESEC	1200
 
@@ -189,15 +189,6 @@ public:
 
 	short m_sCharIDnum1, m_sCharIDnum2, m_sCharIDnum3; // v1.3 그 캐릭터가 갖는 고유값!
 
-	int   m_iPartyRank;										// Party내에서의 위치. -1이면 무의미. 1이면 파티 생성자. 12면 멤버 
-	int   m_iPartyMemberCount;								// 파티 인원 제한용 
-	int   m_iPartyGUID;										// v1.42 Party GUID
-	struct {
-		int  iIndex;
-		char cName[11];
-
-	} m_stPartyMemberName[DEF_MAXPARTYMEMBERS];
-
 	int   m_iAbuseCount;		// 해킹 용의자 파악용 
 	
 	BOOL  m_bIsBWMonitor;		// BadWord 모니터인가?
@@ -312,7 +303,26 @@ public:
 	
 	// 2.06
 	BOOL m_bIsPlayerCivil;
-	//
+	BOOL m_bIsAttackModeChange;
+
+	// New 06/05/2004
+	// Party Stuff
+	int m_iPartyID;
+	int m_iPartyStatus;
+	int m_iReqJoinPartyClientH;
+	char m_cReqJoinPartyName[12];
+
+	int   m_iPartyRank;										// Party내에서의 위치. -1이면 무의미. 1이면 파티 생성자. 12면 멤버 
+	int   m_iPartyMemberCount;								// 파티 인원 제한용 
+	int   m_iPartyGUID;										// v1.42 Party GUID
+	struct {
+	int  iIndex;
+	char cName[11];
+	} m_stPartyMemberName[DEF_MAXPARTYMEMBERS];
+
+	// New 07/05/2004
+	DWORD m_dwLastActionTime;
+	int m_iDeadPenaltyTime;
 };
 
 #endif // !defined(AFX_CLIENT_H__39CC7700_789F_11D2_A8E6_00001C7030A6__INCLUDED_)

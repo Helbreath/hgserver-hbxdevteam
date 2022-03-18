@@ -1,78 +1,15 @@
-<?xml version="1.0" encoding="Windows-1252"?>
+<?xml version="1.0" encoding = "Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="7.00"
 	Name="HGserver"
 	SccProjectName="&quot;$/HGserver&quot;, KDAAAAAA"
-	SccAuxPath=""
-	SccLocalPath="."
-	SccProvider="MSSCCI:Microsoft Visual SourceSafe">
+	SccLocalPath=".">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
 	</Platforms>
 	<Configurations>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="4"
-				OptimizeForProcessor="1"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
-				RuntimeLibrary="1"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile=".\Debug/HGserver.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				WarningLevel="1"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="4"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				OutputFile="C:\Documents and Settings\Administrator.ROOT.000\Desktop\Sources\Test\HGserver.NET.exe"
-				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile=".\Debug/HGserver.pdb"
-				SubSystem="2"
-				TargetMachine="1"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/HGserver.tlb"
-				HeaderFileName=""/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1042"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
@@ -82,10 +19,9 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
 				InlineFunctionExpansion="1"
 				OptimizeForProcessor="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
@@ -100,20 +36,20 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile=".\Release/HGserver.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				ProgramDatabaseFile=".\Release/HGserver.pdb"
-				SubSystem="2"
-				TargetMachine="1"/>
+				SubSystem="2"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Release/HGserver.tlb"
-				HeaderFileName=""/>
+				TypeLibraryName=".\Release/HGserver.tlb"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -127,378 +63,257 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory=".\Debug"
+			IntermediateDirectory=".\Debug"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				OptimizeForProcessor="1"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS"
+				RuntimeLibrary="1"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderFile=".\Debug/HGserver.pch"
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="4"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
+				OutputFile=".\Debug/HGserver.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile=".\Debug/HGserver.pdb"
+				SubSystem="2"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="TRUE"
+				SuppressStartupBanner="TRUE"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/HGserver.tlb"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1042"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
 	<Files>
 		<Filter
 			Name="source"
 			Filter="">
 			<File
-				RelativePath="ActionID.h">
+				RelativePath=".\ActionID.h">
 			</File>
 			<File
-				RelativePath="BuildItem.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\BuildItem.cpp">
 			</File>
 			<File
-				RelativePath="BuildItem.h">
+				RelativePath=".\BuildItem.h">
 			</File>
 			<File
-				RelativePath=".\Changes.txt">
+				RelativePath=".\Client.cpp">
 			</File>
 			<File
-				RelativePath="Client.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Client.h">
 			</File>
 			<File
-				RelativePath="Client.h">
+				RelativePath=".\DelayEvent.cpp">
 			</File>
 			<File
-				RelativePath=".\DebugDialog.cpp">
+				RelativePath=".\DelayEvent.h">
 			</File>
 			<File
-				RelativePath=".\DebugDialog.h">
+				RelativePath=".\DynamicObject.cpp">
 			</File>
 			<File
-				RelativePath="DelayEvent.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\DynamicObject.h">
 			</File>
 			<File
-				RelativePath="DelayEvent.h">
+				RelativePath=".\DynamicObjectID.h">
 			</File>
 			<File
-				RelativePath="DynamicObject.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Fish.cpp">
 			</File>
 			<File
-				RelativePath="DynamicObject.h">
+				RelativePath=".\Fish.h">
 			</File>
 			<File
-				RelativePath="DynamicObjectID.h">
+				RelativePath=".\Game.cpp">
 			</File>
 			<File
-				RelativePath="Fish.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Game.h">
 			</File>
 			<File
-				RelativePath="Fish.h">
+				RelativePath=".\GuildsMan.cpp">
 			</File>
 			<File
-				RelativePath="Game.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\GuildsMan.h">
 			</File>
 			<File
-				RelativePath="Game.h">
+				RelativePath=".\Item.cpp">
 			</File>
 			<File
-				RelativePath="GuildsMan.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Item.h">
 			</File>
 			<File
-				RelativePath="GuildsMan.h">
+				RelativePath=".\Magic.cpp">
 			</File>
 			<File
-				RelativePath="Item.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Magic.h">
 			</File>
 			<File
-				RelativePath="Item.h">
+				RelativePath=".\Map.cpp">
 			</File>
 			<File
-				RelativePath="Magic.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Map.h">
 			</File>
 			<File
-				RelativePath="Magic.h">
+				RelativePath=".\MessageIndex.h">
 			</File>
 			<File
-				RelativePath="Map.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Mineral.cpp">
 			</File>
 			<File
-				RelativePath="Map.h">
+				RelativePath=".\Mineral.h">
 			</File>
 			<File
-				RelativePath="MessageIndex.h">
+				RelativePath=".\Misc.cpp">
 			</File>
 			<File
-				RelativePath="Mineral.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Misc.h">
 			</File>
 			<File
-				RelativePath="Mineral.h">
+				RelativePath=".\Msg.cpp">
 			</File>
 			<File
-				RelativePath="Misc.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Msg.h">
 			</File>
 			<File
-				RelativePath="Misc.h">
+				RelativePath=".\NetMessages.h">
 			</File>
 			<File
-				RelativePath="Msg.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Npc.cpp">
 			</File>
 			<File
-				RelativePath="Msg.h">
+				RelativePath=".\Npc.h">
 			</File>
 			<File
-				RelativePath="NetMessages.h">
+				RelativePath=".\OccupyFlag.cpp">
 			</File>
 			<File
-				RelativePath="Npc.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\OccupyFlag.h">
 			</File>
 			<File
-				RelativePath="Npc.h">
+				RelativePath=".\Player.h">
 			</File>
 			<File
-				RelativePath="OccupyFlag.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Portion.cpp">
 			</File>
 			<File
-				RelativePath="OccupyFlag.h">
+				RelativePath=".\Portion.h">
 			</File>
 			<File
-				RelativePath="Player.h">
+				RelativePath=".\Quest.cpp">
 			</File>
 			<File
-				RelativePath="Portion.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Quest.h">
 			</File>
 			<File
-				RelativePath="Portion.h">
+				RelativePath=".\Skill.cpp">
 			</File>
 			<File
-				RelativePath="Quest.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Skill.h">
 			</File>
 			<File
-				RelativePath="Quest.h">
+				RelativePath=".\SkillNum.h">
 			</File>
 			<File
-				RelativePath="Skill.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\StrTok.cpp">
 			</File>
 			<File
-				RelativePath="Skill.h">
+				RelativePath=".\StrTok.h">
 			</File>
 			<File
-				RelativePath="SkillNum.h">
+				RelativePath=".\StrategicPoint.cpp">
 			</File>
 			<File
-				RelativePath="StrategicPoint.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\StrategicPoint.h">
 			</File>
 			<File
-				RelativePath="StrategicPoint.h">
+				RelativePath=".\TeleportLoc.cpp">
 			</File>
 			<File
-				RelativePath="StrTok.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\TeleportLoc.h">
 			</File>
 			<File
-				RelativePath="StrTok.h">
+				RelativePath=".\Tile.cpp">
 			</File>
 			<File
-				RelativePath="TeleportLoc.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Tile.h">
 			</File>
 			<File
-				RelativePath="TeleportLoc.h">
+				RelativePath=".\UserMessages.h">
 			</File>
 			<File
-				RelativePath="Tile.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath=".\Winmm.lib">
 			</File>
 			<File
-				RelativePath="Tile.h">
+				RelativePath=".\Ws2_32.lib">
 			</File>
 			<File
-				RelativePath="UserMessages.h">
+				RelativePath=".\XSocket.cpp">
 			</File>
 			<File
-				RelativePath="version.h">
+				RelativePath=".\XSocket.h">
 			</File>
 			<File
-				RelativePath="winmain.h">
+				RelativePath=".\version.h">
 			</File>
 			<File
-				RelativePath="Winmm.lib">
+				RelativePath=".\winmain.h">
 			</File>
 			<File
-				RelativePath="wmain.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="Ws2_32.lib">
-			</File>
-			<File
-				RelativePath="XSocket.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="XSocket.h">
+				RelativePath=".\wmain.cpp">
 			</File>
 		</Filter>
 		<File
-			RelativePath="GlobalDef.h">
+			RelativePath="DebugDialog.cpp">
 		</File>
 		<File
-			RelativePath=".\HGserver.rc">
+			RelativePath="DebugDialog.h">
+		</File>
+		<File
+			RelativePath=".\GlobalDef.h">
+		</File>
+		<File
+			RelativePath="HGserver.rc">
+		</File>
+		<File
+			RelativePath="resource.h">
 		</File>
 	</Files>
 	<Globals>

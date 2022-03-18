@@ -167,15 +167,21 @@ CClient::CClient(HWND hWnd)
 	m_iMagicDamageSaveItemIndex = -1;
 
 	m_sCharIDnum1 = m_sCharIDnum2 = m_sCharIDnum3 = 0;
-	
-	m_iPartyRank = -1; // v1.42
+
+	// New 06/05/2004
+	m_iPartyID = 0;
+	m_iPartyStatus = 0;
+	m_iReqJoinPartyClientH = 0;
+	ZeroMemory(m_cReqJoinPartyName,sizeof(m_cReqJoinPartyName));
+
+	/*m_iPartyRank = -1; // v1.42
 	m_iPartyMemberCount = 0;
 	m_iPartyGUID        = 0;
 
 	for (i = 0; i < DEF_MAXPARTYMEMBERS; i++) {
 		m_stPartyMemberName[i].iIndex = 0;
 		ZeroMemory(m_stPartyMemberName[i].cName, sizeof(m_stPartyMemberName[i].cName));
-	}
+	}*/
 
 	m_iAbuseCount     = 0;
 	m_bIsBWMonitor    = FALSE;
@@ -284,7 +290,6 @@ CClient::~CClient()
 			m_pItemInBankList[i]=NULL;
 		}
 }
-
 
 BOOL CClient::bCreateNewParty()
 {

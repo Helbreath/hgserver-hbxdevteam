@@ -4,7 +4,7 @@
 
 #include "XSocket.h"
 #include "Client.h"
-
+#include "winmain.h"
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -416,7 +416,8 @@ int XSocket::iSendMsg(char * cData, DWORD dwSize, char cKey)
 {
  WORD * wp;
  int    i, iRet;
-
+ char cTxt[200];
+	//m_pSndBuffer = cData;
 	// 메시지 크기가 버퍼보다 크면 보낼 수 없다.
 	if (dwSize > m_dwBufferSize) return DEF_XSOCKEVENT_MSGSIZETOOLARGE;
 
@@ -439,7 +440,7 @@ int XSocket::iSendMsg(char * cData, DWORD dwSize, char cKey)
 			m_pSndBuffer[3+i]  = m_pSndBuffer[3+i] ^ (cKey ^ (dwSize - i));
 		}
 	}
-	
+
 	iRet = _iSend(m_pSndBuffer, dwSize + 3, TRUE);
 
 	if (iRet < 0) return iRet;
@@ -562,10 +563,6 @@ char * XSocket::pGetRcvDataPointer(DWORD * pMsgSize, char * pKey)
 	}
 	return (m_pRcvBuffer + 3);
 }
-
-
-
-///  
 
 BOOL _InitWinsock()
 {

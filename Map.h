@@ -199,6 +199,9 @@ public:
 
 private:
 	BOOL _bDecodeMapDataFileContents();
+public:
+	// Snow BOOLean for certain maps to snow instead of rain
+	BOOL m_bIsSnowEnabled;
 };
 
 #endif // !defined(AFX_MAP_H__12609160_8060_11D2_A8E6_00001C7030A6__INCLUDED_)

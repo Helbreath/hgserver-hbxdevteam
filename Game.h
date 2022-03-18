@@ -77,11 +77,11 @@
 
 #define DEF_SSN_LIMIT_MULTIPLY_VALUE	2	// SSN-limit 곱하는 수 
 
-#define DEF_MAXNOTIFYMSGS		1000		// 최대 공지사항 메시지 
+#define DEF_MAXNOTIFYMSGS		300			// 최대 공지사항 메시지 
 #define DEF_MAXSKILLPOINTS		700			// 스킬 포인트의 총합 
 #define DEF_NIGHTTIME			40
 
-#define DEF_CHARPOINTLIMIT		300			// 각각의 특성치의 최대값 
+#define DEF_CHARPOINTLIMIT		1000			// 각각의 특성치의 최대값 
 #define DEF_RAGPROTECTIONTIME	7000		// 몇 초 이상 지나면 랙으로 부터 보호를 받는지 
 #define DEF_MAXREWARDGOLD		99999999	// 포상금 최대치 
 
@@ -105,6 +105,19 @@
 #define DEF_ITEMLOG_DEPLETE				4
 #define DEF_ITEMLOG_NEWGENDROP			5
 #define DEF_ITEMLOG_DUPITEMID			6
+
+// New 07/05/2004
+#define DEF_ITEMLOG_BUY					7
+#define DEF_ITEMLOG_SELL				8
+#define DEF_ITEMLOG_RETRIEVE			9
+#define DEF_ITEMLOG_DEPOSIT				10
+#define DEF_ITEMLOG_EXCHANGE			11
+#define DEF_ITEMLOG_MAKE				13
+#define DEF_ITEMLOG_SUMMONMONSTER		14
+#define DEF_ITEMLOG_POISONED			15
+#define DEF_ITEMLOG_REPAIR				17
+#define DEF_ITEMLOG_SKILLLEARN			12
+#define DEF_ITEMLOG_MAGICLEARN			16
 
 #define DEF_MAXDUPITEMID				100
 
@@ -183,6 +196,18 @@
 class CGame  
 {
 public:
+
+//Hypnotoad functions
+	void SetMPSlateFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void SetHPSlateFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void SetEXPSlateFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void SetDefenseShieldFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void SetMagicProtectionFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void SetPFAFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void SetIllusionMovementFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+	void SetIllusionFlag(short sOwnerH, char cOwnerType, BOOL bStatus);
+//
+
 	void RequestChangePlayMode(int iClientH);
 	void GetHeroMantleHandler(int iClientH,int iItemID,char * pString);
 	void AdminOrder_Weather(int iClientH, char * pData, DWORD dwMsgSize);
@@ -280,7 +305,7 @@ public:
 	void ActivateSpecialAbilityHandler(int iClientH);
 	void EnergySphereProcessor(BOOL bIsAdminCreate = FALSE, int iClientH = NULL);
 	BOOL bCheckEnergySphereDestination(int iNpcH, short sAttackerH, char cAttackerType);
-	void JoinPartyHandler(int iClientH, char * pMemberName);
+	void CGame::JoinPartyHandler(int iClientH, int iV1, char *pMemberName);
 	void CreateNewPartyHandler(int iClientH);
 	void _DeleteRandomOccupyFlag(int iMapIndex);
 	void RequestSellItemListHandler(int iClientH, char * pData);
@@ -305,7 +330,6 @@ public:
 	BOOL _bDecodeBuildItemConfigFileContents(char * pData, DWORD dwMsgSize);
 	BOOL _bCheckSubLogSocketIndex();
 	void _CheckGateSockConnection();
-	BOOL _bItemLog(int iAction, int iGiveH, int iRecvH, class CItem * pItem);
 	void OnSubLogRead(int iIndex);
 	void OnSubLogSocketEvent(UINT message, WPARAM wParam, LPARAM lParam);
 	void _CheckStrategicPointOccupyStatus(char cMapIndex);
@@ -511,7 +535,7 @@ public:
 	BOOL bEquipItemHandler(int iClientH, short sItemIndex, BOOL bNotify = TRUE);
 	BOOL _bAddClientItemList(int iClientH, class CItem * pItem, int * pDelReq);
 	int  iClientMotion_GetItem_Handler(int iClientH, short sX, short sY, char cDir);
-	void DropItemHandler(int iClientH, short sItemIndex, int iAmount, char * pItemName);
+	void DropItemHandler(int iClientH, short sItemIndex, int iAmount, char * pItemName, BOOL bByPlayer = TRUE);
 	void ClientCommonHandler(int iClientH, char * pData);
 	BOOL __fastcall bGetMsgQuene(char * pFrom, char * pData, DWORD * pMsgSize, int * pIndex, char * pKey);
 	void MsgProcess();
@@ -527,7 +551,7 @@ public:
 	void NpcBehavior_Move(int iNpcH);
 	BOOL bGetEmptyPosition(short * pX, short * pY, char cMapIndex);
 	char cGetNextMoveDir(short sX, short sY, short dstX, short dstY, char cMapIndex, char cTurn, int * pError);
-	int  iClientMotion_Attack_Handler(int iClientH, short sX, short sY, short dX, short dY, short wType, char cDir, WORD wTargetObjectID, BOOL bRespose = TRUE);
+	int  iClientMotion_Attack_Handler(int iClientH, short sX, short sY, short dX, short dY, short wType, char cDir, WORD wTargetObjectID, BOOL bResponse = TRUE);
 	void ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize);
 	void NpcProcess();
 	BOOL bCreateNewNpc(char * pNpcName, char * pName, char * pMapName, short sClass, char cSA, char cMoveType, int * poX, int * poY, char * pWaypointList, RECT * pArea, int iSpotMobIndex, char cChangeSide, BOOL bHideGenMode, BOOL bIsSummoned = FALSE, BOOL bFirmBerserk = FALSE, BOOL bIsMaster = FALSE, int iGuildGUID = NULL);
@@ -540,7 +564,7 @@ public:
 	void GameProcess();
 	void InitPlayerData(int iClientH, char * pData, DWORD dwSize);
 	void ResponsePlayerDataHandler(char * pData, DWORD dwSize);
-	BOOL bSendMsgToLS(DWORD dwMsg, int iClientH, BOOL bFlag = TRUE);
+	BOOL bSendMsgToLS(DWORD dwMsg, int iClientH, BOOL bFlag = TRUE, char *pData = NULL);
 	void OnMainLogRead();
 	void OnMainLogSocketEvent(UINT message, WPARAM wParam, LPARAM lParam);
 	void CheckClientResponseTime();
@@ -563,6 +587,42 @@ public:
 	void GetFightzoneTicketHandler(int iClientH);
 	// v1.4311-3 2 시간마다 사투장 예약을 초기화 시킨다.
 	void FightzoneReserveProcessor() ;
+
+	// New 06/05/2004
+	// Upgrades
+	BOOL bCheckIsItemUpgradeSuccess(int iClientH, int iItemIndex, int iSomH, BOOL bBonus = FALSE);
+	void RequestItemUpgradeHandler(int iClientH, int iItemIndex);
+
+	// ArchAngle's Codes
+	void StormBringer(int iClientH, short dX, short dY);
+	void FireBow(short iClientH, short dX, short dY);
+	
+	//Party Codes
+	void RequestCreatePartyHandler(int iClientH);
+	void PartyOperationResultHandler(char *pData);
+	void PartyOperationResult_Create(int iClientH, char *pName, int iResult, int iPartyID);
+	void PartyOperationResult_Join(int iClientH, char *pName, int iResult, int iPartyID);
+	void PartyOperationResult_Dismiss(int iClientH, char *pName, int iResult, int iPartyID);
+	void PartyOperationResult_Delete(int iPartyID);
+	void RequestJoinPartyHandler(int iClientH, char *pData, DWORD dwMsgSize);
+	void RequestDismissPartyHandler(int iClientH);
+	void GetPartyInfoHandler(int iClientH);
+	void PartyOperationResult_Info(int iClientH, char * pName, int iTotal, char *pNameList);
+	void RequestDeletePartyHandler(int iClientH);
+	void RequestAcceptJoinPartyHandler(int iClientH, int iResult);
+	void GetExp(int iClientH, int iExp, BOOL bIsAttackerOwn);
+
+	// New 07/05/2004
+	// Guild Codes
+	void RequestGuildNameHandler(int iClientH, int iObjectID, int iIndex);
+
+	// Item Logs
+	BOOL _bItemLog(int iAction,int iClientH , char * cName, class CItem * pItem);
+	BOOL _bItemLog(int iAction,int iGiveH, int iRecvH, class CItem * pItem,BOOL bForceItemLog = FALSE);
+	BOOL _bCheckGoodItem( class CItem * pItem );
+
+	BOOL bCheckAndConvertPlusWeaponItem(int iClientH, int iItemIndex);
+	void ArmorLifeDecrement(int iAttackerH, int iTargetH, char cOwnerType, int iValue);
 
 	CGame(HWND hWnd);
 	virtual ~CGame();
@@ -611,6 +671,7 @@ public:
 
 	HWND  m_hWnd;
 	int   m_iTotalClients, m_iMaxClients, m_iTotalGameServerClients, m_iTotalGameServerMaxClients;
+	int   m_iTotalBots, m_iMaxBots, m_iTotalGameServerBots, m_iTotalGameServerMaxBots;
 	SYSTEMTIME m_MaxUserSysTime;
 
 	BOOL  m_bF1pressed, m_bF4pressed, m_bF12pressed;
@@ -720,6 +781,11 @@ public:
 	int   m_iCrusadeWinnerSide;
 
 	int   m_iPlayerMaxLevel;
+
+	struct  {
+		int iTotalMembers;
+		int iIndex[12];
+	}m_stPartyInfo[DEF_MAXCLIENTS];
 
 private:
 	int __iSearchForQuest(int iClientH, int iWho, int * pQuestType, int * pMode, int * pRewardType, int * pRewardAmount, int * pContribution, char * pTargetName, int * pTargetType, int * pTargetCount, int * pX, int * pY, int * pRange);

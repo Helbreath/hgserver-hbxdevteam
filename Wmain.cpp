@@ -120,6 +120,10 @@ LRESULT CALLBACK WndProc( HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam )
 		//}
 		break;
 
+//	case WM_ONBOTSOCKETEVENT:
+//		G_pGame->OnBotSocketEvent(message, wParam, lParam);
+//		break;
+
 	case WM_ONGATESOCKETEVENT:
 		G_pGame->OnGateSocketEvent(message, wParam, lParam);
 		break;
@@ -359,7 +363,6 @@ void OnAccept()
 {
 	G_pGame->bAccept(G_pListenSock);
 }
-
 
 void CALLBACK _TimerFunc(UINT wID, UINT wUser, DWORD dwUSer, DWORD dw1, DWORD dw2)
 {

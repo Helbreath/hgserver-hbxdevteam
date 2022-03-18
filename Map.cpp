@@ -11,6 +11,7 @@ extern void PutLogFileList(char * cStr);
 //////////////////////////////////////////////////////////////////////
 
 CMap::CMap(class CGame * pGame)
+: m_bIsSnowEnabled(FALSE)
 {
  int i, ix, iy;
 

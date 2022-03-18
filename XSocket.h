@@ -58,7 +58,6 @@ public:
 	SOCKET iGetSocket();
 	BOOL bAccept(class XSocket * pXSock, unsigned int uiMsg);
 	BOOL bListen(char * pAddr, int iPort, unsigned int uiMsg);
-	
 	int iSendMsg(char * cData, DWORD dwSize, char cKey = NULL);
 	BOOL bConnect(char * pAddr, int iPort, unsigned int uiMsg);
 	int  iOnSocketEvent(WPARAM wParam, LPARAM lParam);

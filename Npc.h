@@ -34,6 +34,8 @@ class CNpc
 public:
 	CNpc(char * pName5);
 	virtual ~CNpc();
+	// Auras
+	char m_pMagicConfigList[100];
 
 	char  m_cNpcName[21]; // NPC의 이름. 사람 이름같은 것
 	

@@ -14,6 +14,7 @@
 #define DEF_MSGFROM_CLIENT		1
 #define DEF_MSGFROM_LOGSERVER	2
 #define DEF_MSGFROM_GATESERVER	3
+#define DEF_MSGFROM_BOT			4
 
 class CMsg  								 
 {
