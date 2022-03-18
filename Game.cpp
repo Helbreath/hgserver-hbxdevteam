@@ -955,7 +955,8 @@ int CGame::iClientMotion_Move_Handler(int iClientH, short sX, short sY, char cDi
  class CTile * pTile;
  DWORD * dwp, dwTime;
  WORD  * wp, wObjectID;
- short * sp, dX, dY, sTemp, sTemp2, sDOtype;
+ short * sp, dX, dY, sDOtype;
+ int     sTemp, sTemp2;
  int   * ip, iRet, iSize, iDamage;
  BOOL  bRet;
 
@@ -1182,7 +1183,7 @@ int CGame::iClientMotion_Move_Handler(int iClientH, short sX, short sY, char cDi
 		*ip = m_pClientList[wObjectID]->m_iApprColor;
 		cp+= 4;
 
-		sp  = (short *)cp;
+		ip  = (int *)cp;
 		
 		// m_pClientList[i]¿Í m_pClientList[sOwnerH]ÀÇ °ü°è¸¦ ÀÔ·ÂÇÑ´Ù.
 		// sStatusÀÇ »óÀ§ 4ºñÆ®°¡ FOE °ü°è¸¦ ³ªÅ¸³½´Ù. 
@@ -1192,7 +1193,7 @@ int CGame::iClientMotion_Move_Handler(int iClientH, short sX, short sY, char cDi
 		sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 		sTemp2 = (short)iGetPlayerABSStatus(wObjectID, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
 		sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-		*sp = sTemp;
+		*ip = sTemp;
 		//*sp = DEF_TEST;
 		cp += 4;//Original 2
 
@@ -2562,7 +2563,8 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
  register int * ip, ix, iy, iSize, iTileExists;
  class CTile * pTileSrc, * pTile;
  unsigned char ucHeader;
- short * sp, * pTotal, sTemp, sTemp2;
+ short * sp, * pTotal;
+ int     sTemp, sTemp2;
  WORD  * wp;
  char  * cp;
 
@@ -2679,14 +2681,14 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
 					iSize += 4;
 
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					// sStatusÀÇ »óÀ§ 4ºñÆ®°¡ FOE °ü°è¸¦ ³ªÅ¸³½´Ù. 
 					sTemp = m_pClientList[pTile->m_sOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 					sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*sp = sTemp;
+					*ip = sTemp;
 					//*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -2717,13 +2719,13 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
 					cp += 2;
 					iSize += 2;
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					sTemp = m_pNpcList[pTile->m_sOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 					sTemp2 = iGetNpcRelationship(pTile->m_sOwner, iClientH);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*sp = sTemp;
+					*ip = sTemp;
 					//*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -2780,14 +2782,14 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
 					iSize += 4;
 
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					// sStatusÀÇ »óÀ§ 4ºñÆ®°¡ FOE °ü°è¸¦ ³ªÅ¸³½´Ù. 
 					sTemp = m_pClientList[pTile->m_sDeadOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 					sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sDeadOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sDeadOwner);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*sp = sTemp;
+					*ip = sTemp;
 					//*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -2818,13 +2820,13 @@ int CGame::iComposeInitMapData(short sX, short sY, int iClientH, char * pData)
 					cp += 2;
 					iSize += 2;
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					sTemp = m_pNpcList[pTile->m_sDeadOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 					sTemp2 = iGetNpcRelationship(pTile->m_sDeadOwner, iClientH);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*sp = sTemp;
+					*ip = sTemp;
 					//*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -3047,6 +3049,490 @@ void CGame::DeleteClient(int iClientH, BOOL bSave, BOOL bNotify, BOOL bCountLogo
 	m_iTotalClients--;
 }
 
+
+void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dwMsgID, WORD wMsgType, short sV1, short sV2, short sV3)
+{
+	int * ip, i, iRet, iShortCutIndex;
+	char  * cp_a, * cp_s, * cp_sv, cData_All[200], cData_Srt[200],  cData_Srt_Av[200];
+	DWORD * dwp;
+	WORD  * wp;
+	int * ipStatus,iDumm;
+	short * sp, sRange, sX, sY;
+	BOOL  bFlag;
+	char cKey,cOwnerSend;
+	int iTemp3,iTemp,iTemp2;
+
+	ZeroMemory(cData_All, sizeof(cData_All));
+	ZeroMemory(cData_Srt, sizeof(cData_Srt));
+	ZeroMemory(cData_Srt_Av, sizeof(cData_Srt_Av));
+	ipStatus = (int *)&iDumm;
+	cKey = (rand() % 255) + 1;
+
+
+	dwp  = (DWORD *)(cData_All + DEF_INDEX4_MSGID);
+	*dwp = dwMsgID;
+	wp   = (WORD *)(cData_All + DEF_INDEX2_MSGTYPE);
+	*wp  = wMsgType;
+
+	dwp  = (DWORD *)(cData_Srt + DEF_INDEX4_MSGID);
+	*dwp = dwMsgID;
+	wp   = (WORD *)(cData_Srt + DEF_INDEX2_MSGTYPE);
+	*wp  = wMsgType;
+
+	dwp  = (DWORD *)(cData_Srt_Av + DEF_INDEX4_MSGID);
+	*dwp = dwMsgID;
+	wp   = (WORD *)(cData_Srt_Av + DEF_INDEX2_MSGTYPE);
+	*wp  = wMsgType;
+
+
+	cp_a  = (char *)(cData_All + DEF_INDEX2_MSGTYPE + 2);
+	cp_s  = (char *)(cData_Srt + DEF_INDEX2_MSGTYPE + 2);
+	cp_sv = (char *)(cData_Srt_Av + DEF_INDEX2_MSGTYPE + 2);
+
+
+	if ((dwMsgID == MSGID_EVENT_LOG) || (wMsgType == DEF_OBJECTMOVE) || (wMsgType == DEF_OBJECTRUN) || 
+		(wMsgType == DEF_OBJECTATTACKMOVE) || (wMsgType == DEF_OBJECTDAMAGEMOVE) || (wMsgType == DEF_OBJECTDYING))
+		sRange = 1;
+	else sRange = 0;
+
+
+	if (cOwnerType == DEF_OWNERTYPE_PLAYER) {
+		if (m_pClientList[sOwnerH] == NULL) return;
+
+		switch(wMsgType){
+		case DEF_OBJECTNULLACTION:
+		case DEF_OBJECTDAMAGE:
+		case DEF_OBJECTDYING:
+		case DEF_MSGTYPE_CONFIRM:
+			if (m_pClientList[sOwnerH]->m_iAdminUserLevel > 3){
+				if(m_pClientList[sOwnerH]->m_iStatus & 0x10 != 0)
+					cOwnerSend = 2;
+				else
+					cOwnerSend = 1;
+			}
+			else cOwnerSend = 1;
+			break;
+		case DEF_MSGTYPE_REJECT:
+			cOwnerSend = 0;
+			break;
+		default:
+			if (m_pClientList[sOwnerH]->m_iAdminUserLevel > 3){
+				if(m_pClientList[sOwnerH]->m_iStatus & 0x10 != 0)
+					return;
+				else
+					cOwnerSend = 0;
+			}
+			else cOwnerSend = 0;
+			break;
+		}
+
+		wp  = (WORD *)cp_a;
+		*wp = sOwnerH;
+		cp_a += 2;
+		sp  = (short *)cp_a;
+		sX  = m_pClientList[sOwnerH]->m_sX;
+		*sp = sX;
+		cp_a += 2;
+		sp  = (short *)cp_a;
+		sY  = m_pClientList[sOwnerH]->m_sY;
+		*sp = sY;
+		cp_a += 2;
+		sp  = (short *)cp_a;
+		*sp = m_pClientList[sOwnerH]->m_sType;
+		cp_a += 2;
+		*cp_a = m_pClientList[sOwnerH]->m_cDir;
+		cp_a++;
+		memcpy(cp_a, m_pClientList[sOwnerH]->m_cCharName, 10);
+		cp_a += 10;
+		sp  = (short *)cp_a;
+		*sp = m_pClientList[sOwnerH]->m_sAppr1;
+		cp_a += 2;
+		sp  = (short *)cp_a;
+		*sp = m_pClientList[sOwnerH]->m_sAppr2;
+		cp_a += 2;
+		sp  = (short *)cp_a;
+		*sp = m_pClientList[sOwnerH]->m_sAppr3;
+		cp_a += 2;
+		sp  = (short *)cp_a;
+		*sp = m_pClientList[sOwnerH]->m_sAppr4;
+		cp_a += 2;
+		ip = (int *)cp_a;
+		*ip = m_pClientList[sOwnerH]->m_iApprColor;
+		cp_a += 4;
+
+		ip  = (int *)cp_a;
+		ipStatus = ip;
+		*ip = m_pClientList[sOwnerH]->m_iStatus;
+		cp_a += 4;
+
+		iTemp = m_pClientList[sOwnerH]->m_iStatus & 0xF0;
+		iTemp3 = m_pClientList[sOwnerH]->m_iStatus & 0x0F0FFFF7F;
+
+			if (wMsgType == DEF_OBJECTNULLACTION) {
+				if (m_pClientList[sOwnerH]->m_bIsKilled == TRUE)
+					*cp_a = 1; 
+				else *cp_a = 0; 
+			}
+			else *cp_a = 0;
+			cp_a++;
+
+			wp  = (WORD *)cp_s;
+			*wp = sOwnerH + 30000;
+			cp_s += 2;
+
+			*cp_s = m_pClientList[sOwnerH]->m_cDir;
+			cp_s++;
+
+			*cp_s = (unsigned char)sV1;
+			cp_s++;
+			*cp_s = (unsigned char)sV2;
+			cp_s++;
+
+
+			sp  = (short *)cp_s;
+			sX  = m_pClientList[sOwnerH]->m_sX;
+			*sp = sX;
+			cp_s += 2;
+			sp  = (short *)cp_s;
+			sY  = m_pClientList[sOwnerH]->m_sY;
+			*sp = sY;
+			cp_s += 2;
+
+
+			wp  = (WORD *)cp_sv;
+			*wp = sOwnerH + 30000;
+			cp_sv += 2;
+
+			*cp_sv = m_pClientList[sOwnerH]->m_cDir;
+			cp_sv++;
+			*cp_sv = sV1 - sX;
+			cp_sv++;
+			*cp_sv = sV2 - sY;
+			cp_sv++;
+			sp  = (short *)cp_sv;
+			*sp = sV3;
+			cp_sv += 2;
+
+			if (cOwnerSend == 2){
+				switch(wMsgType){
+					case DEF_OBJECTNULLACTION:
+					case DEF_MSGTYPE_CONFIRM:
+						iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData_All, 43, cKey);
+						return;
+					case DEF_OBJECTDAMAGE:
+						iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+						return;
+					case DEF_OBJECTDYING:
+						iRet = m_pClientList[sOwnerH]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+						return;
+					default:
+						return;
+				}
+		}
+
+
+	bFlag = TRUE;
+	iShortCutIndex = 0;
+
+	while(bFlag){
+
+		i = m_iClientShortCut[iShortCutIndex];
+		iShortCutIndex++;
+		if (i == 0) bFlag = FALSE;
+
+		if ((bFlag == TRUE) && (m_pClientList[i] != NULL) && (m_pClientList[i]->m_bIsInitComplete == TRUE))
+
+			if ( (m_pClientList[i]->m_cMapIndex == m_pClientList[sOwnerH]->m_cMapIndex) &&
+				(m_pClientList[i]->m_sX >= m_pClientList[sOwnerH]->m_sX - 10 - sRange) &&
+				(m_pClientList[i]->m_sX <= m_pClientList[sOwnerH]->m_sX + 10 + sRange) &&
+				(m_pClientList[i]->m_sY >= m_pClientList[sOwnerH]->m_sY - 8 - sRange) &&
+				(m_pClientList[i]->m_sY <= m_pClientList[sOwnerH]->m_sY + 8 + sRange) ) {
+
+					if (m_pClientList[i]->m_cSide != m_pClientList[sOwnerH]->m_cSide){
+						if (i != sOwnerH) {
+							iTemp = iTemp3;
+						}
+						else {
+							iTemp = m_pClientList[sOwnerH]->m_cSide;
+						}
+					}
+					else {
+						iTemp = m_pClientList[sOwnerH]->m_cSide;
+					}
+
+					iTemp &= 0x0FFFFFFF;
+					iTemp2 = iGetPlayerABSStatus(sOwnerH, i);
+					iTemp  = (iTemp | (iTemp2 << 28));
+					*ipStatus = iTemp;
+
+					if ( (m_pClientList[i]->m_sX >= m_pClientList[sOwnerH]->m_sX - 9) &&
+						(m_pClientList[i]->m_sX <= m_pClientList[sOwnerH]->m_sX + 9) &&
+						(m_pClientList[i]->m_sY >= m_pClientList[sOwnerH]->m_sY - 7) &&
+						(m_pClientList[i]->m_sY <= m_pClientList[sOwnerH]->m_sY + 7) ) {
+
+							switch (wMsgType) {
+					case DEF_MSGTYPE_CONFIRM:
+					case DEF_MSGTYPE_REJECT:
+					case DEF_OBJECTNULLACTION:
+						if (cOwnerSend == 1) 
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 43, cKey);
+						else
+							if (i != sOwnerH)
+								iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 43, cKey);
+						break;
+
+					case DEF_OBJECTATTACK:
+					case DEF_OBJECTATTACKMOVE:
+						if (cOwnerSend == 1) 
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt_Av, 13, cKey);
+						else
+							if (i != sOwnerH)
+								iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt_Av, 13, cKey);
+						break;
+
+					case DEF_OBJECTMAGIC:
+					case DEF_OBJECTDAMAGE:
+					case DEF_OBJECTDAMAGEMOVE:
+						if (cOwnerSend == 1) 
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+						else
+							if (i != sOwnerH)
+								iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+						break;
+
+					case DEF_OBJECTDYING:
+						if (cOwnerSend == TRUE) 
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+						else
+							if (i != sOwnerH)
+								iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+						break;
+
+					default:
+						if (cOwnerSend == 1) 
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 9, cKey);
+						else
+							if (i != sOwnerH)
+								iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 9, cKey);
+						break;
+							} //Switch
+						} // If 2
+				} // If 1
+			else {
+				switch (wMsgType) {
+				case DEF_MSGTYPE_CONFIRM:
+				case DEF_MSGTYPE_REJECT:
+				case DEF_OBJECTNULLACTION:
+					if (cOwnerSend == 1) 
+						iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 43, cKey);
+					else
+						if (i != sOwnerH)
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 43, cKey);
+					break;
+
+				case DEF_OBJECTATTACK:
+				case DEF_OBJECTATTACKMOVE:
+					if (cOwnerSend == 1) 
+						iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt_Av, 13, cKey);
+					else
+						if (i != sOwnerH)
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt_Av, 13, cKey);
+					break;
+
+				case DEF_OBJECTMAGIC:
+				case DEF_OBJECTDAMAGE:
+				case DEF_OBJECTDAMAGEMOVE:
+					if (cOwnerSend == 1) 
+						iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+					else
+						if (i != sOwnerH)
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+					break;
+
+				case DEF_OBJECTDYING:
+					if (cOwnerSend == TRUE) 
+						iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+					else
+						if (i != sOwnerH)
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+					break;
+
+				default:
+					if (cOwnerSend == 1) 
+						iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 43, cKey);
+					else
+						if (i != sOwnerH)
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 43, cKey);
+					break;
+				} //Switch
+			} //else
+	} //While finish
+} //Finish Player
+	else {
+
+//		if (cOwnerSend == 1) 
+//
+//		else
+//		if (i != sOwnerH)
+
+		if (m_pNpcList[sOwnerH] == NULL) return;
+
+		wp  = (WORD *)cp_a;
+		*wp = sOwnerH + 10000;
+		cp_a += 2;
+
+		sp  = (short *)cp_a;
+		sX  = m_pNpcList[sOwnerH]->m_sX;
+		*sp = sX;
+		cp_a += 2;
+
+		sp  = (short *)cp_a;
+		sY  = m_pNpcList[sOwnerH]->m_sY;
+		*sp = sY;
+		cp_a += 2;
+
+		sp  = (short *)cp_a;
+		*sp = m_pNpcList[sOwnerH]->m_sType;
+		cp_a += 2;
+
+		*cp_a = m_pNpcList[sOwnerH]->m_cDir;
+		cp_a++;
+
+		memcpy(cp_a, m_pNpcList[sOwnerH]->m_cName, 5);
+		cp_a += 5;
+
+		sp  = (short *)cp_a;
+		*sp = m_pNpcList[sOwnerH]->m_sAppr2;
+		cp_a += 2;
+
+		ip  = (int *)cp_a;
+		ipStatus = ip;
+		*ip = m_pNpcList[sOwnerH]->m_iStatus;
+		cp_a += 4;
+
+		if (wMsgType == DEF_OBJECTNULLACTION) {
+			if (m_pNpcList[sOwnerH]->m_bIsKilled == TRUE)
+				*cp_a = 1; 
+			else *cp_a = 0;
+		}
+		else *cp_a = 0;
+		cp_a++;
+
+		wp  = (WORD *)cp_s;
+		*wp = sOwnerH + 40000;
+		cp_s += 2;
+
+		*cp_s = m_pNpcList[sOwnerH]->m_cDir;
+		cp_s++;
+
+		*cp_s = (unsigned char)sV1;
+		cp_s++;
+		*cp_s = (unsigned char)sV2;
+		cp_s++;
+
+		sp  = (short *)cp_s;
+		sX  = m_pNpcList[sOwnerH]->m_sX;
+		*sp = sX;
+		cp_s += 2;
+		sp  = (short *)cp_s;
+		sY  = m_pNpcList[sOwnerH]->m_sY;
+		*sp = sY;
+		cp_s += 2;
+
+		wp  = (WORD *)cp_sv;
+		*wp = sOwnerH + 40000;
+		cp_sv += 2;
+		*cp_sv = m_pNpcList[sOwnerH]->m_cDir;
+		cp_sv++;
+		*cp_sv = sV1 - sX;
+		cp_sv++;
+		*cp_sv = sV2 - sY;
+		cp_sv++;
+		sp  = (short *)cp_sv;
+		*sp = sV3;
+		cp_sv += 2;
+
+		for (i = 1; i < DEF_MAXNPCS; i++) {
+			if ((m_pClientList[i] != NULL))
+				if ( (m_pClientList[i]->m_cMapIndex == m_pNpcList[sOwnerH]->m_cMapIndex) &&
+					(m_pClientList[i]->m_sX >= m_pNpcList[sOwnerH]->m_sX - 10 - sRange) &&
+					(m_pClientList[i]->m_sX <= m_pNpcList[sOwnerH]->m_sX + 10 + sRange) &&
+					(m_pClientList[i]->m_sY >= m_pNpcList[sOwnerH]->m_sY - 8 - sRange) &&
+					(m_pClientList[i]->m_sY <= m_pNpcList[sOwnerH]->m_sY + 8 + sRange) ) {
+
+						iTemp = *ipStatus;
+						iTemp = 0x0FFFFFFF & iTemp;
+						iTemp2 = (int)iGetNpcRelationship(sOwnerH, i);
+						iTemp  = (iTemp | (iTemp2 << 28));
+						*ipStatus = iTemp;
+
+						if ( (m_pClientList[i]->m_sX >= m_pNpcList[sOwnerH]->m_sX - 9) &&
+							(m_pClientList[i]->m_sX <= m_pNpcList[sOwnerH]->m_sX + 9) &&
+							(m_pClientList[i]->m_sY >= m_pNpcList[sOwnerH]->m_sY - 7) &&
+							(m_pClientList[i]->m_sY <= m_pNpcList[sOwnerH]->m_sY + 7) ) {
+								switch (wMsgType) {
+						case DEF_MSGTYPE_CONFIRM:
+						case DEF_MSGTYPE_REJECT:
+						case DEF_OBJECTNULLACTION:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 27,cKey);
+							break;
+
+						case DEF_OBJECTDYING:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+							break;
+
+						case DEF_OBJECTDAMAGE:
+						case DEF_OBJECTDAMAGEMOVE:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+							break;
+
+						case DEF_OBJECTATTACK:
+						case DEF_OBJECTATTACKMOVE:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt_Av, 13, cKey);
+							break;
+
+						default:
+							//Original : iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 9, cKey);
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 27, cKey);
+							break;
+
+								} //Switch
+							}
+						else{
+							switch (wMsgType) {
+						case DEF_MSGTYPE_CONFIRM:
+						case DEF_MSGTYPE_REJECT:
+						case DEF_OBJECTNULLACTION:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 27,cKey);
+							break;
+
+						case DEF_OBJECTDYING:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 15, cKey);
+							break;
+
+						case DEF_OBJECTDAMAGE:
+						case DEF_OBJECTDAMAGEMOVE:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt, 11, cKey);
+							break;
+
+						case DEF_OBJECTATTACK:
+						case DEF_OBJECTATTACKMOVE:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_Srt_Av, 13, cKey);
+							break;
+
+						default:
+							iRet = m_pClientList[i]->m_pXSock->iSendMsg(cData_All, 27, cKey);
+							break;
+
+							} //Switch
+						}
+					}
+		}
+	} // else - NPC
+}
+
+
+/*
 void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dwMsgID, WORD wMsgType, short sV1, short sV2, short sV3)
 {
  int * ip, i, iRet, iShortCutIndex;
@@ -3513,13 +3999,14 @@ void CGame::SendEventToNearClient_TypeA(short sOwnerH, char cOwnerType, DWORD dw
 		}
 	}
 }
-
+*/
 int CGame::iComposeMoveMapData(short sX, short sY, int iClientH, char cDir, char * pData)
 {
  register int * ip, ix, iy, iSize, iTileExists, iIndex;
  class CTile * pTileSrc, * pTile;
  unsigned char ucHeader;
- short * sp, * pTotal, sTemp, sTemp2;
+ short * sp, * pTotal;
+ int     sTemp, sTemp2;
  WORD  * wp;
  char  * cp;
 
@@ -3630,13 +4117,13 @@ int CGame::iComposeMoveMapData(short sX, short sY, int iClientH, char cDir, char
 					iSize += 4;
 
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					sTemp = m_pClientList[pTile->m_sOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 			  		sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sOwner);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*sp = sTemp;
+					*ip = sTemp;
 					//*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -3667,13 +4154,13 @@ int CGame::iComposeMoveMapData(short sX, short sY, int iClientH, char cDir, char
 					cp += 2;
 					iSize += 2;
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					sTemp = m_pNpcList[pTile->m_sOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 					sTemp2 = iGetNpcRelationship(pTile->m_sOwner, iClientH);
 					sTemp  = (sTemp | (sTemp2 << 28));
-					*sp = sTemp;
+					*ip = sTemp;
 					//*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -3730,14 +4217,14 @@ int CGame::iComposeMoveMapData(short sX, short sY, int iClientH, char cDir, char
 					iSize += 4;
 
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					sTemp = m_pClientList[pTile->m_sDeadOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 			  
 					sTemp2 = (short)iGetPlayerABSStatus(pTile->m_sDeadOwner, iClientH); //(short)iGetPlayerRelationship(iClientH, pTile->m_sDeadOwner);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*sp = sTemp;
+					*ip = sTemp;
 					////*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -3768,13 +4255,13 @@ int CGame::iComposeMoveMapData(short sX, short sY, int iClientH, char cDir, char
 					cp += 2;
 					iSize += 2;
 					// Status
-					sp  = (short *)cp;
+					ip  = (int *)cp;
 					
 					sTemp = m_pNpcList[pTile->m_sDeadOwner]->m_iStatus;
 					sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 					sTemp2 = iGetNpcRelationship(pTile->m_sDeadOwner, iClientH);
 					sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
-					*sp = sTemp;
+					*ip = sTemp;
 					////*sp = DEF_TEST;
 					cp += 4;//Original 2
 					iSize += 4;//Original 2
@@ -25829,7 +26316,8 @@ void CGame::RequestFullObjectData(int iClientH, char *pData)
  DWORD * dwp;
  WORD  * wp, wObjectID;
  char  * cp, cData[100];
- short * sp, sX, sY, sTemp, sTemp2;
+ short * sp, sX, sY;
+ int     sTemp, sTemp2;
  int   * ip, iRet;
 
 	if (m_pClientList[iClientH] == NULL) return;
@@ -25887,7 +26375,7 @@ void CGame::RequestFullObjectData(int iClientH, char *pData)
 		*ip = m_pClientList[wObjectID]->m_iApprColor;
 		cp += 4;
 		
-		sp  = (short *)cp;
+		ip  = (int *)cp;
 		
 		// m_pClientList[i]¿Í m_pClientList[sOwnerH]ÀÇ °ü°è¸¦ ÀÔ·ÂÇÑ´Ù.
 		// sStatusÀÇ »óÀ§ 4ºñÆ®°¡ FOE °ü°è¸¦ ³ªÅ¸³½´Ù. 
@@ -25896,7 +26384,7 @@ void CGame::RequestFullObjectData(int iClientH, char *pData)
 		sTemp2 = (short)iGetPlayerABSStatus(wObjectID, iClientH); //(short)iGetPlayerRelationship(iClientH, wObjectID);
 		sTemp  = (sTemp | (sTemp2 << 28));//Original : 12
 		
-		*sp = sTemp;
+		*ip = sTemp;
 		//*sp = DEF_TEST;
 		cp += 4;//Original 2
 		
@@ -25938,14 +26426,14 @@ void CGame::RequestFullObjectData(int iClientH, char *pData)
 		*sp = m_pNpcList[wObjectID]->m_sAppr2;
 		cp += 2;
 		
-		sp  = (short *)cp;
+		ip  = (int *)cp;
 	
 		sTemp = m_pNpcList[wObjectID]->m_iStatus;
 		sTemp = 0x0FFFFFFF & sTemp;//Original : sTemp = 0x0FFF & sTemp; // »óÀ§ 4ºñÆ® Å¬¸®¾î
 		
 		sTemp2 = iGetNpcRelationship(wObjectID, iClientH);
 		sTemp  = (sTemp | (sTemp2 << 28));//Original : 12	
-		*sp = sTemp;
+		*ip = sTemp;
 		//*sp = DEF_TEST;
 		cp += 4;//Original 2
 

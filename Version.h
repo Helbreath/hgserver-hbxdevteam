@@ -1,6 +1,6 @@
 
 #define DEF_UPPERVERSION		"2"
-#define DEF_LOWERVERSION 		"042"
+#define DEF_LOWERVERSION 		"05"
 
 //#define DEF_BUILDDATE			312
 #define DEF_BUILDDATE			1126

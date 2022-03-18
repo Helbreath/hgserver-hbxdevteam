@@ -64,6 +64,17 @@ void ThreadProc(void *ch)
 LRESULT CALLBACK WndProc( HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam )
 { 
 	switch (message) {
+//	case WM_COMMAND:
+//		switch(LOWORD(wParam)){
+//		case IDC_GEN:
+//			GetWindowText(GetDlgItem(hDlg,IDC_EDIT1),buffer,sizeof(buffer));
+//			if(DecodeProdKey(buffer,ProdKey,15) == 0){
+//				ShowProdKey(ProdKey,hDlg);
+//			}
+//			break;
+//		}
+//		break;
+
 	case WM_CREATE:
 		break;
 	
