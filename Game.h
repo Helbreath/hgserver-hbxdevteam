@@ -177,11 +177,6 @@
 //#define DEF_NOTIFY_SETTING_FAILED 0xBB4
 //#define DEF_NOTIFY_SETTING_SUCCESS 0xBB3
 
-#define DEF_NOTIFY_SETTING_SUCCESS					0xBB3
-#define DEF_NOTIFY_SETTING_FAILED					0xBB4
-#define DEF_NOTIFY_STATECHANGE_SUCCESS				0xBB5
-#define DEF_NOTIFY_STATECHANGE_FAILED				0xBB6
-
 
 #define DEF_STR 0x01
 #define DEF_DEX 0x02
@@ -478,7 +473,7 @@ public:
 	void ApplyCombatKilledPenalty(int iClientH, char cPenaltyLevel, BOOL bIsSAattacked = FALSE);
 	void EnemyKillRewardHandler(int iAttackerH, int iClientH);
 	void PK_KillRewardHandler(short sAttackerH, short sVictumH);
-	void ApplyPKpenalty(short sAttackerH, short sVictumLevel);
+	void ApplyPKpenalty(short sAttackerH, short sVictumH);
 	BOOL bSetItemToBankItem(int iClientH, short sItemIndex);
 	void RequestRetrieveItemHandler(int iClientH, char * pData);
 	void RequestCivilRightHandler(int iClientH, char * pData);
@@ -548,14 +543,15 @@ public:
 	int iGetDangerValue(int iNpcH, short dX, short dY);
 	void NpcBehavior_Dead(int iNpcH);
 	void NpcKilledHandler(short sAttackerH, char cAttackerType, int iNpcH, short sDamage);
-	int  iCalculateAttackEffect(short sTargetH, char cTargetType, short sAttackerH, char cAttackerType, int tdX, int tdY, int iAttackMode, BOOL bNearAttack = FALSE);
+	//int  iCalculateAttackEffect(short sTargetH, char cTargetType, short sAttackerH, char cAttackerType, int tdX, int tdY, int iAttackMode, BOOL bNearAttack = FALSE);
+	int iCalculateAttackEffect(short sTargetH, char cTargetType, short sAttackerH, char cAttackerType, int tdX, int tdY, int iAttackMode, BOOL bNearAttack = FALSE, BOOL bIsDash = FALSE, BOOL bArrowUse = FALSE);
 	void RemoveFromTarget(short sTargetH, char cTargetType, int iCode = NULL);
 	void NpcBehavior_Attack(int iNpcH);
 	void TargetSearch(int iNpcH, short * pTarget, char * pTargetType);
 	void NpcBehavior_Move(int iNpcH);
 	BOOL bGetEmptyPosition(short * pX, short * pY, char cMapIndex);
 	char cGetNextMoveDir(short sX, short sY, short dstX, short dstY, char cMapIndex, char cTurn, int * pError);
-	int  iClientMotion_Attack_Handler(int iClientH, short sX, short sY, short dX, short dY, short wType, char cDir, WORD wTargetObjectID, BOOL bResponse = TRUE);
+	int  iClientMotion_Attack_Handler(int iClientH, short sX, short sY, short dX, short dY, short wType, char cDir, WORD wTargetObjectID, BOOL bResponse = TRUE, BOOL bIsDash = FALSE);
 	void ChatMsgHandler(int iClientH, char * pData, DWORD dwMsgSize);
 	void NpcProcess();
 	int bCreateNewNpc(char * pNpcName, char * pName, char * pMapName, short sClass, char cSA, char cMoveType, int * poX, int * poY, char * pWaypointList, RECT * pArea, int iSpotMobIndex, char cChangeSide, BOOL bHideGenMode, BOOL bIsSummoned = FALSE, BOOL bFirmBerserk = FALSE, BOOL bIsMaster = FALSE, int iGuildGUID = NULL);
@@ -614,7 +610,7 @@ public:
 	void PartyOperationResult_Info(int iClientH, char * pName, int iTotal, char *pNameList);
 	void RequestDeletePartyHandler(int iClientH);
 	void RequestAcceptJoinPartyHandler(int iClientH, int iResult);
-	void GetExp(int iClientH, int iExp, BOOL bIsAttackerOwn);
+	void GetExp(int iClientH, int iExp, BOOL bIsAttackerOwn = FALSE);
 
 	// New 07/05/2004
 	// Guild Codes
@@ -635,6 +631,9 @@ public:
 
 	// Player shutup
 	void GSM_RequestShutupPlayer(char * pGMName,WORD wReqServerID, WORD wReqClientH, WORD wTime,char * pPlayer );
+
+	// PK Logs
+	BOOL _bPKLog(int iAction,int iAttackerH , int iVictumH, char * pNPC);
 
 	CGame(HWND hWnd);
 	virtual ~CGame();
@@ -799,11 +798,17 @@ public:
 
 	struct  {
 		int iTotalMembers;
-		int iIndex[12];
+		int iIndex[9];
 	}m_stPartyInfo[DEF_MAXCLIENTS];
 
 	// New 17/05/2004
 	short m_sForceRecallTime;
+
+	// New 22/05/2004
+	int	 m_iPrimaryDropRate, m_iSecondaryDropRate;
+
+	// New 25/05/2004
+	int m_iFinalShutdownCount;
 
 private:
 	int __iSearchForQuest(int iClientH, int iWho, int * pQuestType, int * pMode, int * pRewardType, int * pRewardAmount, int * pContribution, char * pTargetName, int * pTargetType, int * pTargetCount, int * pX, int * pY, int * pRange);
@@ -827,6 +832,8 @@ public:
 	void SetPlayingStatus(int iClientH);
 	void ForceChangePlayMode(int iClientH, bool bNotify);
 	void ShowVersion(int iClientH);
+	void ShowInGameMsg(int iClientH, char* pMsg);
+	void RequestResurrectPlayer(int iClientH, bool bResurrect);
 };
 
 #endif // !defined(AFX_GAME_H__C3D29FC5_755B_11D2_A8E6_00001C7030A6__INCLUDED_)

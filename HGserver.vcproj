@@ -82,6 +82,7 @@
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Debug/HGserver.pch"
+				AssemblerOutput="0"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
@@ -99,6 +100,7 @@
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/HGserver.pdb"
+				GenerateMapFile="FALSE"
 				SubSystem="2"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -313,6 +315,9 @@
 		</File>
 		<File
 			RelativePath="HGserver.rc">
+		</File>
+		<File
+			RelativePath="logo.bmp">
 		</File>
 		<File
 			RelativePath="resource.h">

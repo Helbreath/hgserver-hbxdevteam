@@ -279,6 +279,12 @@ CClient::CClient(HWND hWnd)
 	m_bIsCheckingWhisperPlayer = FALSE;
 	m_bIsOwnLocation = FALSE;
 	m_pIsProcessingAllowed = FALSE;
+
+	// New 24/05/2004
+	m_cHeroArmourBonus = 0;
+
+	// New 25/05/2004
+	m_bIsBeingResurrected = FALSE;
 }
 
 CClient::~CClient()

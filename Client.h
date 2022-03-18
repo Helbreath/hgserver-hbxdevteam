@@ -330,6 +330,12 @@ public:
 	BOOL m_bIsCheckingWhisperPlayer;
 	BOOL m_bIsOwnLocation;
 	BOOL m_pIsProcessingAllowed;
+
+	// New 24/05/2004
+	char m_cHeroArmourBonus;
+
+	// New 25/05/2004
+	BOOL m_bIsBeingResurrected;
 };
 
 #endif // !defined(AFX_CLIENT_H__39CC7700_789F_11D2_A8E6_00001C7030A6__INCLUDED_)
